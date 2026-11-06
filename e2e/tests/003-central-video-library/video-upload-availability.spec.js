@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { uniqueName } from '../../helpers/admin.js';
-import { createTracker, TEST_PASSWORD } from '../../helpers/org-api.js';
-import { videoFixture, loginViaScreen } from '../../helpers/video-upload.js';
+import { createTracker } from '../../helpers/org-api.js';
+import { videoFixture } from '../../helpers/video-upload.js';
 
 // Scenario 1, 2 en 3: het uploadvenster met beschikbaarheid. Scenario 1 en 3 mogen in één test.
 // Tests met test.fixme worden overgeslagen en zijn nog niet geschreven. Haal ".fixme" weg zodra je
@@ -36,8 +36,7 @@ test('scenario 2: drie video\'s met drie beschikbaarheden uploaden', async ({ br
 const orgB = await t.organisation({ name: nameB });
 
   
-  const page = await (await t.browserContext(browser)).newPage();
-  await loginViaScreen(page, orgA.loginCode, TEST_PASSWORD);
+  const page = await t.pageAs(browser, orgA.loginCode);
   await page.goto('/videos')
   await page.locator('[data-test="file-input"]').setInputFiles([videoFixture('valid-512x256.mp4'),
     videoFixture('valid-max-5760x2880.mp4'),
@@ -92,8 +91,7 @@ test('scenario 3: "Selectief" zonder organisatie geeft een melding en zet Upload
     const orgA = await t.organisation({ name: uniqueName('E2E-003-SC3-A') });
     const nameB = uniqueName('E2E-003-SC3-B');
   const orgB = await t.organisation({ name: nameB });
-  const page = await (await t.browserContext(browser)).newPage();
-    await loginViaScreen(page, orgA.loginCode, TEST_PASSWORD);
+  const page = await t.pageAs(browser, orgA.loginCode);
     await page.goto('/videos')
   await page.locator('[data-test="file-input"]').setInputFiles([videoFixture('valid-512x256.mp4')]);
   

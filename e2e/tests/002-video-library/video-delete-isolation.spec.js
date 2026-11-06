@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { uniqueName } from '../../helpers/admin.js';
-import { createTracker, BASE, TEST_PASSWORD } from '../../helpers/org-api.js';
-import { videoFixture, loginViaScreen } from '../../helpers/video-upload.js';
+import { createTracker, BASE } from '../../helpers/org-api.js';
+import { videoFixture } from '../../helpers/video-upload.js';
 
 // Scenario 21 t/m 25: verwijderen en afscherming tussen organisaties. Scenario 22 en 23 hebben twee eigen organisaties nodig.
 // Bron: docs/e2e-plan-spec-002.md.
@@ -13,13 +13,12 @@ test('scenario 21: een video verwijderen en annuleren', async ({ browser }) => {
   // A+H. Eerste verwijderen en bevestigen: weg uit de bibliotheek. Tweede annuleren: blijft staan.
   // Handmatig of backend: bestand en miniatuur nog op schijf, deletedAt gevuld.
   const org = await t.organisation({ name: uniqueName('E2E-SC21') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
   const main = page.getByRole('main');
   const confirm = page.getByRole('alertdialog');
   const first = page.locator('[data-test="video"]').filter({ hasText: 'valid-512x256' });
   const second = page.locator('[data-test="video"]').filter({ hasText: 'valid-silent-1024x512' });
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
   await page.goto('/videos');
 
   await page.locator('[data-test="file-input"]').setInputFiles([
@@ -47,16 +46,14 @@ test('scenario 22: organisatie B ziet de videos van A niet', async ({ browser })
   // A. Twee eigen organisaties (t.organisation). A heeft een video, B opent /videos en ziet een lege lijst.
   const orgA = await t.organisation({ name: uniqueName('E2E-SC22-A') });
   const orgB = await t.organisation({ name: uniqueName('E2E-SC22-B') });
-  const pageA = await (await t.browserContext(browser)).newPage();
-  const pageB = await (await t.browserContext(browser)).newPage();
+  const pageA = await t.pageAs(browser, orgA.loginCode);
+  const pageB = await t.pageAs(browser, orgB.loginCode);
 
-  await loginViaScreen(pageA, orgA.loginCode, TEST_PASSWORD);
   await pageA.goto('/videos');
   await pageA.locator('[data-test="file-input"]').setInputFiles([videoFixture('valid-512x256.mp4')]);
   await pageA.getByRole('dialog').getByRole('button', { name: 'Uploaden' }).click();
   await expect(pageA.getByRole('main').getByText('valid-512x256', { exact: true })).toBeVisible({ timeout: 30_000 });
 
-  await loginViaScreen(pageB, orgB.loginCode, TEST_PASSWORD);
   await pageB.goto('/videos');
 
   await expect(pageB.getByText("Er staan nog geen video's in de bibliotheek")).toBeVisible();
@@ -68,10 +65,9 @@ test('scenario 23: B kan de miniatuur van A niet openen', async ({ browser }) =>
   // Open punt in het plan: dit scenario mag volgens jou vervallen.
   const orgA = await t.organisation({ name: uniqueName('E2E-SC23-A') });
   const orgB = await t.organisation({ name: uniqueName('E2E-SC23-B') });
-  const pageA = await (await t.browserContext(browser)).newPage();
+  const pageA = await t.pageAs(browser, orgA.loginCode);
   const apiB = await t.login(orgB.loginCode);
 
-  await loginViaScreen(pageA, orgA.loginCode, TEST_PASSWORD);
   await pageA.goto('/videos');
   await pageA.locator('[data-test="file-input"]').setInputFiles([videoFixture('valid-512x256.mp4')]);
   await pageA.getByRole('dialog').getByRole('button', { name: 'Uploaden' }).click();
@@ -87,9 +83,8 @@ test('scenario 23: B kan de miniatuur van A niet openen', async ({ browser }) =>
 test('scenario 24: A kan de eigen miniatuur wel openen', async ({ browser }) => {
   // A, beperkt. De afbeelding komt binnen (200, afbeelding). De X-Accel-Redirect-header is via nginx niet zichtbaar.
   const org = await t.organisation({ name: uniqueName('E2E-SC24') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
   await page.goto('/videos');
   await page.locator('[data-test="file-input"]').setInputFiles([videoFixture('valid-512x256.mp4')]);
   await page.getByRole('dialog').getByRole('button', { name: 'Uploaden' }).click();

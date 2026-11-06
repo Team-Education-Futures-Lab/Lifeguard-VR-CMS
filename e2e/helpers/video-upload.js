@@ -2,7 +2,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect } from '@playwright/test';
-import { TEST_PASSWORD } from './org-api.js';
 
 /** Pad naar een testvideo uit backend/tests/fixtures/videos/. Het werkpad is e2e/ bij `npx playwright test`. */
 export const videoFixture = (name) => path.resolve('../backend/tests/fixtures/videos', name);
@@ -96,12 +95,11 @@ export async function startHalfUpload(page, fileName = 'valid-512x256.mp4') {
 export const card = (page, name) => page.locator('[data-test="video"]').filter({ hasText: name });
 
 /**
- * Een nieuwe pagina in een eigen browsercontext, ingelogd als deze organisatie, met /videos open.
- * `t` is de tracker van de test (createTracker()), zodat de context na afloop wordt opgeruimd.
+ * Een nieuwe pagina in een eigen browsercontext, ingelogd als deze organisatie (via de API, zonder het inlogscherm),
+ * met /videos open. `t` is de tracker van de test (createTracker()), zodat de context na afloop wordt opgeruimd.
  */
 export async function openLibraryAs(t, browser, org) {
-  const page = await (await t.browserContext(browser)).newPage();
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
+  const page = await t.pageAs(browser, org.loginCode);
   await page.goto('/videos');
   return page;
 }

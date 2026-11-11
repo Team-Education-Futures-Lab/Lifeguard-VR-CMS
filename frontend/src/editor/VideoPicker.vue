@@ -2,8 +2,11 @@
 // Picks a video from the library: the organisation's own videos and the videos available to it,
 // exactly as in the video library (specs/004 FR-014). The chosen video's details come from the
 // editor's stepVideos map, so a video that is no longer available still shows (FR-016).
+// A search field filters on name, description and owner, the same search as the library, and
+// long names wrap instead of being cut off (FR-014b).
 import { ref, computed, onMounted } from 'vue'
 import { listVideos } from '../api/videos'
+import { filterVideos } from '../lib/videoLibrary'
 import { formatDuration } from '../lib/util'
 import { useEditor } from './context'
 
@@ -13,6 +16,8 @@ const picking = ref(!props.node.videoId)
 const videos = ref([])
 const loadState = ref('loading') // loading | ready | error
 const current = computed(() => (props.node.videoId ? ed.stepVideos[props.node.videoId] : null))
+const query = ref('')
+const shown = computed(() => filterVideos(videos.value, { query: query.value }))
 
 async function load() {
   loadState.value = 'loading'
@@ -29,6 +34,12 @@ onMounted(load)
 async function choose(video) {
   await ed.chooseVideo(props.node, video)
   picking.value = false
+  query.value = ''
+}
+
+function cancel() {
+  picking.value = false
+  query.value = ''
 }
 </script>
 
@@ -42,28 +53,44 @@ async function choose(video) {
       </div>
       <button class="btn btn-sm" @click="picking = true">Wijzig</button>
     </div>
-    <ul v-else class="options">
+    <input
+      v-if="(!current || picking) && loadState === 'ready' && videos.length"
+      v-model="query"
+      class="input search"
+      type="search"
+      placeholder="Zoek op naam of organisatie"
+      aria-label="Video zoeken op naam, beschrijving of organisatie"
+      :id="idBase + '-search'"
+      data-test="video-search"
+    />
+    <ul v-if="!current || picking" class="options">
       <li v-if="loadState === 'loading'" class="muted small empty">Video's laden…</li>
       <li v-else-if="loadState === 'error'" class="muted small empty">
         De video's konden niet worden geladen. <button class="btn btn-sm btn-ghost" @click="load">Opnieuw</button>
       </li>
       <template v-else>
-        <li v-for="v in videos" :key="v.id">
-          <button class="opt" :class="{ on: v.id === node.videoId }" data-test="video-option" @click="choose(v)">
+        <li v-for="v in shown" :key="v.id">
+          <button class="opt" :class="{ on: v.id === node.videoId }" :title="v.name" data-test="video-option" @click="choose(v)">
             <span class="th" :style="{ backgroundImage: `url(${v.thumbnailUrl})` }"></span>
             <span class="info">
               <span class="name">{{ v.name }}</span>
-              <span class="muted small">{{ formatDuration(v.durationSeconds ?? 0) }}</span>
+              <!-- Owner under the name, so the name gets the full width of the narrow panel. Same
+                   label as the library (OwnerPill), as text: a button cannot sit inside this button. -->
+              <span class="meta">
+                <span class="muted small">{{ formatDuration(v.durationSeconds ?? 0) }}</span>
+                <span class="owner" :class="{ own: v.owner.isOwn }" :title="v.owner.isOwn ? null : v.owner.name">{{ v.owner.isOwn ? 'Eigen' : v.owner.name }}</span>
+              </span>
             </span>
-            <!-- Same owner label as the library (OwnerPill), as text: a button cannot sit inside this button. -->
-            <span class="owner" :class="{ own: v.owner.isOwn }">{{ v.owner.isOwn ? 'Eigen' : v.owner.name }}</span>
           </button>
         </li>
         <li v-if="!videos.length" class="muted small empty">Nog geen video’s. Upload ze bij Video’s.</li>
+        <li v-else-if="!shown.length" class="muted small empty" data-test="video-search-empty">
+          Geen video’s gevonden voor “{{ query.trim() }}”.
+        </li>
       </template>
     </ul>
     <div v-if="picking && current" class="cancel">
-      <button class="btn btn-sm btn-ghost" @click="picking = false">Annuleren</button>
+      <button class="btn btn-sm btn-ghost" @click="cancel">Annuleren</button>
     </div>
   </div>
 </template>
@@ -72,12 +99,14 @@ async function choose(video) {
 .current { display: flex; gap: 12px; align-items: center; }
 .th { width: 88px; aspect-ratio: 2 / 1; border-radius: 4px; background: var(--surface-2) center / cover; flex-shrink: 0; }
 .info { display: grid; flex: 1; min-width: 0; }
-.name { font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name { font-size: 0.9rem; overflow-wrap: break-word; }
+.meta { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.search { width: 100%; margin-bottom: 6px; }
 .options {
   list-style: none;
   margin: 0;
   padding: 4px;
-  max-height: 240px;
+  max-height: 320px;
   overflow: auto;
   border: 1px solid var(--line-strong);
   border-radius: var(--r-sm);
@@ -101,8 +130,7 @@ async function choose(video) {
 .opt.on { background: var(--brand-soft); }
 .empty { padding: 8px; }
 .owner {
-  flex-shrink: 0;
-  max-width: 40%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

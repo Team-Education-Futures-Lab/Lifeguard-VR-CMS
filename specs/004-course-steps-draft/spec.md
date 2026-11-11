@@ -89,6 +89,13 @@ editor met de weergaven "Canvas", "Canvas + paneel" en "Lijst").
 - Q: Mag een concept een video-onderdeel zonder video bevatten? → A: Ja, zoals FR-010 en FR-012
   al zeggen; de controle op volledigheid komt met publiceren (FR-09).
 
+### Session 2026-11-11 (voorbereiding usability-test)
+
+- Q: Hoe vindt de docent een video in de kiezer als de bibliotheek honderden video's bevat, en
+  waarom zijn lange namen onleesbaar? → A: De kiezer krijgt een zoekveld met dezelfde zoekregels
+  als de videobibliotheek, en lange namen lopen door op een volgende regel in plaats van te worden
+  afgekapt (FR-014b). Dit is een kleine verbetering binnen deze feature, geen nieuwe feature.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Een cursus aanmaken en terugvinden (Priority: P1)
@@ -364,6 +371,12 @@ bestaat nog als zacht verwijderd record.
   bewaren controleren dat de gekozen video voor de organisatie beschikbaar is; de enige
   uitzondering is de video die het onderdeel al had (FR-016). De regels van de videobibliotheek
   (lijst, zoeken, details, kiezer, thumbnail) MUST NOT veranderen door deze feature.
+- **FR-014b**: *Toegevoegd na de voorbereiding van de usability-test (2026-11-11).* De
+  video-kiezer MUST een zoekveld hebben dat de lijst filtert op naam, beschrijving en eigenaar,
+  zonder onderscheid tussen hoofd- en kleine letters en accenten: dezelfde zoekregels als de
+  videobibliotheek (feature 003). Vindt de zoekterm niets, dan MUST de kiezer dat melden met de
+  zoekterm erin. De volledige naam van elke video MUST leesbaar zijn: een lange naam loopt door op
+  een volgende regel en staat ook in de tooltip. Bij een lege bibliotheek is er geen zoekveld.
 - **FR-015**: Een video MUST in meerdere onderdelen en in meerdere cursussen gebruikt kunnen
   worden.
 - **FR-016**: Wordt een gebruikte video later verwijderd door de eigenaar of onbeschikbaar voor

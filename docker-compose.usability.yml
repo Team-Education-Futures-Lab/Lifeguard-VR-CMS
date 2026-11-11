@@ -1,0 +1,16 @@
+# Usability-testomgeving: los van de ontwikkelomgeving.
+#
+# Altijd samen met docker-compose.yml en projectnaam "usability" gebruiken (de .bat-scripts
+# doen dat al):
+#   docker compose -p usability -f docker-compose.yml -f docker-compose.usability.yml up -d
+#
+# Door de projectnaam krijgt de testomgeving eigen volumes (usability_db-data,
+# usability_uploads, usability_videos), een eigen netwerk en eigen containers. Dit bestand
+# regelt alleen wat de projectnaam niet oplost: de poorten.
+services:
+  web:
+    # De ontwikkelomgeving gebruikt 80 en 443. De test draait alleen op HTTPS-poort 8443
+    # (https://localhost:8443). Poort 80 wordt bewust niet doorgegeven: nginx stuurt HTTP door
+    # naar https://localhost zonder poort, en dat zou bij de ontwikkelomgeving uitkomen.
+    ports: !override
+      - "${USABILITY_HTTPS_PORT:-8443}:443"

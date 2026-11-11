@@ -278,6 +278,23 @@ geheel, en in de frontend de API, de omzetting en de editor op een lokale kopie
 - T059: ESLint schoon in `backend/` en `frontend/`; geen Nederlands commentaar in de gewijzigde
   code; UI-teksten en `message`-velden zijn Nederlands, routes, foutcodes en commentaar Engels.
 
+## Verbeterronde voor de usability-test (2026-11-11)
+
+- [X] U1 Zoekveld in de video-kiezer (FR-014b): filtert op naam, beschrijving en eigenaar met
+  `filterVideos` uit `lib/videoLibrary.js`, dezelfde zoekregels als de videobibliotheek; melding
+  "Geen video's gevonden voor …" als niets past; de zoekterm wordt gewist na kiezen of Annuleren
+  (`editor/VideoPicker.vue`).
+- [X] U2 Volledige videonamen in de kiezer: lange namen lopen door op een volgende regel in plaats
+  van af te kappen (zonder woorden te breken), met de naam ook als tooltip; het organisatielabel
+  staat onder de naam zodat de naam de volle breedte van het paneel krijgt; de lijst is iets hoger
+  (320 px) (`editor/VideoPicker.vue`).
+- [X] U3 Tests in `frontend/tests/video-picker.test.js`: zoeken op naam, beschrijving, eigenaar
+  en zonder accenten; melding zonder resultaat; volledige naam en kiezen; geen zoekveld bij een
+  lege bibliotheek.
+- [X] U4 Quickstart scenario 24 toegevoegd.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

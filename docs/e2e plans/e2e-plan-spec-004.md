@@ -39,6 +39,7 @@ Bron: `specs/004-course-steps-draft/quickstart.md`. Dit document zegt per scenar
 | Onderdeel toevoegen | knoppen "Video" en "Vraag" op het canvas |
 | Blok op het canvas | `[data-test="block"]`; daarin `[data-test="badges"]` met "Start"/"Einde" |
 | Video kiezen | `[data-test="video-option"]` (met de naam en het label "Eigen" of de organisatie); knop "Wijzig"; `[data-test="remove-video"]` ("Video weghalen") |
+| Zoeken in de videokiezer | `[data-test="video-search"]` (placeholder "Zoek op naam of organisatie"); zonder resultaat `[data-test="video-search-empty"]` ("Geen video's gevonden voor …") |
 | Melding verloren video | `[data-test="lost-video"]` ("Deze video is niet meer beschikbaar en kan niet worden teruggezet.") |
 | Vraag | veld `[data-test="question"]`; antwoorden `[data-test="answer"]`; goed antwoord: radio met label "Antwoord C is goed"; verwijderen: "Antwoord C verwijderen"; `[data-test="add-answer"]`; `[data-test="feedback"]` |
 | Start en verwijderen | `[data-test="start"]` (checkbox "Startonderdeel"); `[data-test="remove-step"]` |
@@ -73,6 +74,7 @@ Bron: `specs/004-course-steps-draft/quickstart.md`. Dit document zegt per scenar
 | 15 | B opent het adres van A's cursus | A | Als B `/courses/<id van A>`: "Cursus niet gevonden" | `course-list.spec.js` |
 | 16 | Cursus verwijderen | A | Verwijderknop in de lijst: `alertdialog` "Cursus verwijderen?"; "Verwijderen": weg uit de lijst; het adres geeft "Cursus niet gevonden". Dat `deletedAt` gevuld is, is B | `course-list.spec.js` |
 | 17 | Twee tabbladen, de laatste opslag wint | A | Twee pagina's in één context met dezelfde cursus; in elk iets anders wijzigen en opslaan, eerst 1 dan 2; herladen: de wijziging van 2 staat er, geen waarschuwing | `course-editing.spec.js` |
+| 24 | Zoeken in de videokiezer (FR-014b, toegevoegd 2026-11-11) | A+H | A met drie eigen video's, waarvan één met een lange naam; B met een video "Algemeen". Als A een videoblok openen en in `video-search` typen: op een deel van de naam blijft alleen die video over; op de naam van B alleen B's video; op een woord zonder resultaat `video-search-empty` met de zoekterm. De gevonden video kiezen en opslaan: na herladen staat hij in het blok. Of een lange naam volledig leesbaar is (doorlopen op een tweede regel), blijft een handmatige controle | `course-video-picker.spec.js` |
 | 23 | B verwijdert een algemene video die A gebruikt | A | Zoals 14, maar B verwijdert de video "Algemeen" (zacht). A ziet nog naam en duur; niet meer in `/videos` of de kiezer | `course-unavailable-video.spec.js` |
 | SC-004 | Ongeldige `PUT`-verzoeken (6 gevallen) | B | `courseSave.test.js` | n.v.t. |
 | SC-006 | Cursus zacht verwijderd (`deletedAt`) | B | `courseCrud.test.js` | n.v.t. |
@@ -86,11 +88,12 @@ Bron: `specs/004-course-steps-draft/quickstart.md`. Dit document zegt per scenar
 | Label | Aantal |
 |---|---|
 | A (automatiseren) | 24 (1 t/m 5, 6a, 6b, 7 t/m 17, 14a t/m 14e, 23) |
+| A+H | 1 (24, toegevoegd na de verbeterronde voor de usability-test) |
 | B | 3 (SC-004, SC-006, FR-016a) |
 | H | 1 (SC-007) |
 | – (vervallen) | 2 (13a, 22) |
 
-10 en 11 staan in hetzelfde bestand. 14a t/m 14e beginnen elk met de situatie van 14; zet die klaar in een functie in het testbestand, zodat elke test los kan draaien. Dan zijn er ongeveer 24 tests in 5 bestanden.
+10 en 11 staan in hetzelfde bestand. 14a t/m 14e beginnen elk met de situatie van 14; zet die klaar in een functie in het testbestand, zodat elke test los kan draaien. Dan zijn er ongeveer 25 tests in 5 bestanden.
 
 ## Risico's en aandachtspunten
 

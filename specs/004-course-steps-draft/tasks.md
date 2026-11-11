@@ -292,6 +292,10 @@ geheel, en in de frontend de API, de omzetting en de editor op een lokale kopie
   en zonder accenten; melding zonder resultaat; volledige naam en kiezen; geen zoekveld bij een
   lege bibliotheek.
 - [X] U4 Quickstart scenario 24 toegevoegd.
+- [ ] U5 E2e-test voor scenario 24: staat als `test.fixme` in
+  `e2e/tests/004-course-steps-draft/course-video-picker.spec.js` en in
+  `docs/e2e plans/e2e-plan-spec-004.md`. Schrijven samen met de andere e2e-tests van spec 004,
+  die ook nog allemaal `test.fixme` zijn.
 
 ---
 

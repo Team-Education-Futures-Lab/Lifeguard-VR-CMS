@@ -16,3 +16,7 @@ specs
 backend
 # The frontend tests check videos in the browser on the same test videos as the server.
 !backend/tests/fixtures/videos
+# Usability-test snapshots and test credentials: never part of an image
+snapshots-*
+usability-inloggegevens.md
+test-results

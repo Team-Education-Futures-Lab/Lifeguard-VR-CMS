@@ -10,5 +10,9 @@ COPY backend/tests/fixtures/videos/ /backend/tests/fixtures/videos/
 RUN npm run build
 
 FROM nginx:stable-alpine
-COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+# Which nginx config goes into the image. default.conf (HTTPS with a certificate) for local use
+# and CI; default.prod.conf (plain HTTP behind the webserver of the VPS) for the image that goes
+# to GHCR: docker build --build-arg NGINX_CONF=default.prod.conf ...
+ARG NGINX_CONF=default.conf
+COPY nginx/${NGINX_CONF} /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html

@@ -1,0 +1,39 @@
+# Production on the VPS (yonder.lifeguardvr.nl). Builds nothing: it runs the images from GHCR.
+# Needs only this file and a filled-in .env (copy of .env.prod.example) in the same folder:
+#
+#   docker compose -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.prod.yml up -d
+#   docker compose -f docker-compose.prod.yml exec api npx knex migrate:latest   # after every new version
+#
+# The webserver of the VPS handles HTTPS and passes everything for the domain on to
+# 127.0.0.1:${CMS_HTTP_PORT}. MariaDB is installed on the VPS itself, outside Docker.
+name: lifeguard-cms
+
+services:
+  api:
+    image: ${CMS_IMAGE_PREFIX:?Vul CMS_IMAGE_PREFIX in .env in}/lifeguard-cms-api:${CMS_VERSION:?Vul CMS_VERSION in .env in}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Paths inside the container; the folders on the VPS are mounted below.
+      UPLOADS_DIR: /data/uploads
+      VIDEOS_DIR: /data/videos
+    extra_hosts:
+      # Lets the container reach MariaDB on the VPS itself as host.docker.internal (DB_HOST).
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${CMS_UPLOADS_PATH:?Vul CMS_UPLOADS_PATH in .env in}:/data/uploads
+      # Videos live in their own folder, never under the public uploads (specs/002 research R2).
+      - ${CMS_VIDEOS_PATH:?Vul CMS_VIDEOS_PATH in .env in}:/data/videos
+
+  web:
+    image: ${CMS_IMAGE_PREFIX:?Vul CMS_IMAGE_PREFIX in .env in}/lifeguard-cms-web:${CMS_VERSION:?Vul CMS_VERSION in .env in}
+    restart: unless-stopped
+    ports:
+      # Only reachable from the VPS itself: the outside world goes through the VPS webserver.
+      - "127.0.0.1:${CMS_HTTP_PORT:?Vul CMS_HTTP_PORT in .env in}:80"
+    volumes:
+      - ${CMS_UPLOADS_PATH}:/data/uploads:ro
+      - ${CMS_VIDEOS_PATH}:/data/videos:ro
+    depends_on:
+      - api

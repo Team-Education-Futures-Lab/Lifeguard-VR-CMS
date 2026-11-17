@@ -90,3 +90,34 @@ export async function startHalfUpload(page, fileName = 'valid-512x256.mp4') {
 
   return { percent, resume: () => (cut = false) };
 }
+
+/** De kaart van één video in de lijst van /videos, gevonden op (unieke) naam. */
+export const card = (page, name) => page.locator('[data-test="video"]').filter({ hasText: name });
+
+/**
+ * Een nieuwe pagina in een eigen browsercontext, ingelogd als deze organisatie (via de API, zonder het inlogscherm),
+ * met /videos open. `t` is de tracker van de test (createTracker()), zodat de context na afloop wordt opgeruimd.
+ */
+export async function openLibraryAs(t, browser, org) {
+  const page = await t.pageAs(browser, org.loginCode);
+  await page.goto('/videos');
+  return page;
+}
+
+/**
+ * Uploadt één of meer video's in één keer vanaf /videos: [{ file, name, visibility, organisation? }].
+ * `visibility` is 'public', 'selective' of 'private'; bij 'selective' geef je `organisation` (de naam van de
+ * gekozen organisatie) mee. Wacht tot de kaarten van alle video's in de lijst staan (en niet op de tekst in het
+ * uploadvenster), want pas dan zijn de video's echt klaar.
+ */
+export async function uploadVideos(page, videos) {
+  await page.locator('[data-test="file-input"]').setInputFiles(videos.map((v) => videoFixture(v.file)));
+  for (const [i, v] of videos.entries()) {
+    const entry = page.locator('[data-test="entry"]').nth(i);
+    await entry.getByLabel('Naam').fill(v.name);
+    await entry.locator(`[data-test="visibility-${v.visibility}"]`).check();
+    if (v.organisation) await entry.getByLabel(v.organisation, { exact: true }).check();
+  }
+  await page.getByRole('dialog').getByRole('button', { name: 'Uploaden' }).click();
+  for (const v of videos) await expect(card(page, v.name)).toBeVisible({ timeout: 30_000 });
+}

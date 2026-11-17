@@ -66,6 +66,7 @@ Verwacht: alles groen, inclusief `courseIsolation.test.js` (SC-003, ook de thumb
 | 21a | Na 19 met Doorgaan (andere video gekozen): opslaan, dan Ctrl+Z | Het onderdeel houdt zijn plaats, maar het videoblok is leeg met dezelfde melding; Ctrl+Y zet de gekozen video terug |
 | 22 | Een onderdeel met een gewone video verwijderen of de video vervangen | Geen waarschuwing (SC-005b) |
 | 23 | Als B: video "Algemeen beschikbaar" zacht verwijderen terwijl A hem gebruikt; als A de cursus openen | Zoals 14: naam, thumbnail en duur staan er nog; niet meer in Video's of de kiezer |
+| 24 | Video-kiezer openen met veel video's (bijv. na `seed-usability-videos.js`); zoeken op een deel van een naam, op een organisatienaam en op een woord zonder resultaat | De lijst toont alleen passende video's; lange namen zijn volledig leesbaar; zonder resultaat staat er "Geen video's gevonden voor …" (FR-014b) |
 
 Controleer na scenario 16 dat de cursus zacht verwijderd is (SC-006):
 

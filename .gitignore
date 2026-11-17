@@ -16,3 +16,6 @@ docs/~$*
 # Playwright
 e2e/.env
 e2e/playwright/.auth
+# Usability-test snapshots (database-dumps, logo's en video's)
+/snapshots-*/
+/usability-inloggegevens.md

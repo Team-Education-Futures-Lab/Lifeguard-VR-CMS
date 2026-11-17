@@ -91,6 +91,23 @@ export function createTracker() {
       return context;
     },
 
+    /**
+     * Een nieuwe pagina in een eigen browsercontext, al ingelogd als deze organisatie, zonder het inlogscherm.
+     * Er wordt via de API ingelogd (t.login) en die sessie gaat naar de browser; dat scheelt een paar seconden per
+     * organisatie. Gebruik loginViaScreen alleen als het inloggen zelf getest wordt. De pagina staat op een lege
+     * pagina: ga zelf met page.goto naar de plek die je nodig hebt.
+     */
+    async pageAs(browser, loginCode, password = TEST_PASSWORD) {
+      const api = await tracker.login(loginCode, password);
+      const context = await browser.newContext({
+        baseURL: BASE,
+        ignoreHTTPSErrors: true,
+        storageState: await api.storageState(),
+      });
+      contexts.push(context);
+      return context.newPage();
+    },
+
     /** Verwijdert wat is aangemaakt. Een organisatie die de test al verwijderde (404) is niet erg. */
     async cleanup() {
       if (orgIds.length) {

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { uniqueName } from '../../helpers/admin.js';
-import { createTracker, BASE, TEST_PASSWORD } from '../../helpers/org-api.js';
-import { videoFixture, loginViaScreen, holdUploads } from '../../helpers/video-upload.js';
+import { createTracker, BASE } from '../../helpers/org-api.js';
+import { videoFixture, holdUploads } from '../../helpers/video-upload.js';
 
 // Scenario 1, 2, 15, 16 t/m 19: uploaden, voortgang en het knopje rechtsonder. Eigen organisatie per test.
 // Tests met test.fixme worden overgeslagen en zijn nog niet geschreven. Haal ".fixme" weg zodra je
@@ -13,8 +13,7 @@ test.afterEach(() => t.cleanup());
 test('scenario 1: een lege bibliotheek toont de lege-tekst en 2 knoppen "Video toevoegen"', async ({ browser }) => {
   // A. Eigen, lege organisatie. /videos openen.
   const org = await t.organisation({ name: uniqueName('E2E-SC1') });
-  const page = await (await t.browserContext(browser)).newPage();
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
+  const page = await t.pageAs(browser, org.loginCode);
 
   await page.goto('/videos');
 
@@ -28,9 +27,8 @@ test('scenario 1: een lege bibliotheek toont de lege-tekst en 2 knoppen "Video t
 test('scenario 2: een geldige video wordt geupload en staat in de bibliotheek', async ({ browser }) => {
   // A. videoFixture('valid-512x256.mp4') kiezen en uploaden.
   const org = await t.organisation({ name: uniqueName('E2E-SC2') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
 
   await page.goto('/videos');
 
@@ -53,9 +51,8 @@ test('scenario 2: een geldige video wordt geupload en staat in de bibliotheek', 
 test('scenario 15: drie bestanden tegelijk: eén bezig, twee wachten', async ({ browser }) => {
   // A. Drie bestanden kiezen. Eén bezig, twee "Wacht...".
   const org = await t.organisation({ name: uniqueName('E2E-SC15') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
 
   await page.goto('/videos');
 
@@ -87,9 +84,8 @@ test('scenario 15: drie bestanden tegelijk: eén bezig, twee wachten', async ({ 
 test('scenario 16: het knopje rechtsonder staat op "Videos" ook zonder uploads', async ({ browser }) => {
   // A. Op /videos aanwezig, klik opent de bestandskiezer. Op /settings/style niet.
   const org = await t.organisation({ name: uniqueName('E2E-SC16') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
   await page.goto('/videos');
 
   const circle = page.locator('[data-test="circle"]');
@@ -105,9 +101,8 @@ test('scenario 16: het knopje rechtsonder staat op "Videos" ook zonder uploads',
 test('scenario 16b: het knopje tijdens een upload (gedrag)', async ({ browser }) => {
   // A+H. Ingeklapt blijven; 
   const org = await t.organisation({ name: uniqueName('E2E-SC16-B') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
 
   await page.goto('/videos');
   const release = await holdUploads(page);
@@ -127,10 +122,9 @@ test('scenario 16b: het knopje tijdens een upload (gedrag)', async ({ browser })
 test('scenario 16c: de lijst klapt vanzelf uit en weer in', async ({ browser }) => {
   // A+H. Bij "Toegevoegd" en bij "Verbinding verbroken..." klapt de lijst uit en na ongeveer 4 s weer in.
   const org = await t.organisation({ name: uniqueName('E2E-SC16-C') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
   const panel = page.locator('[data-test="panel"]');
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
 
   await page.goto('/videos');
   const release = await holdUploads(page);
@@ -160,13 +154,12 @@ test('scenario 16c: de lijst klapt vanzelf uit en weer in', async ({ browser }) 
 test('scenario 16d: het knopje op "Huisstijl" tijdens een upload', async ({ browser }) => {
   // A. Upload loopt door; het knopje klapt niet vanzelf uit; klik opent de lijst en die blijft open tot je opnieuw klikt.
   const org = await t.organisation({ name: uniqueName('E2E-SC16-D') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
 
   const circle = page.locator('[data-test="circle"]');
   const panel = page.locator('[data-test="panel"]');
 
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
 
   await page.goto('/videos');
   const release = await holdUploads(page);
@@ -198,12 +191,11 @@ test('scenario 16d: het knopje op "Huisstijl" tijdens een upload', async ({ brow
 test('scenario 17: het tabblad sluiten tijdens een upload geeft een waarschuwing', async ({ browser }) => {
   // A. page.on('dialog', ...) en page.close({ runBeforeUnload: true }).
   const org = await t.organisation({ name: uniqueName('E2E-SC17') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
 
   const circle = page.locator('[data-test="circle"]');
 
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
 
   await page.goto('/videos');
   const release = await holdUploads(page);
@@ -228,11 +220,10 @@ release();
 test('scenario 18: uitloggen tijdens een upload vraagt bevestiging', async ({  browser }) => {
   //  Bevestigingsvraag; na "Uitloggen" is de upload onderbroken en later hervatbaar (halve-upload-helper).
    const org = await t.organisation({ name: uniqueName('E2E-SC18') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
   const circle = page.locator('[data-test="circle"]');
   const dialog = page.getByRole('alertdialog');
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
 
   await page.goto('/videos');
   await holdUploads(page);
@@ -260,10 +251,9 @@ test('scenario 18: uitloggen tijdens een upload vraagt bevestiging', async ({  b
 test('scenario 19: een lopende upload annuleren', async ({  browser }) => {
   // A+H. Automatiseren: de regel verdwijnt uit het scherm.
      const org = await t.organisation({ name: uniqueName('E2E-SC19') });
-  const page = await (await t.browserContext(browser)).newPage();
+  const page = await t.pageAs(browser, org.loginCode);
   const circle = page.locator('[data-test="circle"]');
 
-  await loginViaScreen(page, org.loginCode, TEST_PASSWORD);
 
   await page.goto('/videos');
   await holdUploads(page);

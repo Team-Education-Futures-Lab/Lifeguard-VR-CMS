@@ -131,6 +131,61 @@ op 60.
 
 ## Productie
 
+Op de VPS (yonder.lifeguardvr.nl) staat een eigen webserver vóór de app: die doet HTTPS met het
+certificaat en stuurt alles als gewone http door naar de `web`-container. Daarvoor is er een
+tweede nginx-config, `nginx/default.prod.conf`: één blok op poort 80, zonder certificaat en
+zonder doorsturen naar https, verder gelijk aan `nginx/default.conf`. Houd de `location`-blokken
+van beide bestanden gelijk. Bouw de web-image voor de VPS met:
+
+```bash
+docker build -f frontend/Dockerfile --build-arg NGINX_CONF=default.prod.conf -t <image>:<versie> .
+```
+
+Zonder `--build-arg` krijgt de image `default.conf` (lokaal en in CI). De webserver van de VPS
+moet minstens dezelfde limieten toestaan als `default.prod.conf`: headers tot 32 KB, verzoeken
+tot 40 MB op het uploadpad en time-outs van 300 seconden.
+
+### Op de VPS
+
+Op de VPS staan alleen `docker-compose.prod.yml` en een ingevulde `.env` (kopie van
+`.env.prod.example`), geen code. Het compose-bestand bouwt niets: het haalt de images
+`lifeguard-cms-api` en `lifeguard-cms-web` van GHCR en start ze. Er is geen database-container:
+de API verbindt met de MariaDB die op de VPS zelf geïnstalleerd is (`DB_HOST=host.docker.internal`).
+
+Eenmalig:
+
+1. In MariaDB een database en gebruiker aanmaken. Containers verbinden vanuit het Docker-netwerk
+   (meestal een `172.`-adres), en MariaDB moet daarop luisteren (`bind-address`, niet alleen
+   `127.0.0.1`):
+
+   ```sql
+   CREATE DATABASE cms CHARACTER SET utf8mb4;
+   CREATE USER 'cms'@'172.%' IDENTIFIED BY '<lang wachtwoord>';
+   GRANT ALL PRIVILEGES ON cms.* TO 'cms'@'172.%';
+   ```
+
+2. Mappen aanmaken voor logo's en video's (bijvoorbeeld `/srv/lifeguard/uploads` en
+   `/srv/lifeguard/videos`) en `.env` invullen.
+3. Inloggen bij GHCR met een token met `read:packages`:
+   `docker login ghcr.io -u <gebruikersnaam>`.
+4. Starten, de tabellen aanmaken en de eerste beheerder aanmaken:
+
+   ```bash
+   docker compose -f docker-compose.prod.yml pull
+   docker compose -f docker-compose.prod.yml up -d
+   docker compose -f docker-compose.prod.yml exec api npx knex migrate:latest
+   docker compose -f docker-compose.prod.yml exec api node scripts/create-admin.js beheer
+   ```
+
+5. In de webserver van de VPS `yonder.lifeguardvr.nl` doorsturen naar
+   `http://127.0.0.1:<CMS_HTTP_PORT>`, met de limieten hierboven.
+
+Een nieuwe versie: `CMS_VERSION` in `.env` aanpassen, daarna `pull`, `up -d` en
+`exec api npx knex migrate:latest` (voert alleen nieuwe migraties uit). Logo's, video's en de
+database staan buiten de containers en blijven bewaard.
+
+Zonder webserver ervoor (eigen certificaat in de `web`-container):
+
 - Gebruik een echt TLS-certificaat (bijvoorbeeld Let's Encrypt) in plaats van
   `nginx/dev-cert.sh`; zet `server.crt` en `server.key` in `nginx/certs/`.
 - Houd `COOKIE_SECURE=true`.

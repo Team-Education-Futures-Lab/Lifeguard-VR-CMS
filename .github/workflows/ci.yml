@@ -6,10 +6,11 @@ on:
   push:
     branches: ['**']
 
-# A new push to the same branch cancels the run that is still going.
+# A new push to the same branch cancels the run that is still going. Not on main: a run there can
+# be publishing a release, which must not stop halfway; the next run on main waits instead.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -187,3 +188,72 @@ jobs:
       - name: Frontend – npm audit
         working-directory: frontend
         run: npm audit --audit-level=high
+
+  # Only on main, after every other job passed: a new version vA.B.C and both images on GHCR.
+  # Version: the last tag plus one. Patch (C) by default; "#minor" or "#major" in the pull request
+  # title or in a commit message since the last tag raises B or A instead. Explained in docs/ci.md.
+  release:
+    name: Release (version tag and images on GHCR)
+    needs: audit
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the version tag
+      packages: write   # push the images to GHCR
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # all commits and tags, to find the last version
+      - name: Determine the next version
+        id: version
+        run: |
+          if last=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null); then
+            range="$last..HEAD"
+          else
+            last=v0.0.0; range=HEAD   # no version yet: look at all commits
+          fi
+          if [ "$(git rev-list --count "$range")" = 0 ]; then
+            echo "Nothing new since $last; no release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          IFS=. read -r major minor patch <<< "${last#v}"
+          log=$(git log "$range" --format=%B)
+          if grep -q '#major' <<< "$log"; then major=$((major + 1)); minor=0; patch=0
+          elif grep -q '#minor' <<< "$log"; then minor=$((minor + 1)); patch=0
+          else patch=$((patch + 1)); fi
+          version="$major.$minor.$patch"
+          echo "Last version $last, next version v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR
+        if: steps.version.outputs.skip == 'false'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      # Same images as built by hand for v1.0.0 (docs/deployment-vps.md): the web image with the
+      # nginx config for the VPS. The label links the packages to this repository.
+      - name: Build and push both images
+        if: steps.version.outputs.skip == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          registry="ghcr.io/${OWNER,,}"
+          labels="--label org.opencontainers.image.source=https://github.com/${{ github.repository }} --label org.opencontainers.image.version=$VERSION --label org.opencontainers.image.revision=${{ github.sha }}"
+          docker build $labels --target prod -t "$registry/lifeguard-cms-api:$VERSION" -t "$registry/lifeguard-cms-api:latest" backend
+          docker build $labels -f frontend/Dockerfile --build-arg NGINX_CONF=default.prod.conf -t "$registry/lifeguard-cms-web:$VERSION" -t "$registry/lifeguard-cms-web:latest" .
+          for image in lifeguard-cms-api lifeguard-cms-web; do
+            docker push "$registry/$image:$VERSION"
+            docker push "$registry/$image:latest"
+          done
+      # Only after the images are on GHCR, so a version tag always has its images.
+      - name: Push the version tag
+        if: steps.version.outputs.skip == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "v$VERSION"
+          git push origin "v$VERSION"
+          echo "### Released v$VERSION" >> "$GITHUB_STEP_SUMMARY"
+          echo "On the VPS: set CMS_VERSION=$VERSION in .env, then pull and up -d (docs/deployment-vps.md)." >> "$GITHUB_STEP_SUMMARY"

@@ -131,17 +131,24 @@ op 60.
 
 ## Productie
 
+Volledige uitleg, besluiten en het draaiboek voor de VPS: `docs/deployment-vps.md`.
+
 Op de VPS (yonder.lifeguardvr.nl) staat een eigen webserver vóór de app: die doet HTTPS met het
 certificaat en stuurt alles als gewone http door naar de `web`-container. Daarvoor is er een
 tweede nginx-config, `nginx/default.prod.conf`: één blok op poort 80, zonder certificaat en
 zonder doorsturen naar https, verder gelijk aan `nginx/default.conf`. Houd de `location`-blokken
-van beide bestanden gelijk. Bouw de web-image voor de VPS met:
+van beide bestanden gelijk.
+
+Releases gaan automatisch: elke merge naar `main` waarbij de CI slaagt, wordt een nieuwe versie
+(`vA.B.C`). De CI-job **Release** bouwt beide images, zet ze op GHCR en zet de git-tag. Standaard
+gaat C één omhoog; `#minor` of `#major` in de titel van de pull request verhoogt B of A. Zie
+`docs/ci.md`, "Releases". Met de hand de web-image voor de VPS bouwen:
 
 ```bash
 docker build -f frontend/Dockerfile --build-arg NGINX_CONF=default.prod.conf -t <image>:<versie> .
 ```
 
-Zonder `--build-arg` krijgt de image `default.conf` (lokaal en in CI). De webserver van de VPS
+Zonder `--build-arg` krijgt de image `default.conf` (lokaal en in de CI-jobs voor build en tests). De webserver van de VPS
 moet minstens dezelfde limieten toestaan als `default.prod.conf`: headers tot 32 KB, verzoeken
 tot 40 MB op het uploadpad en time-outs van 300 seconden.
 
@@ -180,7 +187,7 @@ Eenmalig:
 5. In de webserver van de VPS `yonder.lifeguardvr.nl` doorsturen naar
    `http://127.0.0.1:<CMS_HTTP_PORT>`, met de limieten hierboven.
 
-Een nieuwe versie: `CMS_VERSION` in `.env` aanpassen, daarna `pull`, `up -d` en
+Een nieuwe versie (het nummer staat op GitHub bij **Tags**): `CMS_VERSION` in `.env` aanpassen, daarna `pull`, `up -d` en
 `exec api npx knex migrate:latest` (voert alleen nieuwe migraties uit). Logo's, video's en de
 database staan buiten de containers en blijven bewaard.
 

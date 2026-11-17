@@ -44,12 +44,13 @@ wordt een nieuwe versie `vA.B.C`:
 
 ### Hoe het nummer wordt bepaald
 
-De job zoekt de laatste tag van de vorm `vA.B.C` en kijkt alleen naar **titels** sinds die tag:
-de titel van elke pull request en de eerste regel van elke commit. Tekst verderop in een
-commitbericht of in de beschrijving van een PR telt niet mee, zodat uitleg waarin `#major`
-voorkomt geen major-versie maakt.
+De job zoekt de laatste tag van de vorm `vA.B.C` en kijkt alleen naar de **titels van de pull
+requests** die sindsdien naar `main` zijn gemerged. Commits op Development, commitberichten en de
+beschrijving van een PR tellen niet mee; zo maakt uitleg waarin `#major` voorkomt geen
+major-versie. (Bij een squash-merge of een directe push naar `main` telt de eerste regel van die
+commit, want daar staat de titel.)
 
-| Staat er in een titel sinds de vorige versie… | Dan | Voorbeeld |
+| Staat er in de titel van een PR sinds de vorige versie… | Dan | Voorbeeld |
 | --- | --- | --- |
 | `#major` | A + 1, B en C naar 0 | `v1.4.2` → `v2.0.0` |
 | `#minor` (en geen `#major`) | B + 1, C naar 0 | `v1.4.2` → `v1.5.0` |

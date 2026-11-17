@@ -57,7 +57,7 @@ Automatisch. Elke merge naar `main` waarbij alle CI-jobs slagen, wordt een nieuw
 **Release** in `.github/workflows/ci.yml` bepaalt het nummer, bouwt beide images, zet ze op GHCR
 (met het nummer en als `latest`) en zet de git-tag. Het nummer is de vorige versie plus één:
 
-| In de titel van de PR (of de eerste regel van een commit) sinds de vorige versie | Voorbeeld |
+| In de titel van een PR die sinds de vorige versie naar `main` is gemerged | Voorbeeld |
 | --- | --- |
 | niets (bugfix of kleine wijziging) | `v1.0.0` → `v1.0.1` |
 | `#minor` (nieuwe functie) | `v1.0.1` → `v1.1.0` |

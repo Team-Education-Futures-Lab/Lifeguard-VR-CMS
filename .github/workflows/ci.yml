@@ -191,7 +191,7 @@ jobs:
 
   # Only on main, after every other job passed: a new version vA.B.C and both images on GHCR.
   # Version: the last tag plus one. Patch (C) by default; "#minor" or "#major" in the pull request
-  # title or in a commit message since the last tag raises B or A instead. Explained in docs/ci.md.
+  # title or in the first line of a commit since the last tag raises B or A. Explained in docs/ci.md.
   release:
     name: Release (version tag and images on GHCR)
     needs: audit
@@ -218,7 +218,13 @@ jobs:
             exit 0
           fi
           IFS=. read -r major minor patch <<< "${last#v}"
-          log=$(git log "$range" --format=%B)
+          # Only titles count: the first line of every commit, and for a merge of a pull request
+          # the PR title (first line of the merge commit's body). Text further down a message,
+          # such as an explanation that mentions both keywords, is ignored.
+          log=$(git log "$range" --format=%s
+                for sha in $(git rev-list --merges "$range"); do
+                  git log -1 --format=%b "$sha" | sed -n '/./{p;q}'
+                done)
           if grep -q '#major' <<< "$log"; then major=$((major + 1)); minor=0; patch=0
           elif grep -q '#minor' <<< "$log"; then minor=$((minor + 1)); patch=0
           else patch=$((patch + 1)); fi

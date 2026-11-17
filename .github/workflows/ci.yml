@@ -190,8 +190,8 @@ jobs:
         run: npm audit --audit-level=high
 
   # Only on main, after every other job passed: a new version vA.B.C and both images on GHCR.
-  # Version: the last tag plus one. Patch (C) by default; "#minor" or "#major" in the pull request
-  # title or in a commit message since the last tag raises B or A instead. Explained in docs/ci.md.
+  # Version: the last tag plus one. Patch (C) by default; "#minor" or "#major" in the title of a
+  # pull request merged since the last tag raises B or A. Explained in docs/ci.md.
   release:
     name: Release (version tag and images on GHCR)
     needs: audit
@@ -218,7 +218,16 @@ jobs:
             exit 0
           fi
           IFS=. read -r major minor patch <<< "${last#v}"
-          log=$(git log "$range" --format=%B)
+          # Only pull request titles count. --first-parent walks main itself, so commits made on
+          # Development are skipped. A merge commit holds the PR title on the first line of its
+          # body; a squash merge or a direct push to main uses its first line.
+          log=$(for sha in $(git rev-list --first-parent "$range"); do
+                  if git rev-parse -q --verify "$sha^2" >/dev/null; then
+                    git log -1 --format=%b "$sha" | sed -n '/./{p;q}'
+                  else
+                    git log -1 --format=%s "$sha"
+                  fi
+                done)
           if grep -q '#major' <<< "$log"; then major=$((major + 1)); minor=0; patch=0
           elif grep -q '#minor' <<< "$log"; then minor=$((minor + 1)); patch=0
           else patch=$((patch + 1)); fi

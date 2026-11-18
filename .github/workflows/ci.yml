@@ -67,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Values for the test database only (profile "test", a throwaway MariaDB in tmpfs). These are
-      # not secrets: the database exists only during this job. DB_HOST, DB_PORT, UPLOADS_DIR and
+      # not secrets: the database exists only during this job. DB_HOST, DB_PORT, LOGOS_DIR and
       # VIDEOS_DIR are set by docker-compose.yml for api-test.
       - name: Create .env for the tests
         run: |
@@ -80,7 +80,7 @@ jobs:
           DB_ROOT_PASSWORD=ci-test-only-root-password
           TEST_DB_NAME=cms_test
           API_PORT=3000
-          UPLOADS_DIR=/tmp/uploads
+          LOGOS_DIR=/tmp/logos
           VIDEOS_DIR=/tmp/videos
           COOKIE_SECURE=false
           SESSION_IDLE_TIMEOUT_MINUTES=60
@@ -130,7 +130,7 @@ jobs:
           DB_ROOT_PASSWORD=ci-e2e-only-root-password
           TEST_DB_NAME=cms_test
           API_PORT=3000
-          UPLOADS_DIR=/tmp/uploads
+          LOGOS_DIR=/tmp/logos
           VIDEOS_DIR=/tmp/videos
           SESSION_IDLE_TIMEOUT_MINUTES=60
           VIDEO_MIN_FREE_SPACE_GB=1
@@ -158,7 +158,7 @@ jobs:
 
       - name: Upload the Playwright report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-report
           path: e2e/playwright-report/
@@ -182,12 +182,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       # npm audit reads package-lock.json; no install needed. Fails on high or critical.
+      # Only production packages (--omit=dev): that is what ends up in the images. Dev tools such as
+      # vitest, vite and eslint are left out, so an advisory without a fix there (e.g. picomatch,
+      # GHSA-fc5q-39xc-vjpf) does not block the release. Check those locally with npm audit.
       - name: Backend – npm audit
         working-directory: backend
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
       - name: Frontend – npm audit
         working-directory: frontend
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
   # Only on main, after every other job passed: a new version vA.B.C and both images on GHCR.
   # Version: the last tag plus one. Patch (C) by default; "#minor" or "#major" in the title of a

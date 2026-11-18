@@ -24,10 +24,10 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 3306
-      UPLOADS_DIR: /data/uploads
+      LOGOS_DIR: /data/logos
       VIDEOS_DIR: /data/videos
     volumes:
-      - uploads:/data/uploads
+      - logos:/data/logos
       # Videos live on their own volume: never under /media (specs/002 research R2).
       - videos:/data/videos
     depends_on:
@@ -43,7 +43,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - uploads:/data/uploads:ro
+      - logos:/data/logos:ro
       - videos:/data/videos:ro
       - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
@@ -79,7 +79,7 @@ services:
       NODE_ENV: test
       DB_HOST: db-test
       DB_PORT: 3306
-      UPLOADS_DIR: /tmp/uploads
+      LOGOS_DIR: /tmp/logos
       VIDEOS_DIR: /tmp/videos
     depends_on:
       db-test:
@@ -95,5 +95,5 @@ services:
 
 volumes:
   db-data:
-  uploads:
+  logos:
   videos:

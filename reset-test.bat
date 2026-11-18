@@ -34,7 +34,7 @@ if "%VERSION%"=="" (
   exit /b 1
 )
 set "SNAP=%SNAPROOT%\snapshot-%VERSION%"
-for %%f in (database.sql uploads.tar videos.tar) do (
+for %%f in (database.sql logos.tar videos.tar) do (
   if not exist "%SNAP%\%%f" (
     echo snapshot-%VERSION% is onvolledig of bestaat niet: %SNAP%\%%f ontbreekt.
     exit /b 1
@@ -64,7 +64,7 @@ echo [2/5] Database terugzetten (oude database wordt eerst helemaal verwijderd).
 if errorlevel 1 goto :fail
 
 echo [3/5] Logo's terugzetten...
-docker run --rm -v %USABILITY_PROJECT%_uploads:/data -v "%SNAP%:/backup:ro" alpine:3 sh -c "find /data -mindepth 1 -delete && tar -xf /backup/uploads.tar -C /data"
+docker run --rm -v %USABILITY_PROJECT%_logos:/data -v "%SNAP%:/backup:ro" alpine:3 sh -c "find /data -mindepth 1 -delete && tar -xf /backup/logos.tar -C /data"
 if errorlevel 1 goto :fail
 
 echo [4/5] Video's en thumbnails terugzetten...

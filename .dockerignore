@@ -7,7 +7,7 @@
 .env
 .env.*
 !.env.example
-uploads
+logos
 nginx/certs
 docs
 specs

@@ -5,7 +5,7 @@
 #   docker compose -p usability -f docker-compose.yml -f docker-compose.usability.yml up -d
 #
 # Door de projectnaam krijgt de testomgeving eigen volumes (usability_db-data,
-# usability_uploads, usability_videos), een eigen netwerk en eigen containers. Dit bestand
+# usability_logos, usability_videos), een eigen netwerk en eigen containers. Dit bestand
 # regelt alleen wat de projectnaam niet oplost: de poorten.
 services:
   web:

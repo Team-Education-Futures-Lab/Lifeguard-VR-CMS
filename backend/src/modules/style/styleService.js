@@ -10,7 +10,7 @@ import * as repo from './styleRepository.js'
 const COLOUR_PATTERN = /^#[0-9A-F]{6}$/
 const COLOUR_FIELDS = ['primaryColour', 'secondaryColour']
 
-export const logosDir = () => path.join(config.UPLOADS_DIR, 'logos')
+export const logosDir = () => config.LOGOS_DIR
 
 async function removeLogoFile(fileName) {
   if (!fileName) return

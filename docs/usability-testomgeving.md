@@ -7,7 +7,7 @@ commando terug te zetten is. De ontwikkelomgeving blijft er helemaal buiten.
 
 - De testomgeving draait als apart Docker Compose-project met de naam `usability`. Daardoor
   krijgt ze eigen containers, een eigen netwerk en eigen opslag: `usability_db-data` (database),
-  `usability_uploads` (logo's) en `usability_videos` (video's en thumbnails). De
+  `usability_logos` (logo's) en `usability_videos` (video's en thumbnails). De
   ontwikkelomgeving gebruikt `contentmanagementsysteem_db-data` enz.; die worden nooit geraakt.
 - In `docker-compose.yml` staat geen vaste `container_name` en alle opslag is een *named
   volume* (geen map in het project). Daarom is de projectnaam genoeg voor de scheiding.
@@ -37,7 +37,7 @@ opdrachtprompt worden gestart.
 2. Schrijft de hele database weg naar een tekstbestand (`database.sql`): alle accounts,
    organisaties, video-gegevens, cursussen met vragen en antwoorden, huisstijl en het actielog.
    Inlogsessies worden bewust niet bewaard.
-3. Pakt alle geüploade logo's in één bestand in (`uploads.tar`).
+3. Pakt alle geüploade logo's in één bestand in (`logos.tar`).
 4. Pakt alle video's en thumbnails in één bestand in (`videos.tar`). Half afgemaakte uploads
    horen niet bij de begintoestand en worden overgeslagen.
 5. Start de app weer en onthoudt deze snapshot als de *actieve* snapshot.

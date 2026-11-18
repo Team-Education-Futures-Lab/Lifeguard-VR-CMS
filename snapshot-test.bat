@@ -9,11 +9,11 @@ pause
 exit /b
 :main
 rem Maakt een snapshot van de usability-testomgeving: database-dump + kopie van de logo's
-rem (volume uploads) en video's/thumbnails (volume videos).
+rem (volume logos) en video's/thumbnails (volume videos).
 rem
 rem Gebruik:  snapshot-test.bat        (dubbelklik: kiest zelf v1, v2, ...)
 rem           snapshot-test.bat v1     (zelf een versienaam kiezen)
-rem Resultaat: snapshots-usability\snapshot-v1\ met database.sql, uploads.tar en videos.tar.
+rem Resultaat: snapshots-usability\snapshot-v1\ met database.sql, logos.tar en videos.tar.
 rem De nieuwe snapshot wordt de actieve snapshot voor reset-test.bat.
 setlocal EnableExtensions
 cd /d "%~dp0"
@@ -58,8 +58,8 @@ rem --skip-dump-date: dezelfde toestand geeft byte voor byte dezelfde dump (hand
 %DC% exec -T db sh -c "MYSQL_PWD=$MARIADB_ROOT_PASSWORD mariadb-dump -uroot --single-transaction --routines --triggers --events --skip-dump-date --add-drop-database --ignore-table-data=$MARIADB_DATABASE.Session --databases $MARIADB_DATABASE" > "%SNAP%\database.sql"
 if errorlevel 1 goto :fail
 
-echo [3/4] Logo's kopieren (volume %USABILITY_PROJECT%_uploads)...
-docker run --rm -v %USABILITY_PROJECT%_uploads:/data:ro -v "%SNAP%:/backup" alpine:3 tar -cf /backup/uploads.tar -C /data .
+echo [3/4] Logo's kopieren (volume %USABILITY_PROJECT%_logos)...
+docker run --rm -v %USABILITY_PROJECT%_logos:/data:ro -v "%SNAP%:/backup" alpine:3 tar -cf /backup/logos.tar -C /data .
 if errorlevel 1 goto :fail
 
 echo [4/4] Video's en thumbnails kopieren (volume %USABILITY_PROJECT%_videos)...
@@ -75,7 +75,7 @@ for /f %%t in ('powershell -NoProfile -Command "[DateTimeOffset]::Now.ToUnixTime
 set /a DUUR=T1-T0
 echo.
 echo Snapshot %VERSION% gemaakt in %DUUR% seconden: %SNAP%
-dir /-c "%SNAP%" | findstr /i "database.sql uploads.tar videos.tar"
+dir /-c "%SNAP%" | findstr /i "database.sql logos.tar videos.tar"
 echo reset-test.bat zet voortaan snapshot-%VERSION% terug.
 exit /b 0
 

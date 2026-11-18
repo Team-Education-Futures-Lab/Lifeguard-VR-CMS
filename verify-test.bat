@@ -41,7 +41,7 @@ if errorlevel 1 (
 )
 del "%CUR%" 2>nul
 
-for %%v in (uploads videos) do call :files %%v
+for %%v in (logos videos) do call :files %%v
 echo.
 if "%RESULT%"=="0" (echo RESULTAAT: identiek aan snapshot-%VERSION%.) else (echo RESULTAAT: NIET identiek aan snapshot-%VERSION%.)
 exit /b %RESULT%

@@ -3,10 +3,9 @@ node_modules/
 *.log
 dist/
 coverage/
-# videos, logos, old uploads and database files
+# videos, logos and database files
 /videos/
 dbdata/
-uploads/
 /logos/
 # local TLS certificates (nginx/dev-cert.sh)
 nginx/certs/

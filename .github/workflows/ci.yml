@@ -182,12 +182,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       # npm audit reads package-lock.json; no install needed. Fails on high or critical.
+      # Only production packages (--omit=dev): that is what ends up in the images. Dev tools such as
+      # vitest, vite and eslint are left out, so an advisory without a fix there (e.g. picomatch,
+      # GHSA-fc5q-39xc-vjpf) does not block the release. Check those locally with npm audit.
       - name: Backend – npm audit
         working-directory: backend
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
       - name: Frontend – npm audit
         working-directory: frontend
-        run: npm audit --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
 
   # Only on main, after every other job passed: a new version vA.B.C and both images on GHCR.
   # Version: the last tag plus one. Patch (C) by default; "#minor" or "#major" in the title of a

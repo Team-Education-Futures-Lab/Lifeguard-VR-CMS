@@ -67,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       # Values for the test database only (profile "test", a throwaway MariaDB in tmpfs). These are
-      # not secrets: the database exists only during this job. DB_HOST, DB_PORT, UPLOADS_DIR and
+      # not secrets: the database exists only during this job. DB_HOST, DB_PORT, LOGOS_DIR and
       # VIDEOS_DIR are set by docker-compose.yml for api-test.
       - name: Create .env for the tests
         run: |
@@ -80,7 +80,7 @@ jobs:
           DB_ROOT_PASSWORD=ci-test-only-root-password
           TEST_DB_NAME=cms_test
           API_PORT=3000
-          UPLOADS_DIR=/tmp/uploads
+          LOGOS_DIR=/tmp/logos
           VIDEOS_DIR=/tmp/videos
           COOKIE_SECURE=false
           SESSION_IDLE_TIMEOUT_MINUTES=60
@@ -130,7 +130,7 @@ jobs:
           DB_ROOT_PASSWORD=ci-e2e-only-root-password
           TEST_DB_NAME=cms_test
           API_PORT=3000
-          UPLOADS_DIR=/tmp/uploads
+          LOGOS_DIR=/tmp/logos
           VIDEOS_DIR=/tmp/videos
           SESSION_IDLE_TIMEOUT_MINUTES=60
           VIDEO_MIN_FREE_SPACE_GB=1

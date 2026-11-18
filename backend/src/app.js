@@ -20,11 +20,11 @@ export function createApp() {
   const app = express()
   app.disable('x-powered-by')
 
-  // Development only: in production nginx serves /media from the uploads volume (constitution III).
+  // Development only: in production nginx serves /media/logos from the logos folder (constitution III).
   if (config.NODE_ENV !== 'production') {
     app.use(
-      '/media',
-      express.static(config.UPLOADS_DIR, {
+      '/media/logos',
+      express.static(config.LOGOS_DIR, {
         setHeaders: (res) => {
           res.set('X-Content-Type-Options', 'nosniff')
           res.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox")

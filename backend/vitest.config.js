@@ -5,7 +5,7 @@ import { defineConfig } from 'vitest/config'
 // Set before globalSetup and the test workers start, so both see the same environment.
 process.env.NODE_ENV = 'test'
 process.env.COOKIE_SECURE = 'false'
-process.env.UPLOADS_DIR = path.join(os.tmpdir(), 'cms-test-uploads')
+process.env.LOGOS_DIR = path.join(os.tmpdir(), 'cms-test-logos')
 process.env.VIDEOS_DIR = path.join(os.tmpdir(), 'cms-test-videos')
 // Outside Docker the tests use the db-test container that is published on localhost:3307.
 if (!process.env.DB_HOST) {

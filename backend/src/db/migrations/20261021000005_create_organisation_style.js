@@ -7,7 +7,7 @@ export async function up(knex) {
     // '#RRGGBB' in upper case; NULL = default value.
     table.specificType('primaryColour', 'char(7)').nullable()
     table.specificType('secondaryColour', 'char(7)').nullable()
-    // File name in <UPLOADS_DIR>/logos/ (UUID + .png/.jpg/.svg); NULL = default logo.
+    // File name in LOGOS_DIR (UUID + .png/.jpg/.svg); NULL = default logo.
     table.string('logoImage', 255).nullable()
   })
 }

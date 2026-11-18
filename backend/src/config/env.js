@@ -16,7 +16,7 @@ if (existsSync(envFile)) {
 const env = process.env
 const NODE_ENV = env.NODE_ENV || 'development'
 
-const required = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'API_PORT', 'UPLOADS_DIR', 'VIDEOS_DIR']
+const required = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'API_PORT', 'LOGOS_DIR', 'VIDEOS_DIR']
 if (NODE_ENV === 'test') required.push('TEST_DB_NAME')
 
 const missing = required.filter((key) => !env[key])
@@ -61,10 +61,10 @@ export const config = Object.freeze({
   DB_PASSWORD: env.DB_PASSWORD,
   TEST_DB_NAME: env.TEST_DB_NAME,
   API_PORT: positiveInteger('API_PORT'),
-  UPLOADS_DIR: path.resolve(repoRoot, env.UPLOADS_DIR),
+  LOGOS_DIR: path.resolve(repoRoot, env.LOGOS_DIR),
   COOKIE_SECURE: env.COOKIE_SECURE !== 'false',
   SESSION_IDLE_TIMEOUT_MINUTES: positiveInteger('SESSION_IDLE_TIMEOUT_MINUTES', 60),
-  // Video library (specs/002): files live outside UPLOADS_DIR, which is public under /media.
+  // Video library (specs/002): files live outside LOGOS_DIR, which is public under /media/logos.
   VIDEOS_DIR: path.resolve(repoRoot, env.VIDEOS_DIR),
   VIDEO_MAX_SIZE_GB: videoMaxSizeGb,
   VIDEO_MAX_SIZE_BYTES: videoMaxSizeGb * GIB,

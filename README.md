@@ -7,8 +7,8 @@ loggen in namens hun organisatie. Zie `specs/` voor de specificaties per feature
 - `frontend/`: Vue 3-app (Vite). Inloggen, organisaties, huisstijl en de videobibliotheek
   werken via de API; cursussen zijn nog een prototype dat alleen in de browser bewaart (de
   video-kiezer in de cursus-editor gebruikt daarom nog prototypevideo's)
-- `nginx/`: configuratie van de webserver (frontend, `/api` naar de API, `/media` uit het
-  uploads-volume, video-thumbnails via `X-Accel-Redirect` uit het videos-volume)
+- `nginx/`: configuratie van de webserver (frontend, `/api` naar de API, `/media/logos` uit het
+  logos-volume, video-thumbnails via `X-Accel-Redirect` uit het videos-volume)
 - `docker-compose.yml`: alle onderdelen als containers
 
 ## Vereisten
@@ -90,7 +90,7 @@ hervatbaar geüpload met het tus-protocol en op de server nog een keer gecontrol
 
 | Variabele | Standaard | Betekenis |
 | --- | --- | --- |
-| `VIDEOS_DIR` | – (verplicht) | map voor video's en thumbnails; nooit binnen `UPLOADS_DIR` |
+| `VIDEOS_DIR` | – (verplicht) | map voor video's en thumbnails; nooit binnen `LOGOS_DIR` |
 | `VIDEO_MAX_SIZE_GB` | 10 | maximale grootte per video |
 | `VIDEO_MIN_FREE_SPACE_GB` | 20 | vrije schijfruimte die na een upload moet overblijven |
 | `VIDEO_MAX_PARALLEL_UPLOADS` | 1 | uploads tegelijk per browsertabblad (alleen de browser dwingt dit af) |
@@ -171,7 +171,7 @@ Eenmalig:
    GRANT ALL PRIVILEGES ON cms.* TO 'cms'@'172.%';
    ```
 
-2. Mappen aanmaken voor logo's en video's (bijvoorbeeld `/srv/lifeguard/uploads` en
+2. Mappen aanmaken voor logo's en video's (bijvoorbeeld `/srv/lifeguard/logos` en
    `/srv/lifeguard/videos`) en `.env` invullen.
 3. Inloggen bij GHCR met een token met `read:packages`:
    `docker login ghcr.io -u <gebruikersnaam>`.
@@ -196,6 +196,6 @@ Zonder webserver ervoor (eigen certificaat in de `web`-container):
 - Gebruik een echt TLS-certificaat (bijvoorbeeld Let's Encrypt) in plaats van
   `nginx/dev-cert.sh`; zet `server.crt` en `server.key` in `nginx/certs/`.
 - Houd `COOKIE_SECURE=true`.
-- Database, uploads en video's staan in de Docker-volumes `db-data`, `uploads` en `videos`;
+- Database, logo's en video's staan in de Docker-volumes `db-data`, `logos` en `videos`;
   maak daar back-ups van. Houd de vrije schijfruimte in de gaten: uploads worden geweigerd als
   er minder dan `VIDEO_MIN_FREE_SPACE_GB` zou overblijven.

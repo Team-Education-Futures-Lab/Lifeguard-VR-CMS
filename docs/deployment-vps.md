@@ -106,12 +106,12 @@ Verwacht: Docker met Compose v2, en MariaDB 10.11 of nieuwer (het CMS is gebouwd
 ### 2. Mappen aanmaken
 
 ```bash
-sudo mkdir -p /opt/lifeguard-cms /srv/lifeguard/uploads /srv/lifeguard/videos
+sudo mkdir -p /opt/lifeguard-cms /srv/lifeguard/logos /srv/lifeguard/videos
 sudo chown "$USER" /opt/lifeguard-cms
 ```
 
 - `/opt/lifeguard-cms`: hier komen `docker-compose.prod.yml` en `.env`.
-- `/srv/lifeguard/uploads` en `/srv/lifeguard/videos`: logo's en video's. Kiest Geert-jan een
+- `/srv/lifeguard/logos` en `/srv/lifeguard/videos`: logo's en video's. Kiest Geert-jan een
   andere plek (bijvoorbeeld een aparte schijf voor video's), pas dan de paden hier en in stap 4 aan.
 
 ### 3. Het compose-bestand op de VPS zetten
@@ -142,7 +142,7 @@ cat > .env <<ENV
 CMS_IMAGE_PREFIX=ghcr.io/team-education-futures-lab
 CMS_VERSION=1.0.0
 CMS_HTTP_PORT=8080
-CMS_UPLOADS_PATH=/srv/lifeguard/uploads
+CMS_LOGOS_PATH=/srv/lifeguard/logos
 CMS_VIDEOS_PATH=/srv/lifeguard/videos
 DB_HOST=host.docker.internal
 DB_PORT=3306

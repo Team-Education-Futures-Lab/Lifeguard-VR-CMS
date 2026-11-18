@@ -12,12 +12,12 @@ import { JPG_BYTES } from './images.js'
 
 export const app = createApp()
 
-/** Empties all tables (children first), the uploads directory and the videos directory. */
+/** Empties all tables (children first), the logos directory and the videos directory. */
 export async function resetDatabase() {
   for (const table of ['Answer', 'CourseStep', 'CourseVersion', 'OrganisationCourse', 'Course', 'VideoAccess', 'Video', 'AdminActionLog', 'OrganisationStyle', 'Session', 'Organisation', 'Administrator']) {
     await db(table).del()
   }
-  await rm(config.UPLOADS_DIR, { recursive: true, force: true })
+  await rm(config.LOGOS_DIR, { recursive: true, force: true })
   await rm(config.VIDEOS_DIR, { recursive: true, force: true })
 }
 

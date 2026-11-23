@@ -41,7 +41,7 @@ const snapshot = async () => ({
   course: await db('Course').where({ id: course.courseId }).first(),
 })
 
-const payload = { name: 'Overgenomen', description: 'Door B', steps: [] }
+const payload = { draftVersionNumber: 1, name: 'Overgenomen', description: 'Door B', steps: [] }
 
 describe('another organisation', () => {
   it('gets 404 on every course route of A and changes nothing', async () => {
@@ -82,5 +82,33 @@ describe('invalid ids and sessions', () => {
     const admin = await createAdmin()
     const { agent } = await agentWithSession({ administratorId: admin.id })
     expect((await agent.get(`/api/organisation/courses/${course.courseId}`)).status).toBe(403)
+  })
+})
+
+// Only the owner publishes or unpublishes (specs/006 FR-002, SC-005).
+describe('publishing and unpublishing', () => {
+  const versionsOf = (courseId) => db('CourseVersion').where({ courseId }).orderBy('id')
+
+  it('gives another organisation 404 and changes nothing', async () => {
+    const base = `/api/organisation/courses/${course.courseId}`
+    expect((await as.a.post(`${base}/publish`)).status).toBe(200)
+    const before = await versionsOf(course.courseId)
+    for (const action of ['publish', 'unpublish']) {
+      const response = await as.b.post(`${base}/${action}`)
+      expect(response.status).toBe(404)
+      expect(response.body.error.code).toBe('not_found')
+    }
+    expect(await versionsOf(course.courseId)).toEqual(before)
+  })
+
+  it('gives 404 for an unknown or a deleted course', async () => {
+    const deleted = await createCourseRow({ organisationId: a.id, deletedAt: new Date() })
+    await createStepRow({ versionId: deleted.versionId, videoId, isStart: true })
+    for (const action of ['publish', 'unpublish']) {
+      expect((await as.a.post(`/api/organisation/courses/99999999/${action}`)).status).toBe(404)
+      expect((await as.a.post(`/api/organisation/courses/abc/${action}`)).status).toBe(404)
+      expect((await as.a.post(`/api/organisation/courses/${deleted.courseId}/${action}`)).status).toBe(404)
+    }
+    expect(await versionsOf(deleted.courseId)).toHaveLength(1)
   })
 })

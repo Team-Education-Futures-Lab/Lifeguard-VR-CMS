@@ -3,7 +3,17 @@
 import { ref, computed, inject, provide, reactive, watch } from 'vue'
 import * as C from '../lib/course'
 import { checkCourse } from '../lib/completeness'
-import { applyKeyChanges, keyChanges, savedKeys, savedVideos, toEditor, toPayload } from '../lib/courseMapping'
+import {
+  answerKeyOf,
+  applyKeyChanges,
+  keyChanges,
+  publicationOf,
+  savedKeys,
+  savedVideos,
+  stepKeyOf,
+  toEditor,
+  toPayload,
+} from '../lib/courseMapping'
 import { snapCourse } from '../lib/history'
 import { getEditorVariant, setEditorVariant } from '../lib/editorPreference'
 import { confirmDialog, toast } from '../lib/ui'
@@ -13,9 +23,10 @@ const KEY = Symbol('editor')
 /**
  * `course` is a ref with the editor model, `stepVideos` a reactive map videoId → video details,
  * `doc` the draft document the course was loaded from, `save(payload)` stores a draft and returns
- * the saved document.
+ * the saved document. `publish()` and `unpublish()` call the API and return the draft document
+ * (specs/006 contracts/api.md).
  */
-export function provideEditor({ course, stepVideos: initialVideos, doc, history, save }) {
+export function provideEditor({ course, stepVideos: initialVideos, doc, history, save, publish: publishRequest, unpublish: unpublishRequest }) {
   const stepVideos = reactive(initialVideos)
   const selectedId = ref(null)
   const selectedEdge = ref(null) // '<sourceId>__<handle>' of a selected connection
@@ -40,6 +51,16 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
   const dirty = computed(() => snapCourse(course.value) !== savedSnapshot.value)
   const saving = ref(false)
   const fieldErrors = ref({})
+  // The draft this editor works on, and the publication status of the course (specs/006 FR-018,
+  // FR-019, research R14). A save from a draft that was published meanwhile is refused; the
+  // message of the server is kept to show the "Cursus is intussen gepubliceerd" dialog.
+  const draftVersionNumber = doc.draftVersionNumber ?? null
+  const publication = reactive(publicationOf(doc))
+  const draftReplaced = ref(null)
+  // Publishing (specs/006 US1, US2, research R7): a request is running; the messages that keep the
+  // course from being published, shown in the "Nog niet klaar om te publiceren" dialog.
+  const publishing = ref(false)
+  const publishIssues = ref(null)
 
   const ordered = computed(() => C.orderedNodes(course.value))
 
@@ -182,7 +203,7 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
     saving.value = true
     const sent = JSON.parse(snapCourse(course.value))
     try {
-      const result = await save(toPayload(course.value, saved))
+      const result = await save(toPayload(course.value, saved, draftVersionNumber))
       // Keep the editor's own keys stable: map the keys that were sent to the saved ones.
       const changes = keyChanges(sent, result, saved)
       history.replaceKeys(changes)
@@ -206,8 +227,13 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
       }
       // What was sent, with the new keys, is what is stored now; later edits stay unsaved.
       savedSnapshot.value = JSON.stringify(applyKeyChanges(sent, changes))
+      applyPublication(result)
       return true
     } catch (error) {
+      if (error.code === 'draft_replaced') {
+        draftReplaced.value = error.message
+        return false
+      }
       if (error.code === 'validation_failed') fieldErrors.value = error.fields ?? {}
       if (error.status !== 401) toast('De cursus is niet opgeslagen. Probeer het opnieuw.')
       return false
@@ -216,12 +242,83 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
     }
   }
 
+  /** Marks these issues red, as a click on "Opslaan als concept" does (specs/005 FR-022a). */
+  function flagIssues(list) {
+    flaggedIssueIds.clear()
+    for (const issue of list) flaggedIssueIds.add(issue.id)
+  }
+
+  /** A message of the server in the shape of the editor check (ids are editor keys). */
+  function fromServerIssue(issue) {
+    const nodeId = issue.stepId ? stepKeyOf(issue.stepId) : null
+    const answerId = issue.answerId ? answerKeyOf(issue.answerId) : null
+    return { id: [issue.code, nodeId, answerId].filter(Boolean).join(':'), code: issue.code, msg: issue.message, nodeId, answerId }
+  }
+
+  /**
+   * "Publiceren" after the confirmation (specs/006 FR-001 – FR-007, research R7). Publishing works on
+   * the saved draft only (verbeterronde V4): with unsaved changes nothing happens (the menu says
+   * "Sla eerst je wijzigingen op"). With messages of the editor check nothing is sent: the dialog
+   * shows them. The server checks again; its messages go to the same dialog. Returns the new draft
+   * document, or null when nothing was published.
+   */
+  async function publish() {
+    history.flush()
+    if (dirty.value) return null
+    const own = issues.value.issues
+    if (own.length) {
+      flagIssues(own)
+      publishIssues.value = own
+      return null
+    }
+    publishing.value = true
+    try {
+      return await publishRequest()
+    } catch (error) {
+      if (error.code === 'course_incomplete') {
+        const list = (error.issues ?? []).map(fromServerIssue)
+        flagIssues(list)
+        publishIssues.value = list
+      } else if (error.code === 'draft_replaced') draftReplaced.value = error.message
+      else if (error.status !== 401) toast('Publiceren is niet gelukt. Probeer het opnieuw.')
+      return null
+    } finally {
+      publishing.value = false
+    }
+  }
+
+  /**
+   * Takes over the publication status and the video details of a draft document that has the same
+   * steps (after unpublishing, or when the same version went live again). Whether a video is kept
+   * by the live version changes with it, so the check reports the video again when the live
+   * version is gone (specs/006 FR-012, FR-013).
+   */
+  function applyPublication(result) {
+    Object.assign(publication, publicationOf(result))
+    Object.assign(stepVideos, toEditor(result).stepVideos)
+  }
+
+  /** "Onpubliceren" after the confirmation (specs/006 FR-015, FR-016). Returns true when done. */
+  async function unpublish() {
+    publishing.value = true
+    try {
+      applyPublication(await unpublishRequest())
+      return true
+    } catch (error) {
+      if (error.status !== 401) toast('Onpubliceren is niet gelukt. Probeer het opnieuw.')
+      return false
+    } finally {
+      publishing.value = false
+    }
+  }
+
   const ctx = reactive({
     course, stepVideos, history, ordered, variant, issues,
     selectedId, selectedEdge, hoverEdge, focusEdge, focusEnds, modalId, focusRequest, showSettings,
-    dirty, saving, fieldErrors, lostVideoNotices,
+    dirty, saving, fieldErrors, lostVideoNotices, draftVersionNumber, publication, draftReplaced, publishing, publishIssues,
     select, selectEdge, clearSelection, open, isFlagged,
     addNode, addLinked, connect, disconnect, tidyCanvas, removeNode, setStart, clearVideo, chooseVideo, confirmLosingVideo, saveDraft,
+    publish, unpublish, applyPublication,
   })
   provide(KEY, ctx)
   return ctx

@@ -46,9 +46,12 @@ export async function openStep(page, block) {
  * video-onderdeel en bij elk antwoord). Geeft het opgeslagen concept terug (met `nextStepId`).
  */
 export async function saveCourse(api, course, steps) {
+  // Spec 006 (research R14): elke opslag noemt het nummer van het concept; dat staat in het actuele document.
+  const current = await api.get(`/api/organisation/courses/${course.id}`);
+  const { draftVersionNumber } = await current.json();
   const res = await api.put(`/api/organisation/courses/${course.id}`, {
     // Volgens het contract van spec 004 zit de beschrijving niet altijd in het document; dan die van createCourse.
-    data: { name: course.name, description: course.description ?? 'Beschrijving van de testcursus', steps },
+    data: { draftVersionNumber, name: course.name, description: course.description ?? 'Beschrijving van de testcursus', steps },
   });
   if (res.status() !== 200) {
     throw new Error(`Cursus opslaan mislukt: ${res.status()} ${await res.text()}`);

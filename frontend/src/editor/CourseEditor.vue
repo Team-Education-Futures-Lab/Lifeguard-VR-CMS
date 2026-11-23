@@ -1,9 +1,10 @@
 <script setup>
 // The course editor on a local copy of the draft, with "Opslaan als concept", undo/redo and a
-// question before leaving with unsaved changes (specs/004 FR-009, FR-009a, FR-020a, research R10).
+// question before leaving with unsaved changes (specs/004 FR-009, FR-009a, FR-020a, research R10),
+// and "Publiceren" / "Onpubliceren" with the publication status (specs/006 contracts/ui.md).
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import { saveCourse } from '../api/courses'
+import { publishCourse, saveCourse, unpublishCourse } from '../api/courses'
 import { toEditor } from '../lib/courseMapping'
 import { useCourseHistory } from '../lib/history'
 import { confirmDialog } from '../lib/ui'
@@ -14,8 +15,15 @@ import DescriptionField from '../components/DescriptionField.vue'
 import CanvasEditor from './CanvasEditor.vue'
 import OverviewList from './OverviewList.vue'
 import CompletenessStatus from './CompletenessStatus.vue'
+import PublicationStatus from '../components/PublicationStatus.vue'
+import PublishDialog from './PublishDialog.vue'
+import PublishMenu from './PublishMenu.vue'
+import UnpublishDialog from './UnpublishDialog.vue'
 
-const props = defineProps({ doc: Object })
+// `notice`: a short message to show right away, after a publication that gave a new draft.
+const props = defineProps({ doc: Object, notice: { type: String, default: '' } })
+// A publication made a new draft (new ids): the view loads the editor again with it (research R14).
+const emit = defineEmits(['published'])
 const initial = toEditor(props.doc)
 const course = ref(initial.course)
 const history = useCourseHistory(() => course.value)
@@ -25,6 +33,8 @@ const ed = provideEditor({
   doc: props.doc,
   history,
   save: (payload) => saveCourse(props.doc.id, payload),
+  publish: () => publishCourse(props.doc.id),
+  unpublish: () => unpublishCourse(props.doc.id),
 })
 
 const settingsMessage = computed(() => {
@@ -38,12 +48,58 @@ const settingsMessage = computed(() => {
 const FLASH_MS = 2500
 const savedFlash = ref('')
 let flashTimer = null
+function flash(message) {
+  savedFlash.value = message
+  clearTimeout(flashTimer)
+  flashTimer = setTimeout(() => (savedFlash.value = ''), FLASH_MS)
+}
 async function onSave() {
   if (!(await ed.saveDraft())) return
   const open = ed.issues.issues.length
-  savedFlash.value = open === 0 ? 'Concept opgeslagen' : `Opgeslagen, nog ${open} ${open === 1 ? 'punt' : 'punten'} open`
-  clearTimeout(flashTimer)
-  flashTimer = setTimeout(() => (savedFlash.value = ''), FLASH_MS)
+  flash(open === 0 ? 'Concept opgeslagen' : `Opgeslagen, nog ${open} ${open === 1 ? 'punt' : 'punten'} open`)
+}
+if (props.notice) flash(props.notice)
+
+// Publishing and unpublishing (specs/006 US1–US4, verbeterronde V2–V5), from the menu next to
+// the status. The confirmation comes first; with messages of the completeness check the
+// "Nog niet klaar" dialog opens straight away instead (FR-007).
+const dialog = ref(null) // null | 'publish' | 'unpublish'
+const live = computed(() => ed.publication.publication)
+function onPublish() {
+  if (ed.issues.issues.length) ed.publish()
+  else dialog.value = 'publish'
+}
+async function confirmPublish() {
+  dialog.value = null
+  const wasLive = Boolean(live.value)
+  const lastNumber = ed.publication.lastPublishedVersionNumber
+  const result = await ed.publish()
+  if (!result) return
+  const number = result.publication?.versionNumber
+  // FR-017: the last published version went live again, with its own number.
+  const message = !wasLive && number === lastNumber ? `Versie ${number} staat weer op de VR-brillen` : `Gepubliceerd als versie ${number}`
+  if (result.draftVersionNumber !== ed.draftVersionNumber) {
+    emit('published', result, message)
+    return
+  }
+  ed.applyPublication(result)
+  flash(message)
+}
+async function confirmUnpublish() {
+  dialog.value = null
+  if (await ed.unpublish()) flash('Cursus is niet meer gepubliceerd')
+}
+function openStep(nodeId) {
+  ed.publishIssues = null
+  ed.open(nodeId)
+}
+
+// A colleague published meanwhile (research R14): only a reload helps. The page may be left
+// without the question about unsaved changes, those changes cannot be saved anyway.
+let reloading = false
+function reload() {
+  reloading = true
+  window.location.reload()
 }
 
 const VARIANTS = [
@@ -62,7 +118,7 @@ function onKey(e) {
 }
 // Closing or reloading the page: the browser asks its own question.
 function onBeforeUnload(e) {
-  if (!ed.dirty) return
+  if (!ed.dirty || reloading) return
   e.preventDefault()
   e.returnValue = ''
 }
@@ -94,11 +150,17 @@ onBeforeRouteLeave((to) => {
   <div class="editor">
     <header class="bar">
       <RouterLink to="/courses" class="icon-btn" title="Terug naar cursussen"><Icon name="left" /></RouterLink>
-      <span class="status draft">Concept</span>
       <button class="title" title="Naam en beschrijving" @click="ed.showSettings = true">
         <span class="name">{{ course.name || 'Naamloze cursus' }}</span>
         <Icon name="down" :size="14" />
       </button>
+      <div class="publication-bar">
+        <PublicationStatus
+          :status="ed.publication.status"
+          :publication="ed.publication.publication"
+        />
+        <PublishMenu @publish="onPublish" @unpublish="dialog = 'unpublish'" />
+      </div>
 
       <div class="seg" role="radiogroup" aria-label="Weergave">
         <button
@@ -131,6 +193,36 @@ onBeforeRouteLeave((to) => {
       <CanvasEditor v-if="ed.variant !== 'list'" :key="ed.variant" :mode="ed.variant" />
       <OverviewList v-else />
     </div>
+
+    <PublishDialog
+      v-if="dialog === 'publish'"
+      mode="confirm"
+      :live-version-number="live ? live.versionNumber : null"
+      @confirm="confirmPublish"
+      @cancel="dialog = null"
+    />
+    <PublishDialog
+      v-if="ed.publishIssues"
+      mode="issues"
+      :issues="ed.publishIssues"
+      @cancel="ed.publishIssues = null"
+      @open-step="openStep"
+    />
+    <UnpublishDialog
+      v-if="dialog === 'unpublish'"
+      :has-unavailable-video="Boolean(live?.hasUnavailableVideo)"
+      @confirm="confirmUnpublish"
+      @cancel="dialog = null"
+    />
+    <Teleport to="body">
+      <div v-if="ed.draftReplaced" class="backdrop replaced-backdrop">
+        <div class="modal" role="alertdialog" aria-modal="true" aria-label="Cursus is intussen gepubliceerd" data-test="draft-replaced" style="width: min(440px, 100%)">
+          <div class="modal-head"><h2>Cursus is intussen gepubliceerd</h2></div>
+          <div class="modal-body"><p>{{ ed.draftReplaced }}</p></div>
+          <div class="modal-foot"><button class="btn btn-primary" data-test="reload" @click="reload">Pagina opnieuw laden</button></div>
+        </div>
+      </div>
+    </Teleport>
 
     <!-- Name and description change the local copy: they count as changes and fall under undo (US5). -->
     <Modal v-if="ed.showSettings" title="Cursus" @close="ed.showSettings = false">
@@ -203,6 +295,8 @@ onBeforeRouteLeave((to) => {
   .saved-flash { animation: none; }
 }
 .settings { display: grid; gap: 16px; }
+.publication-bar { display: flex; align-items: center; gap: 10px; }
+.replaced-backdrop { z-index: 70; }
 .stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .stage > :deep(*) { flex: 1; min-height: 0; }
 @media (max-width: 900px) {

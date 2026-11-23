@@ -142,3 +142,41 @@ describe('deleting a course (US5)', () => {
     wrapper.unmount()
   })
 })
+
+// The publication status per course (specs/006 US5, FR-018, FR-019, FR-021).
+describe('CoursesView: publication status', () => {
+  const publication = (versionNumber) => ({ versionNumber, publishedAt: '2026-11-23T13:05:00.000Z', hasUnavailableVideo: false })
+  const rowsOf = (wrapper) => wrapper.findAll('.row')
+
+  it('shows draft, published and published with changes as text, with version and date', async () => {
+    mockApi({
+      courses: [
+        { ...COURSE, id: 1, name: 'Nooit', status: 'draft', publication: null, lastPublishedVersionNumber: null },
+        { ...COURSE, id: 2, name: 'Eerder', status: 'draft', publication: null, lastPublishedVersionNumber: 2 },
+        { ...COURSE, id: 3, name: 'Live', status: 'published', publication: publication(2), lastPublishedVersionNumber: 2 },
+        { ...COURSE, id: 4, name: 'Gewijzigd', status: 'published_changed', publication: publication(1), lastPublishedVersionNumber: 1 },
+      ],
+    })
+    const { wrapper } = await mountView()
+    const statuses = rowsOf(wrapper).map((row) => row.get('[data-test="publication-status"]'))
+    expect(statuses.map((s) => s.attributes('data-status'))).toEqual(['draft', 'draft', 'published', 'published_changed'])
+    expect(statuses[0].text()).toBe('Concept')
+    expect(statuses[1].text()).toBe('Concept')
+    expect(statuses[2].text()).toContain('Gepubliceerd')
+    expect(statuses[2].text()).toMatch(/Versie 2 · \d+ november 2026 om \d\d:05/)
+    expect(statuses[3].text()).toContain('Gepubliceerd · wijzigingen nog niet gepubliceerd')
+    expect(statuses[3].text()).toContain('Op de Quest: versie 1')
+    wrapper.unmount()
+  })
+
+  it('says that a published course also goes off the VR headsets when it is deleted', async () => {
+    mockApi({ courses: [{ ...COURSE, status: 'published', publication: publication(1), lastPublishedVersionNumber: 1 }] })
+    const { wrapper } = await mountView()
+    await wrapper.find('button[title="Verwijderen"]').trigger('click')
+    expect(ui.confirm.body).toBe(
+      '“Redding in het diepe bad” wordt verwijderd. Deze cursus is gepubliceerd. Na verwijderen is hij niet meer te downloaden op de VR-brillen.',
+    )
+    ui.confirm.resolve(false)
+    wrapper.unmount()
+  })
+})

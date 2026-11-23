@@ -29,16 +29,32 @@ export function ownCoursesQuery(organisationId, trx = db) {
 export function findOwnCourse(id, organisationId, trx = db, { forUpdate = false } = {}) {
   const query = ownCoursesQuery(organisationId, trx)
     .where('c.id', id)
-    .select('c.id', 'c.updatedAt', 'cv.id as versionId', 'cv.name', 'cv.description')
+    .select('c.id', 'c.updatedAt', 'cv.id as versionId', 'cv.versionNumber', 'cv.name', 'cv.description')
     .first()
   return forUpdate ? query.forUpdate() : query
+}
+
+/**
+ * Whether the course exists, belongs to the organisation and is not deleted, regardless of its
+ * draft. Used when the locked draft was published meanwhile (specs/006 research R14).
+ */
+export async function ownCourseExists(id, organisationId, trx = db) {
+  requireId(organisationId)
+  const row = await trx('Course as c')
+    .join('OrganisationCourse as oc', function joinOwner() {
+      this.on('oc.courseId', '=', 'c.id').andOnVal('oc.organisationId', '=', organisationId).andOnVal('oc.isOwner', '=', true)
+    })
+    .where('c.id', id)
+    .whereNull('c.deletedAt')
+    .first('c.id')
+  return Boolean(row)
 }
 
 /** Own courses for the list: newest change first, with the number of steps of each kind (research R6). */
 export function listOwnCourses(organisationId) {
   return ownCoursesQuery(organisationId)
     .leftJoin('CourseStep as s', 's.courseVersionId', 'cv.id')
-    .groupBy('c.id', 'c.updatedAt', 'cv.name')
+    .groupBy('c.id', 'c.updatedAt', 'cv.id', 'cv.name', 'cv.description')
     .orderBy([
       { column: 'c.updatedAt', order: 'desc' },
       { column: 'c.id', order: 'desc' },
@@ -46,7 +62,9 @@ export function listOwnCourses(organisationId) {
     .select(
       'c.id',
       'c.updatedAt',
+      'cv.id as versionId',
       'cv.name',
+      'cv.description',
       db.raw("COUNT(CASE WHEN s.stepType = 'video' THEN 1 END) AS videoStepCount"),
       db.raw("COUNT(CASE WHEN s.stepType = 'question' THEN 1 END) AS questionStepCount"),
     )
@@ -82,6 +100,133 @@ export async function insertCourse(trx, organisationId, { name, description }) {
     { courseStepId: questionId, answerText: 'Ik wacht af', isCorrect: false, sortOrder: 1, nextCourseStepId: right },
   ])
   return courseId
+}
+
+/**
+ * Per course, its published version with the highest versionNumber (specs/006 data-model.md),
+ * whether or not it is still live. Map courseId → { id, courseId, versionNumber, name,
+ * description, publishedAt, unpublishedAt }.
+ */
+export async function latestPublishedVersions(courseIds, trx = db) {
+  if (courseIds.length === 0) return new Map()
+  const rows = await trx('CourseVersion as cv')
+    .whereIn('cv.courseId', courseIds)
+    .whereNotNull('cv.publishedAt')
+    .whereRaw(
+      'cv.versionNumber = (SELECT MAX(x.versionNumber) FROM CourseVersion x WHERE x.courseId = cv.courseId AND x.publishedAt IS NOT NULL)',
+    )
+    .select('cv.id', 'cv.courseId', 'cv.versionNumber', 'cv.name', 'cv.description', 'cv.publishedAt', 'cv.unpublishedAt')
+  return new Map(rows.map((row) => [row.courseId, row]))
+}
+
+/**
+ * The only definition of "live", the version the Quests of the organisation can download
+ * (specs/006 research R1): the published version with the highest versionNumber, unless it was
+ * unpublished, of a course that is not deleted. The Quest API of a later feature uses this too.
+ * Map courseId → version row (as latestPublishedVersions).
+ */
+export async function liveVersions(courseIds, trx = db) {
+  if (courseIds.length === 0) return new Map()
+  const latest = await latestPublishedVersions(courseIds, trx)
+  if (latest.size === 0) return new Map()
+  const active = new Set(
+    (await trx('Course').whereIn('id', [...latest.keys()]).whereNull('deletedAt').select('id')).map((row) => row.id),
+  )
+  const live = new Map()
+  for (const [courseId, version] of latest) {
+    if (version.unpublishedAt === null && active.has(courseId)) live.set(courseId, version)
+  }
+  return live
+}
+
+/** Steps and answers of several versions in two queries: Map versionId → { steps, answers }. */
+export async function versionContents(versionIds, trx = db) {
+  const contents = new Map(versionIds.map((id) => [id, { steps: [], answers: [] }]))
+  if (versionIds.length === 0) return contents
+  const steps = await trx('CourseStep')
+    .whereIn('courseVersionId', versionIds)
+    .orderBy('id')
+    .select('id', 'courseVersionId', 'stepType', 'isStart', 'videoId', 'questionText', 'feedback', 'nextCourseStepId')
+  const versionOfStep = new Map(steps.map((step) => [step.id, step.courseVersionId]))
+  for (const step of steps) contents.get(step.courseVersionId).steps.push(step)
+  if (steps.length > 0) {
+    const answers = await trx('Answer')
+      .whereIn('courseStepId', steps.map((step) => step.id))
+      .select('id', 'courseStepId', 'answerText', 'isCorrect', 'sortOrder', 'nextCourseStepId')
+    for (const answer of answers) contents.get(versionOfStep.get(answer.courseStepId)).answers.push(answer)
+  }
+  return contents
+}
+
+/** The ids of the videos used in a version. */
+export async function versionVideoIds(versionId, trx = db) {
+  const rows = await trx('CourseStep').where({ courseVersionId: versionId }).whereNotNull('videoId').distinct('videoId')
+  return new Set(rows.map((row) => row.videoId))
+}
+
+/** Puts the draft in the past: it becomes a published version (specs/006 research R3). */
+export function freezeDraft(trx, versionId) {
+  return trx('CourseVersion').where({ id: versionId }).whereNull('publishedAt').update({ publishedAt: db.raw('UTC_TIMESTAMP()') })
+}
+
+/** Sets or clears unpublishedAt of a published version (specs/006 FR-016, FR-017). */
+export function setUnpublishedAt(trx, versionId, unpublished) {
+  return trx('CourseVersion')
+    .where({ id: versionId })
+    .whereNotNull('publishedAt')
+    .update({ unpublishedAt: unpublished ? db.raw('UTC_TIMESTAMP()') : null })
+}
+
+/**
+ * A new draft as a copy of version `fromVersionId` (specs/006 research R3): the version row, the
+ * steps in id order, their answers, and the connections through a map old id → new id, so they
+ * point inside the new draft. Videos are copied as a reference. Returns the new version id.
+ */
+export async function copyVersionAsDraft(trx, fromVersionId, courseId, versionNumber) {
+  const from = await trx('CourseVersion').where({ id: fromVersionId }).first('name', 'description')
+  const [versionId] = await trx('CourseVersion').insert({
+    courseId,
+    versionNumber,
+    name: from.name,
+    description: from.description,
+    publishedAt: null,
+    unpublishedAt: null,
+  })
+  const steps = await trx('CourseStep').where({ courseVersionId: fromVersionId }).orderBy('id')
+  const newId = new Map()
+  for (const step of steps) {
+    const [id] = await trx('CourseStep').insert({
+      courseVersionId: versionId,
+      isStart: step.isStart,
+      stepType: step.stepType,
+      description: step.description,
+      feedback: step.feedback,
+      videoId: step.videoId,
+      questionText: step.questionText,
+      nextCourseStepId: null,
+      positionX: step.positionX,
+      positionY: step.positionY,
+    })
+    newId.set(step.id, id)
+  }
+  for (const step of steps) {
+    if (step.nextCourseStepId !== null) {
+      await trx('CourseStep').where({ id: newId.get(step.id) }).update({ nextCourseStepId: newId.get(step.nextCourseStepId) })
+    }
+  }
+  if (steps.length > 0) {
+    const answers = await trx('Answer').whereIn('courseStepId', steps.map((step) => step.id)).orderBy('id')
+    for (const answer of answers) {
+      await trx('Answer').insert({
+        courseStepId: newId.get(answer.courseStepId),
+        answerText: answer.answerText,
+        isCorrect: answer.isCorrect,
+        sortOrder: answer.sortOrder,
+        nextCourseStepId: answer.nextCourseStepId === null ? null : newId.get(answer.nextCourseStepId),
+      })
+    }
+  }
+  return versionId
 }
 
 export function listSteps(versionId, trx = db) {

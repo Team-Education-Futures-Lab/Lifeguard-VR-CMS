@@ -4915,6 +4915,7 @@
               <attribute uid="ad6564287b8604682b29e5be8c4902522" cid="EA283" name="name" type="VARCHAR(255)" type-id="VARCHAR(255)" nullable="false" creation-date="10/20/2026 08:29:24" />
               <attribute uid="abb96516c9ddb4cf48efb73e54d95b32a" cid="EA284" name="description" type="TEXT" type-id="TEXT" nullable="false" creation-date="10/20/2026 08:29:24" />
               <attribute uid="a38b48e2cd6e84dcc8827d6629fe33657" cid="EA285" name="publishedAt" type="DATETIME" type-id="DATETIME" nullable="true" creation-date="10/20/2026 08:29:24" />
+              <attribute uid="ae29b4bae5787456b8e1852d2fd0c1aa7" cid="EA323" name="unpublishedAt" type="DATETIME" type-id="DATETIME" nullable="true" creation-date="11/23/2026 13:45:00" />
             </attributes>
           </item>
           <item id="7bb361aedd37419baa063dcd96ed58b1" cid="REL112" type="erd-relationship" creator="" creation-date="10/21/2026 15:39:15" from="926257f6496a454eb058b72db340a2ae" to="08986d4ec55744b8b6dd6944a9e49491">

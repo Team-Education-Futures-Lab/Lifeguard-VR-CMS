@@ -52,7 +52,7 @@ describe('video file cleanup', () => {
     expect(thumbnail.status).toBe(200)
 
     // The teacher removes the step and saves; the next run removes the files.
-    const saved = await agent.put(`/api/organisation/courses/${course.courseId}`).send({ name: 'Cursus', description: 'D', steps: [] })
+    const saved = await agent.put(`/api/organisation/courses/${course.courseId}`).send({ draftVersionNumber: 1, name: 'Cursus', description: 'D', steps: [] })
     expect(saved.status).toBe(200)
     expect(await runVideoFileCleanup()).toBe(2)
     expect(await filesOf(video)).toEqual([false, false])

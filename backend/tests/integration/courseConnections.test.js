@@ -16,7 +16,7 @@ beforeEach(async () => {
 })
 
 const url = () => `/api/organisation/courses/${course.courseId}`
-const put = (steps) => agent.put(url()).send({ name: 'Route', description: 'Met vertakkingen', steps })
+const put = (steps) => agent.put(url()).send({ draftVersionNumber: 1, name: 'Route', description: 'Met vertakkingen', steps })
 const video = (key, nextStepKey = null, extra = {}) => ({
   key,
   stepType: 'video',
@@ -129,7 +129,7 @@ describe('invalid connections change nothing (FR-008, SC-006)', () => {
   it('refuses a key that points to a step of another course', async () => {
     const other = await createCourseRow({ organisationId: a.id })
     const otherSaved = (
-      await agent.put(`/api/organisation/courses/${other.courseId}`).send({ name: 'X', description: 'Y', steps: [video('w')] })
+      await agent.put(`/api/organisation/courses/${other.courseId}`).send({ draftVersionNumber: 1, name: 'X', description: 'Y', steps: [video('w')] })
     ).body
     await expectRejected([video('v1', `s${otherSaved.steps[0].id}`)], 'steps.0.nextStepKey', 'Dit vervolg bestaat niet in deze cursus.')
   })
@@ -169,7 +169,7 @@ describe('saving different courses at the same time', () => {
     for (let round = 0; round < 5; round++) {
       const responses = await Promise.all(
         others.map(({ agent: own, course: target }) =>
-          own.put(`/api/organisation/courses/${target.courseId}`).send({ name: 'Route', description: 'Tegelijk', steps: steps() }),
+          own.put(`/api/organisation/courses/${target.courseId}`).send({ draftVersionNumber: 1, name: 'Route', description: 'Tegelijk', steps: steps() }),
         ),
       )
       expect(responses.map((response) => response.status)).toEqual(others.map(() => 200))

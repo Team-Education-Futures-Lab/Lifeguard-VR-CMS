@@ -33,7 +33,7 @@ let keyCount = 0
 const newKey = () => `k${++keyCount}`
 const videoStep = (videoId, extra = {}) => ({ key: newKey(), stepType: 'video', isStart: false, positionX: 0, positionY: 0, videoId, ...extra })
 const courseUrlOf = (courseId) => `/api/organisation/courses/${courseId}`
-const save = (courseId, steps) => as.a.put(`/api/organisation/courses/${courseId}`).send({ name: 'Cursus', description: 'D', steps })
+const save = (courseId, steps) => as.a.put(`/api/organisation/courses/${courseId}`).send({ draftVersionNumber: 1, name: 'Cursus', description: 'D', steps })
 
 describe('choosing a video for a new step', () => {
   it('accepts exactly the videos of the library of A (SC-005)', async () => {
@@ -83,6 +83,7 @@ describe('video details in the draft', () => {
       durationSeconds: 95,
       thumbnailUrl: `/api/organisation/courses/${courseId}/steps/${step.id}/videos/${videos.bPublic.id}/thumbnail`,
       available: true,
+      keptByLiveVersion: false,
     })
     expect((await as.a.get(`/api/organisation/courses/${courseId}`)).body.steps[0].video).toEqual(step.video)
   })

@@ -14,8 +14,8 @@ specs
 .claude
 .specify
 backend
-# The frontend tests check videos in the browser on the same test videos as the server.
-!backend/tests/fixtures/videos
+# The frontend tests share fixtures with the server (test videos, completeness-check cases).
+!backend/tests/fixtures
 # Usability-test snapshots and test credentials: never part of an image
 snapshots-*
 usability-inloggegevens.md

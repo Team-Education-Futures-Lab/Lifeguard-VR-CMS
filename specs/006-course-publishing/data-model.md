@@ -119,7 +119,7 @@ met de server-id's:
 | `answerOpen` | Antwoord B is nog niet verbonden | ✓ | ✓ |
 | `neverEnds` | Vanaf hier eindigt de route nooit | ✓ | – |
 | `noVideo` | Kies een video | ✓ | – |
-| `videoUnavailable` | Kies een andere video: deze is niet meer beschikbaar | ✓ | – |
+| `videoUnavailable` | Video niet meer beschikbaar: kies een andere. | ✓ | – |
 | `noQuestion` | Vul de vraag in | ✓ | – |
 | `emptyAnswer` | Antwoord A is leeg | ✓ | ✓ |
 

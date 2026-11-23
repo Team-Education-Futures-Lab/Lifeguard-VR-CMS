@@ -35,7 +35,7 @@ video's) en feature 005 (verbindingen en de compleetheidscontrole, FR-010 t/m FR
 - Q: Wanneer mag een cursus gepubliceerd worden met een video die de eigenaar intussen heeft
   verwijderd of beperkt? → A: Alleen als die video al in de live versie van deze cursus zit.
   Anders (nooit gepubliceerd, onpubliceerd, of de video zit niet in de live versie) houdt hij
-  publiceren tegen met "Kies een andere video: deze is niet meer beschikbaar". Dit volgt
+  publiceren tegen met "Video niet meer beschikbaar: kies een andere.". Dit volgt
   `docs/Requirements.docx` FR-13: alleen een gepubliceerde cursus houdt een verwijderde video in
   leven, en oude versies in de geschiedenis tellen niet mee.
 - Q: Wat gebeurt er als de docent een cursus onpubliceert en daarna opnieuw publiceert zonder iets
@@ -57,6 +57,26 @@ video's) en feature 005 (verbindingen en de compleetheidscontrole, FR-010 t/m FR
   gebruikt via een verwijzing (overnemen, FR-12). Downloads op een Quest worden niet bijgehouden en
   tellen niet mee (de Quest houdt zijn eigen kopie, FR-09-VR). Het echt verwijderen is een latere
   opruimstap (backlog); in deze feature blijft verwijderen zacht zoals in feature 004.
+
+### Session 2026-11-23 (verbeterronde na de handmatige test)
+
+- Q: Hoe werken opslaan en publiceren samen? → A: In twee stappen. Publiceren werkt alleen op het
+  opgeslagen concept; met niet-opgeslagen wijzigingen kan de docent niet publiceren en staat er
+  "Sla eerst je wijzigingen op" (vervangt "eerst opslaan, dan publiceren in één klik").
+- Q: Hoe heet publiceren bij een cursus die al live staat? → A: "Wijzigingen publiceren"; bij een
+  cursus die niet live staat "Publiceren".
+- Q: Waar staan de publicatieknoppen? → A: Links in de editorbalk, naast de status: één knop met
+  een keuzemenu. De knop draagt de actie van dat moment ("Publiceren" of "Wijzigingen
+  publiceren"); het menu bevat die actie en "Onpubliceren" (alleen als de cursus live staat).
+- Q: Waar staat dat er niets nieuws te publiceren is? → A: Alleen in het keuzemenu, als reden bij
+  de uitgegrijsde actie, niet permanent in de balk.
+- Q: Wat staat er bij een cursus die eerder gepubliceerd was en nu niet meer? → A: Alleen
+  "Concept", net als bij een cursus die nooit gepubliceerd is.
+- Q: Hoe verwoorden we een onbeschikbare video? → A: Kort: de melding "Video niet meer
+  beschikbaar: kies een andere."; bij onpubliceren "Let op: een video in deze cursus is niet meer
+  beschikbaar. Opnieuw publiceren kan pas met een andere video."
+- Q: Hoe ziet "Nog niet klaar om te publiceren" eruit? → A: Als de lijst "nog te doen": groepen
+  met kopje en aantal, per regel het onderdeel en de melding, klikbaar.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -87,9 +107,9 @@ van het concept op dat moment.
 4. **Given** een zojuist gepubliceerde cursus, **When** de docent verder bewerkt in de editor,
    **Then** kan dat gewoon; het concept blijft bewerkbaar en de gepubliceerde versie verandert
    niet.
-5. **Given** de editor met niet-opgeslagen wijzigingen, **When** de docent publiceert en
-   bevestigt, **Then** worden die wijzigingen eerst als concept opgeslagen en daarna gepubliceerd;
-   de bevestiging zegt dat vooraf.
+5. **Given** de editor met niet-opgeslagen wijzigingen, **When** de docent het publicatiemenu
+   opent, **Then** is publiceren niet te gebruiken en staat erbij "Sla eerst je wijzigingen op";
+   publiceren werkt alleen op het opgeslagen concept.
 
 ---
 
@@ -125,8 +145,8 @@ melding.
    versie (FR-012).
 5. **Given** een cursus zonder live versie (nooit gepubliceerd of onpubliceerd) met een video die
    de eigenaar heeft verwijderd of beperkt, **When** de docent publiceert, **Then** wordt er niet
-   gepubliceerd en ziet de docent bij dat onderdeel "Kies een andere video: deze is niet meer
-   beschikbaar" (FR-012).
+   gepubliceerd en ziet de docent bij dat onderdeel "Video niet meer beschikbaar: kies een
+   andere." (FR-012).
 
 ---
 
@@ -156,8 +176,8 @@ tekst.
    gewijzigd, **When** de docent kijkt, **Then** blijft de status "Gepubliceerd" (zonder
    wijzigingen), omdat de Quest de plaats op het canvas niet gebruikt.
 4. **Given** een gepubliceerde cursus zonder niet-gepubliceerde wijzigingen, **When** de docent
-   naar de knop "Publiceren" kijkt, **Then** is die niet te gebruiken en staat erbij dat er niets
-   nieuws te publiceren is.
+   het publicatiemenu opent, **Then** is "Wijzigingen publiceren" niet te gebruiken en staat erbij
+   "Er is niets nieuws om te publiceren".
 5. **Given** een gepubliceerde cursus met wijzigingen die de cursus onvolledig maken, **When** de
    docent opnieuw wil publiceren, **Then** wordt er niet gepubliceerd (User Story 2) en blijft de
    vorige versie gewoon live.
@@ -274,8 +294,9 @@ elke cursus toont de juiste status, en de gepubliceerde tonen versienummer en da
   interface om.
 - **FR-003**: Vóór het publiceren MUST een bevestiging verschijnen in eenvoudige Nederlandse taal
   (NFR-03), die zegt dat de cursus beschikbaar komt voor de Quests van de organisatie, bij
-  opnieuw publiceren dat de nieuwe versie de huidige vervangt, en bij niet-opgeslagen wijzigingen
-  dat die eerst worden opgeslagen. Annuleren MUST niets veranderen.
+  opnieuw publiceren dat de wijzigingen vervangen wat er nu op staat. Annuleren MUST niets
+  veranderen. Publiceren MUST alleen het opgeslagen concept publiceren; met niet-opgeslagen
+  wijzigingen MUST publiceren niet te gebruiken zijn, met de uitleg "Sla eerst je wijzigingen op".
 - **FR-004**: Publiceren MUST de inhoud van het concept vastzetten als gepubliceerde versie met
   een versienummer en de publicatiedatum en -tijd: naam, beschrijving, onderdelen, video's,
   vragen, antwoorden (met goed/fout en feedback), verbindingen en het startonderdeel. Een latere
@@ -320,9 +341,9 @@ elke cursus toont de juiste status, en de gepubliceerde tonen versienummer en da
   (FR-13, FR-14) en die in het concept zit, MUST publiceren alleen niet tegenhouden als dezelfde
   video in de live versie van deze cursus zit; hij komt dan mee in de nieuwe versie. Heeft de
   cursus geen live versie, of zit de video er niet in, dan MUST publiceren worden geweigerd met
-  bij dat onderdeel "Kies een andere video: deze is niet meer beschikbaar". De server MUST dit
+  bij dat onderdeel "Video niet meer beschikbaar: kies een andere.". De server MUST dit
   zelf controleren (FR-006).
-- **FR-013**: De editor MUST de melding "Kies een andere video: deze is niet meer beschikbaar"
+- **FR-013**: De editor MUST de melding "Video niet meer beschikbaar: kies een andere."
   (feature 005, FR-015) alleen tonen voor een onbeschikbare video die niet in de live versie zit,
   zodat de lijst "nog te doen" en de controle bij publiceren hetzelfde zeggen (verfijnt FR-015
   van feature 005). De waarschuwing bij het weghalen of vervangen van zo'n video (feature 004,
@@ -335,7 +356,7 @@ elke cursus toont de juiste status, en de gepubliceerde tonen versienummer en da
 **Onpubliceren**
 
 - **FR-015**: De docent MUST een gepubliceerde cursus van de eigen organisatie kunnen
-  onpubliceren vanuit de editor, met de knop "Onpubliceren", na een bevestiging in eenvoudige
+  onpubliceren vanuit de editor, met "Onpubliceren" in het publicatiemenu, na een bevestiging in eenvoudige
   taal die zegt dat de cursus niet meer te downloaden is voor de Quests en dat Quests die hem al
   hebben hem kunnen blijven gebruiken. Bevat de live versie een video die niet meer beschikbaar
   is, dan MUST de bevestiging ook zeggen dat die video bij opnieuw publiceren vervangen moet
@@ -360,9 +381,12 @@ elke cursus toont de juiste status, en de gepubliceerde tonen versienummer en da
 - **FR-019**: Het cursusoverzicht en de editor MUST de status tonen in tekst (kleur is nooit het
   enige signaal), en bij een live versie het versienummer en de publicatiedatum. In de editor MUST
   de status direct na publiceren, onpubliceren en opslaan zijn bijgewerkt, zonder herladen.
-- **FR-020**: Bij een gepubliceerde cursus zonder niet-gepubliceerde wijzigingen MUST "Publiceren"
-  niet te gebruiken zijn, met de uitleg dat er niets nieuws te publiceren is. "Onpubliceren" MUST
-  alleen te gebruiken zijn bij een cursus met een live versie.
+- **FR-020**: Publiceren en onpubliceren staan in één knop met keuzemenu, links in de editorbalk
+  naast de status. De knop heet "Publiceren" zolang de cursus niet live staat en "Wijzigingen
+  publiceren" als hij live staat. Bij een gepubliceerde cursus zonder niet-gepubliceerde
+  wijzigingen MUST die actie niet te gebruiken zijn, met in het menu de uitleg "Er is niets nieuws
+  om te publiceren". "Onpubliceren" MUST alleen in het menu staan bij een cursus met een live
+  versie.
 
 **Verwijderen**
 

@@ -9,38 +9,43 @@ eenvoudige taal (NFR-03). Kleur is nooit het enige signaal.
 | Status | Tekst | Extra regel |
 | --- | --- | --- |
 | `draft`, nooit gepubliceerd | **Concept** | – |
-| `draft`, eerder gepubliceerd | **Concept** | "Niet gepubliceerd (was versie 2)" |
+| `draft`, eerder gepubliceerd | **Concept** | – (verbeterronde V6) |
 | `published` | **Gepubliceerd** | "Versie 2 · 23 november 2026 om 14:05" |
 | `published_changed` | **Gepubliceerd · wijzigingen nog niet gepubliceerd** | "Op de Quest: versie 2 · 23 november 2026 om 14:05" |
 
 `data-test="publication-status"`; de status heeft ook een `data-status` met de API-waarde.
 
-## Editorbalk
+## Editorbalk (verbeterronde V2–V5)
 
-Naast "Opslaan als concept":
+Links, na de naam van de cursus: de status en daarnaast één knop met keuzemenu
+(`data-test="publish-menu"`, `aria-haspopup="menu"`). Rechts blijft het bewerken: ongedaan maken,
+"nog te doen", "Canvas ordenen", "Opslaan als concept".
 
-- **Publiceren** (`data-test="publish"`): bij `draft` en `published_changed`. Bij `published`
-  uitgeschakeld met de tooltip/hulptekst "Er is niets nieuws om te publiceren".
-- **Onpubliceren** (`data-test="unpublish"`): alleen bij een live versie (secundaire knop).
-- Beide uitgeschakeld tijdens een lopend verzoek.
+- De knop heet **Publiceren** zolang de cursus niet live staat, en **Wijzigingen publiceren** als
+  hij live staat. Tijdens een verzoek: "Bezig…", uitgeschakeld.
+- Het menu bevat:
+  - dezelfde actie (`data-test="publish"`). Uitgegrijsd met de reden eronder
+    (`data-test="publish-reason"`): "Sla eerst je wijzigingen op" bij niet-opgeslagen wijzigingen
+    (publiceren werkt alleen op het opgeslagen concept, V4), of "Er is niets nieuws om te
+    publiceren" bij `published`;
+  - **Onpubliceren** (`data-test="unpublish"`), alleen bij een live versie.
 
 ## Bevestiging publiceren (`PublishDialog`, `role="alertdialog"`)
 
-- Titel: "Cursus publiceren?" (eerste keer) of "Nieuwe versie publiceren?" (er is een live versie).
-- Tekst eerste keer: "De cursus wordt beschikbaar voor de VR-brillen van jullie organisatie."
-- Tekst opnieuw: "De nieuwe versie vervangt versie {n}. Daarna kunnen de VR-brillen van jullie
-  organisatie de nieuwe versie downloaden." (Het nummer van de nieuwe versie staat pas vast na
-  publiceren; bij terugzetten na onpubliceren kan het hetzelfde nummer zijn, FR-017.)
-- Bij niet-opgeslagen wijzigingen extra: "Je wijzigingen worden eerst opgeslagen."
-- Knoppen: "Publiceren" / "Annuleren".
+- Titel: "Publiceren?" (niet live) of "Wijzigingen publiceren?" (live).
+- Tekst niet live: "De cursus wordt beschikbaar voor de VR-brillen van jullie organisatie."
+- Tekst live: "De wijzigingen komen op de VR-brillen van jullie organisatie. Ze vervangen wat daar
+  nu staat (versie {n})."
+- Knoppen: "Publiceren" of "Wijzigingen publiceren" / "Annuleren".
 
 ## Nog niet klaar om te publiceren
 
 Als de editor zelf meldingen heeft, of de server `422` geeft:
 
-- Titel: "Nog niet klaar om te publiceren"; tekst "Los deze punten eerst op:".
-- Lijst van meldingen, gegroepeerd zoals de lijst "nog te doen" (specs/005); elke melding met het
-  onderdeel waar ze over gaat is een knop die het onderdeel opent en de dialoog sluit.
+- Titel: "Nog niet klaar om te publiceren"; tekst "Los deze punten eerst op. Klik op een punt om
+  het onderdeel te openen."
+- Dezelfde lijst als "nog te doen" (`IssueGroups`, verbeterronde V1): groepen met kopje en aantal,
+  per regel het onderdeel en de melding; een regel opent het onderdeel en sluit de dialoog.
 - De meldingen worden rood op de blokken en in "nog te doen" (specs/005 FR-022a).
 - Knop: "Sluiten".
 
@@ -49,8 +54,8 @@ Als de editor zelf meldingen heeft, of de server `422` geeft:
 - Titel: "Cursus onpubliceren?"
 - Tekst: "De cursus is daarna niet meer te downloaden op de VR-brillen. Brillen die hem al hebben,
   kunnen hem blijven gebruiken. Je concept en eerdere versies blijven bewaard."
-- Bij `publication.hasUnavailableVideo` extra: "Let op: er zit een video in die niet meer
-  beschikbaar is. Wil je later opnieuw publiceren, dan moet je eerst een andere video kiezen."
+- Bij `publication.hasUnavailableVideo` extra: "Let op: een video in deze cursus is niet meer
+  beschikbaar. Opnieuw publiceren kan pas met een andere video."
 - Knoppen: "Onpubliceren" / "Annuleren".
 
 ## Na afloop

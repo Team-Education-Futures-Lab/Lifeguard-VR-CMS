@@ -17,6 +17,17 @@ export const notFound = () => new AppError(404, 'not_found', 'Niet gevonden.')
 export const conflict = (fields) =>
   new AppError(409, 'conflict', 'Deze gegevens zijn al in gebruik.', fields)
 
+/** A save from a draft that was published meanwhile (specs/006 research R14). */
+export const draftReplaced = () =>
+  new AppError(409, 'draft_replaced', 'Deze cursus is intussen gepubliceerd. Laad de pagina opnieuw om verder te werken.')
+
+/** A course that is not complete cannot be published (specs/006 FR-006); `issues` lists why. */
+export function courseIncomplete(issues) {
+  const error = new AppError(422, 'course_incomplete', 'De cursus is nog niet klaar om te publiceren.')
+  error.issues = issues
+  return error
+}
+
 export const notAuthenticated = () =>
   new AppError(401, 'not_authenticated', 'Je bent niet ingelogd.')
 

@@ -1,0 +1,985 @@
+[
+  {
+    "name": "complete course",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": []
+  },
+  {
+    "name": "empty course",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": []
+    },
+    "expected": [
+      {
+        "code": "empty"
+      }
+    ]
+  },
+  {
+    "name": "no start step",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": false,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "noStart"
+      }
+    ]
+  },
+  {
+    "name": "loop without an end",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "video",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": 2
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 0,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": 1
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "noEnd"
+      },
+      {
+        "code": "neverEnds",
+        "step": 0
+      },
+      {
+        "code": "neverEnds",
+        "step": 1
+      }
+    ]
+  },
+  {
+    "name": "unreachable step",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 4,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 400,
+          "positionY": 260,
+          "videoId": 9,
+          "video": {
+            "id": 9,
+            "name": "Video 9",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "unreachable",
+        "step": 3
+      }
+    ]
+  },
+  {
+    "name": "answer without a next step",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": null
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "answerOpen",
+        "step": 0,
+        "answer": 1
+      }
+    ]
+  },
+  {
+    "name": "loop next to an end",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 0,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": 4
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 0,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 4,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 0,
+          "positionY": 260,
+          "videoId": 9,
+          "video": {
+            "id": 9,
+            "name": "Video 9",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": 2
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "neverEnds",
+        "step": 1
+      },
+      {
+        "code": "neverEnds",
+        "step": 3
+      }
+    ]
+  },
+  {
+    "name": "video step without a video",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": null,
+          "video": null,
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "noVideo",
+        "step": 1
+      }
+    ]
+  },
+  {
+    "name": "unavailable video, no live version",
+    "libraryVideoIds": [
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": false,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "videoUnavailable",
+        "step": 1
+      }
+    ]
+  },
+  {
+    "name": "unavailable video kept by the live version",
+    "libraryVideoIds": [
+      8,
+      9
+    ],
+    "liveVideoIds": [
+      7
+    ],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": false,
+            "keptByLiveVersion": true
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": []
+  },
+  {
+    "name": "empty question",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "   ",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "noQuestion",
+        "step": 0
+      }
+    ]
+  },
+  {
+    "name": "empty answer",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "emptyAnswer",
+        "step": 0,
+        "answer": 1
+      }
+    ]
+  },
+  {
+    "name": "question that is start and end",
+    "libraryVideoIds": [
+      7,
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": null
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": null
+            }
+          ]
+        }
+      ]
+    },
+    "expected": []
+  }
+]

@@ -1,6 +1,7 @@
 // The live completeness check of the course editor (specs/005 FR-010 – FR-017, research R4,
 // data-model.md § Melding). Pure: the editor recomputes it after every change. It never blocks
-// saving; publishing (FR-09) will use the same rules later.
+// saving. Publishing uses the same rules on the server (backend/src/lib/courseCheck.js, specs/006
+// research R5); the shared cases in backend/tests/fixtures/course-check-cases.json keep them equal.
 import { findNode, isEnd, outgoing } from './course'
 import { LETTERS } from './util'
 
@@ -12,7 +13,7 @@ const MESSAGES = {
   answerOpen: (letter) => `Antwoord ${letter} is nog niet verbonden`,
   neverEnds: () => 'Vanaf hier eindigt de route nooit',
   noVideo: () => 'Kies een video',
-  videoUnavailable: () => 'Kies een andere video: deze is niet meer beschikbaar',
+  videoUnavailable: () => 'Video niet meer beschikbaar: kies een andere.',
   noQuestion: () => 'Vul de vraag in',
   emptyAnswer: (letter) => `Antwoord ${letter} is leeg`,
 }
@@ -37,7 +38,11 @@ export function checkCourse(course, stepVideos = {}) {
   for (const n of course.nodes) {
     if (n.type === 'video') {
       if (!n.videoId) add('noVideo', n.id)
-      else if (stepVideos[n.videoId]?.available === false) add('videoUnavailable', n.id)
+      // An unavailable video only blocks publishing when the live version does not have it
+      // (specs/006 FR-012, FR-013, constitution V).
+      else if (stepVideos[n.videoId]?.available === false && stepVideos[n.videoId]?.keptByLiveVersion !== true) {
+        add('videoUnavailable', n.id)
+      }
       continue
     }
     if (!n.question?.trim()) add('noQuestion', n.id)

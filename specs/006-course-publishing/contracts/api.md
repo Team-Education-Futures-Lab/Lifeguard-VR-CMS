@@ -70,7 +70,7 @@ Publiceert het **opgeslagen** concept. Geen body.
     "message": "De cursus is nog niet klaar om te publiceren.",
     "issues": [
       { "code": "answerOpen", "message": "Antwoord B is nog niet verbonden", "stepId": 103, "answerId": 502 },
-      { "code": "videoUnavailable", "message": "Kies een andere video: deze is niet meer beschikbaar", "stepId": 104 }
+      { "code": "videoUnavailable", "message": "Video niet meer beschikbaar: kies een andere.", "stepId": 104 }
     ] }
   ```
 

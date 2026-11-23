@@ -1,6 +1,8 @@
 import { db } from '../../db/knex.js'
-import { notFound, validationError } from '../../lib/errors.js'
+import { courseIncomplete, draftReplaced, notFound, validationError } from '../../lib/errors.js'
 import { withDeadlockRetry } from '../../lib/deadlockRetry.js'
+import { checkCourse } from '../../lib/courseCheck.js'
+import { sameContent } from '../../lib/courseContent.js'
 import { MESSAGES, validateCourseFields, validateDraft } from '../../lib/courseDraft.js'
 import * as repo from './courseRepository.js'
 
@@ -10,9 +12,10 @@ import * as repo from './courseRepository.js'
 
 /**
  * The video of a video step: always name, duration and thumbnail, also when the video is no
- * longer in the library; `available` says whether it is (research R5a). Nothing else of the video.
+ * longer in the library; `available` says whether it is (research R5a), `keptByLiveVersion`
+ * whether the live version has it, so it may stay (specs/006 FR-012). Nothing else of the video.
  */
-function toStepVideo(courseId, stepId, row, library) {
+function toStepVideo(courseId, stepId, row, library, liveVideoIds) {
   return {
     id: row.id,
     name: row.name,
@@ -21,20 +24,70 @@ function toStepVideo(courseId, stepId, row, library) {
       ? `/api/organisation/courses/${courseId}/steps/${stepId}/videos/${row.id}/thumbnail`
       : null,
     available: library.has(row.id),
+    keptByLiveVersion: liveVideoIds.has(row.id),
   }
 }
 
-/** The draft document of contracts/api.md. */
+/**
+ * The publication fields of courses (specs/006 contracts/api.md, research R4, R8): per course id
+ * { status, publication, lastPublishedVersionNumber, liveVideoIds }. `courses` are rows with the
+ * course `id`, the draft `versionId`, `name` and `description`.
+ */
+async function publicationInfo(courses, organisationId, trx = db) {
+  const ids = courses.map((course) => course.id)
+  const latest = await repo.latestPublishedVersions(ids, trx)
+  const live = await repo.liveVersions(ids, trx)
+  const contents = await repo.versionContents(
+    [...courses.map((course) => course.versionId), ...[...live.values()].map((version) => version.id)],
+    trx,
+  )
+  const liveVideos = new Map()
+  for (const [courseId, version] of live) {
+    liveVideos.set(courseId, new Set(contents.get(version.id).steps.filter((step) => step.videoId).map((step) => step.videoId)))
+  }
+  const library = await repo.libraryVideoIds(organisationId, [...new Set([...liveVideos.values()].flatMap((set) => [...set]))], trx)
+
+  const info = new Map()
+  for (const course of courses) {
+    const version = live.get(course.id)
+    const liveVideoIds = liveVideos.get(course.id) ?? new Set()
+    const base = { lastPublishedVersionNumber: latest.get(course.id)?.versionNumber ?? null, liveVideoIds }
+    if (!version) {
+      info.set(course.id, { ...base, status: 'draft', publication: null })
+      continue
+    }
+    const same = sameContent(
+      { name: course.name, description: course.description, ...contents.get(course.versionId) },
+      { name: version.name, description: version.description, ...contents.get(version.id) },
+    )
+    info.set(course.id, {
+      ...base,
+      status: same ? 'published' : 'published_changed',
+      publication: {
+        versionNumber: version.versionNumber,
+        publishedAt: new Date(version.publishedAt).toISOString(),
+        hasUnavailableVideo: [...liveVideoIds].some((id) => !library.has(id)),
+      },
+    })
+  }
+  return info
+}
+
+/** The draft document of contracts/api.md (specs/004, 005 and 006). */
 async function toDraftDocument(course, organisationId, trx) {
   const steps = await repo.listSteps(course.versionId, trx)
   const answers = await repo.listAnswers(steps.map((step) => step.id), trx)
   const videos = await repo.stepVideos(course.versionId, trx)
   const library = await repo.libraryVideoIds(organisationId, [...new Set([...videos.values()].map((row) => row.id))], trx)
+  const info = (await publicationInfo([course], organisationId, trx)).get(course.id)
   return {
     id: course.id,
     name: course.name,
     description: course.description,
-    status: 'draft',
+    draftVersionNumber: course.versionNumber,
+    status: info.status,
+    publication: info.publication,
+    lastPublishedVersionNumber: info.lastPublishedVersionNumber,
     updatedAt: new Date(course.updatedAt).toISOString(),
     steps: steps.map((step) => {
       const base = {
@@ -49,7 +102,7 @@ async function toDraftDocument(course, organisationId, trx) {
         return {
           ...base,
           videoId: step.videoId,
-          video: row ? toStepVideo(course.id, step.id, row, library) : null,
+          video: row ? toStepVideo(course.id, step.id, row, library, info.liveVideoIds) : null,
           nextStepId: step.nextCourseStepId ?? null,
         }
       }
@@ -70,17 +123,23 @@ async function toDraftDocument(course, organisationId, trx) {
   }
 }
 
-/** The course list of contracts/api.md; every course is a draft in this feature. */
+/** The course list of contracts/api.md, with the publication status of every course (specs/006 FR-019). */
 export async function listCourses(organisationId) {
   const rows = await repo.listOwnCourses(organisationId)
-  return rows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    updatedAt: new Date(row.updatedAt).toISOString(),
-    videoStepCount: Number(row.videoStepCount),
-    questionStepCount: Number(row.questionStepCount),
-    status: 'draft',
-  }))
+  const info = await publicationInfo(rows, organisationId)
+  return rows.map((row) => {
+    const { status, publication, lastPublishedVersionNumber } = info.get(row.id)
+    return {
+      id: row.id,
+      name: row.name,
+      updatedAt: new Date(row.updatedAt).toISOString(),
+      videoStepCount: Number(row.videoStepCount),
+      questionStepCount: Number(row.questionStepCount),
+      status,
+      publication,
+      lastPublishedVersionNumber,
+    }
+  })
 }
 
 /** A new, empty draft for the organisation in the session (FR-001, FR-002). */
@@ -205,14 +264,38 @@ async function saveConnections(trx, steps, stepIds, answerIds) {
  */
 export async function saveDraft(courseId, organisationId, body) {
   const draft = validateDraft(body)
-  return withDeadlockRetry(() => saveDraftTransaction(courseId, organisationId, draft))
+  await withDeadlockRetry(() => saveDraftTransaction(courseId, organisationId, draft))
+  // The document is read after the commit: the transaction stays short, so saves of different
+  // courses overlap less (lib/deadlockRetry.js). The last save wins, as before.
+  return getDraft(courseId, organisationId)
+}
+
+/**
+ * Locks the draft of an own course for the rest of the transaction. Locking the draft row makes
+ * saves and publications of the same course run one after the other. Returns the course with its
+ * draft; `null` when the course is there but the locked draft was published meanwhile (specs/006
+ * research R14); throws not found for an unknown, deleted or someone else's course.
+ */
+async function lockDraft(courseId, organisationId, trx) {
+  const course = await repo.findOwnCourse(courseId, organisationId, trx, { forUpdate: true })
+  if (course) return course
+  if (!(await repo.ownCourseExists(courseId, organisationId, trx))) throw notFound()
+  return null
+}
+
+/** As lockDraft, but takes the new draft when the old one was published meanwhile. */
+async function lockCurrentDraft(courseId, organisationId, trx) {
+  const course = (await lockDraft(courseId, organisationId, trx)) ?? (await lockDraft(courseId, organisationId, trx))
+  if (!course) throw notFound()
+  return course
 }
 
 function saveDraftTransaction(courseId, organisationId, draft) {
   return db.transaction(async (trx) => {
-    // Locking the draft row makes two saves of the same course run one after the other.
-    const course = await repo.findOwnCourse(courseId, organisationId, trx, { forUpdate: true })
-    if (!course) throw notFound()
+    const course = await lockDraft(courseId, organisationId, trx)
+    // The editor works on a draft that was published since: its ids now belong to the published
+    // version, which never changes (specs/006 FR-004, research R14).
+    if (!course || course.versionNumber !== draft.draftVersionNumber) throw draftReplaced()
     const storedSteps = await repo.listSteps(course.versionId, trx)
     const storedAnswers = await repo.listAnswers(storedSteps.map((step) => step.id), trx)
     checkIds(draft.steps, storedSteps, storedAnswers)
@@ -233,6 +316,66 @@ function saveDraftTransaction(courseId, organisationId, draft) {
 
     await repo.updateDraftFields(trx, course.versionId, draft)
     await repo.touchCourse(trx, course.id)
-    return getDraft(course.id, organisationId, trx)
   })
+}
+
+/** The content of a version for sameContent (research R4). */
+async function contentOf(version, trx) {
+  const contents = await repo.versionContents([version.id], trx)
+  return { name: version.name, description: version.description, ...contents.get(version.id) }
+}
+
+/**
+ * Publishes the saved draft (specs/006 FR-001 – FR-010, FR-012, FR-017, research R3), all or
+ * nothing. The server checks the course itself; an incomplete course gives 422 with the messages
+ * and nothing changes. Then, against the latest published version:
+ * - same content and live: nothing to do (a second click, research R9);
+ * - same content but unpublished: that version goes live again, with its number and date;
+ * - otherwise the draft itself becomes the published version and a copy is the new draft.
+ * Returns the (new) draft document.
+ */
+export function publishCourse(courseId, organisationId) {
+  return withDeadlockRetry(() =>
+    db.transaction(async (trx) => {
+      const course = await lockCurrentDraft(courseId, organisationId, trx)
+      const doc = await toDraftDocument(course, organisationId, trx)
+      const videoSteps = doc.steps.filter((step) => step.video)
+      const issues = checkCourse(doc, {
+        libraryVideoIds: new Set(videoSteps.filter((step) => step.video.available).map((step) => step.videoId)),
+        liveVideoIds: new Set(videoSteps.filter((step) => step.video.keptByLiveVersion).map((step) => step.videoId)),
+      })
+      if (issues.length > 0) throw courseIncomplete(issues)
+
+      const latest = (await repo.latestPublishedVersions([course.id], trx)).get(course.id)
+      const draft = { id: course.versionId, name: course.name, description: course.description }
+      if (latest && sameContent(await contentOf(draft, trx), await contentOf(latest, trx))) {
+        if (latest.unpublishedAt === null) return doc
+        await repo.setUnpublishedAt(trx, latest.id, false)
+      } else {
+        await repo.freezeDraft(trx, course.versionId)
+        await repo.copyVersionAsDraft(trx, course.versionId, course.id, course.versionNumber + 1)
+      }
+      await repo.touchCourse(trx, course.id)
+      return getDraft(course.id, organisationId, trx)
+    }),
+  )
+}
+
+/**
+ * Takes the live version off the Quests (specs/006 FR-015, FR-016): it gets unpublishedAt. The
+ * draft and every published version stay. Without a live version nothing changes. Returns the
+ * draft document.
+ */
+export function unpublishCourse(courseId, organisationId) {
+  return withDeadlockRetry(() =>
+    db.transaction(async (trx) => {
+      const course = await lockCurrentDraft(courseId, organisationId, trx)
+      const live = (await repo.liveVersions([course.id], trx)).get(course.id)
+      if (live) {
+        await repo.setUnpublishedAt(trx, live.id, true)
+        await repo.touchCourse(trx, course.id)
+      }
+      return getDraft(course.id, organisationId, trx)
+    }),
+  )
 }

@@ -105,8 +105,14 @@ describe('each rule gives exactly its message (SC-003)', () => {
     expect(checkCourse(c).issues.map((i) => i.msg)).toEqual(['Kies een video'])
     const gone = course([video({ videoId: 9 })])
     expect(checkCourse(gone, { 9: { available: false } }).issues.map((i) => i.msg)).toEqual([
-      'Kies een andere video: deze is niet meer beschikbaar',
+      'Video niet meer beschikbaar: kies een andere.',
     ])
+  })
+
+  it('a video that is no longer available but in the live version is fine (specs/006 FR-013)', () => {
+    const kept = course([video({ videoId: 9 })])
+    expect(checkCourse(kept, { 9: { available: false, keptByLiveVersion: true } }).issues).toEqual([])
+    expect(codes(kept, { 9: { available: false, keptByLiveVersion: false } })).toEqual(['videoUnavailable'])
   })
 
   it('empty question and empty answer (FR-015)', () => {

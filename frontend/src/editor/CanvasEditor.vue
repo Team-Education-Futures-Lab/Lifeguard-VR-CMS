@@ -10,6 +10,7 @@ import { useEditor } from './context'
 import { findNode, outgoing, positionBelow, NODE_W } from '../lib/course'
 import { LETTERS } from '../lib/util'
 import { edgeColour, laneOffsets } from './edgeStyle'
+import { lastCanvasView } from './lastView'
 import Icon from '../components/Icon.vue'
 import VideoNode from './VideoNode.vue'
 import QuestionNode from './QuestionNode.vue'
@@ -59,10 +60,14 @@ function centerOn(id, duration = 300) {
 }
 
 // Start view: fit everything, unless that makes the blocks too small; then start at the start step.
+// Right after the editor was built again for the same course (a new draft after publishing,
+// specs/006 contracts/ui.md § Na afloop), the canvas keeps its zoom and position.
 onInit(() =>
   setTimeout(async () => {
     const r = ed.focusRequest
     if (r && Date.now() - r.t < 3000) return centerOn(r.id, 0)
+    const last = lastCanvasView.value
+    if (last && last.courseId === ed.course.id && Date.now() - last.t < 5000) return setViewport(last.viewport)
     await fitView({ padding: 0.2, maxZoom: 1 })
     if (getViewport().zoom >= 0.75 || !wrap.value) return
     const start = findNode(ed.course, ed.course.startId) ?? ed.course.nodes[0]
@@ -172,7 +177,10 @@ function onKey(e) {
   if (e.key === 'Escape') ed.clearSelection()
 }
 onMounted(() => window.addEventListener('keydown', onKey))
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  lastCanvasView.value = { courseId: ed.course.id, viewport: getViewport(), t: Date.now() }
+})
 
 const selectedNode = computed(() => (ed.selectedId ? findNode(ed.course, ed.selectedId) : null))
 </script>

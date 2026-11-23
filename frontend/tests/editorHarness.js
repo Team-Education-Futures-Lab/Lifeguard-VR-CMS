@@ -43,7 +43,7 @@ export const docs = {
     positionX: 0,
     positionY: 0,
     videoId: 17,
-    video: { id: 17, name: 'Zwembad', durationSeconds: 60, thumbnailUrl: '/t/17', available: true },
+    video: { id: 17, name: 'Zwembad', durationSeconds: 60, thumbnailUrl: '/t/17', available: true, keptByLiveVersion: false },
     nextStepId: null,
     ...extra,
   }),
@@ -64,7 +64,17 @@ export const docs = {
       ...extra,
     }
   },
-  doc: (...steps) => ({ id: 12, name: 'Redding', description: 'Diep bad', steps }),
+  // The draft document of specs/006 contracts/api.md: a draft that was never published.
+  doc: (...steps) => ({
+    id: 12,
+    name: 'Redding',
+    description: 'Diep bad',
+    draftVersionNumber: 1,
+    status: 'draft',
+    publication: null,
+    lastPublishedVersionNumber: null,
+    steps,
+  }),
 }
 
 /** The editor key of a step or answer id. */

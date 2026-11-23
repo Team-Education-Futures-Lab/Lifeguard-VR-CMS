@@ -89,6 +89,22 @@ export async function createCourseRow({
 }
 
 /**
+ * Inserts a published version of a course directly (specs/006 data-model.md): a CourseVersion with
+ * publishedAt (and optionally unpublishedAt). Steps are added with createStepRow. Returns its id.
+ */
+export async function createPublishedVersionRow({
+  courseId,
+  versionNumber,
+  name = 'Testcursus',
+  description = 'Een cursus om mee te testen.',
+  publishedAt = new Date('2026-11-20T10:00:00.000Z'),
+  unpublishedAt = null,
+}) {
+  const [id] = await db('CourseVersion').insert({ courseId, versionNumber, name, description, publishedAt, unpublishedAt })
+  return id
+}
+
+/**
  * Inserts a step of a course version. A question step gets `answers` (default two, the first
  * correct). Returns { id, answerIds }.
  */

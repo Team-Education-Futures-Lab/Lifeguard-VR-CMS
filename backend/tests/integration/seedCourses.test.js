@@ -31,7 +31,7 @@ describe('seedCourses', () => {
       if (step.stepType === 'video') copy.nextStepKey = step.nextStepId ? `s${step.nextStepId}` : null
       return copy
     })
-    expect((await agent.put(`/api/organisation/courses/${draft.id}`).send({ name: draft.name, description: draft.description, steps })).status).toBe(200)
+    expect((await agent.put(`/api/organisation/courses/${draft.id}`).send({ draftVersionNumber: 1, name: draft.name, description: draft.description, steps })).status).toBe(200)
   })
 
   it('uses only question steps without videos', async () => {

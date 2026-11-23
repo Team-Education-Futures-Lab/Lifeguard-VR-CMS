@@ -66,8 +66,29 @@ describe('toEditor', () => {
 
   it('keeps video details apart, also for a video that is no longer available', () => {
     expect(toEditor(doc).stepVideos).toEqual({
-      17: { name: 'Zwembad', durationSeconds: 95, thumbnailUrl: '/api/organisation/courses/12/steps/101/videos/17/thumbnail', available: false },
+      17: { name: 'Zwembad', durationSeconds: 95, thumbnailUrl: '/api/organisation/courses/12/steps/101/videos/17/thumbnail', available: false, keptByLiveVersion: false },
     })
+  })
+
+  it('keeps keptByLiveVersion of a video (specs/006 FR-013)', () => {
+    const steps = doc.steps.map((step) => (step.video ? { ...step, video: { ...step.video, keptByLiveVersion: true } } : step))
+    expect(toEditor({ ...doc, steps }).stepVideos[17].keptByLiveVersion).toBe(true)
+  })
+
+  it('returns the draft number and the publication status (specs/006 research R8, R14)', () => {
+    const publication = { versionNumber: 2, publishedAt: '2026-11-23T13:05:00.000Z', hasUnavailableVideo: false }
+    const result = toEditor({ ...doc, draftVersionNumber: 3, status: 'published_changed', publication, lastPublishedVersionNumber: 2 })
+    expect(result.draftVersionNumber).toBe(3)
+    expect(result.status).toBe('published_changed')
+    expect(result.publication).toEqual(publication)
+    expect(result.lastPublishedVersionNumber).toBe(2)
+  })
+
+  it('treats a document without publication fields as a draft', () => {
+    const result = toEditor(doc)
+    expect(result.status).toBe('draft')
+    expect(result.publication).toBeNull()
+    expect(result.lastPublishedVersionNumber).toBeNull()
   })
 
   it('has no start step when none is marked', () => {
@@ -76,6 +97,10 @@ describe('toEditor', () => {
 })
 
 describe('toPayload', () => {
+  it('sends the number of the loaded draft (specs/006 research R14)', () => {
+    expect(toPayload(toEditor(doc).course, savedKeys(doc), 4).draftVersionNumber).toBe(4)
+  })
+
   it('sends every step with its key and connections as keys (specs/005 research R1)', () => {
     const payload = toPayload(toEditor(doc).course, savedKeys(doc))
     expect(payload).toEqual({

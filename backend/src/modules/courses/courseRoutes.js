@@ -53,6 +53,16 @@ courseRoutes.delete('/courses/:id', async (req, res) => {
 
 // "Opslaan als concept": the whole draft at once (research R3). Only these fields are read.
 courseRoutes.put('/courses/:id', async (req, res) => {
-  const { name, description, steps } = req.body ?? {}
-  res.json(await service.saveDraft(courseId(req), getOrganisationId(req), { name, description, steps }))
+  const { draftVersionNumber, name, description, steps } = req.body ?? {}
+  res.json(await service.saveDraft(courseId(req), getOrganisationId(req), { draftVersionNumber, name, description, steps }))
+})
+
+// Publishes the saved draft (specs/006 contracts/api.md); no body is read.
+courseRoutes.post('/courses/:id/publish', async (req, res) => {
+  res.json(await service.publishCourse(courseId(req), getOrganisationId(req)))
+})
+
+// Takes the live version off the Quests (specs/006 FR-016); no body is read.
+courseRoutes.post('/courses/:id/unpublish', async (req, res) => {
+  res.json(await service.unpublishCourse(courseId(req), getOrganisationId(req)))
 })

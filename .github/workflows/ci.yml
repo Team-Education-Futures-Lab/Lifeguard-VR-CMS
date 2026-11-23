@@ -149,9 +149,28 @@ jobs:
       - name: Playwright – npm ci
         working-directory: e2e
         run: npm ci
-      - name: Playwright – install Chromium
+      # De browser downloaden duurt meestal 15–35 s, maar soms minuten (210 s op 2026-11-23). Daarom
+      # wordt hij bewaard tussen runs, per Playwright-versie. Alleen de headless shell: de tests
+      # draaien headless. De systeembibliotheken (apt) staan niet in de cache en worden elke run
+      # geïnstalleerd.
+      - name: Playwright – read the version
+        id: playwright
         working-directory: e2e
-        run: npx playwright install --with-deps chromium
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Playwright – cache Chromium
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-chromium-headless-shell
+      - name: Playwright – install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        working-directory: e2e
+        run: npx playwright install --with-deps --only-shell chromium
+      - name: Playwright – system libraries for Chromium
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        working-directory: e2e
+        run: npx playwright install-deps chromium
       - name: Run the e2e tests
         working-directory: e2e
         run: npx playwright test

@@ -42,6 +42,7 @@ export const MESSAGES = {
   nextStep: 'Dit vervolg bestaat niet in deze cursus.',
   videoToItself: 'Een video-onderdeel kan niet naar zichzelf wijzen.',
   questionNext: 'Een vraag gaat verder via haar antwoorden.',
+  draftVersionNumber: 'Laad de pagina opnieuw om verder te werken.',
 }
 
 const isId = (value) => Number.isInteger(value) && value > 0 && value <= 4294967295
@@ -176,6 +177,9 @@ function checkConnections(steps, fields) {
  */
 export function validateDraft(body) {
   const fields = {}
+  // The number of the draft the editor loaded (specs/006 research R14).
+  const draftVersionNumber = body?.draftVersionNumber
+  if (!Number.isInteger(draftVersionNumber) || draftVersionNumber < 1) fields.draftVersionNumber = MESSAGES.draftVersionNumber
   const { name, description } = checkCourseFields(body, fields)
   const raw = body?.steps
   let steps = []
@@ -188,5 +192,5 @@ export function validateDraft(body) {
     checkConnections(steps, fields)
   }
   if (Object.keys(fields).length > 0) throw validationError(fields)
-  return { name, description, steps }
+  return { draftVersionNumber, name, description, steps }
 }

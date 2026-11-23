@@ -1,5 +1,6 @@
 <script setup>
-// The organisation's courses, all drafts (specs/004 contracts/ui.md § Cursussen).
+// The organisation's courses with their publication status (specs/004 contracts/ui.md § Cursussen,
+// specs/006 contracts/ui.md § Cursusoverzicht).
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { listCourses, createCourse, deleteCourse } from '../api/courses'
@@ -8,6 +9,7 @@ import { confirmDialog, toast } from '../lib/ui'
 import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
 import DescriptionField from '../components/DescriptionField.vue'
+import PublicationStatus from '../components/PublicationStatus.vue'
 
 const router = useRouter()
 const courses = ref([])
@@ -63,7 +65,11 @@ async function create() {
 async function remove(c) {
   const ok = await confirmDialog({
     title: 'Cursus verwijderen?',
-    body: `“${c.name}” wordt verwijderd.`,
+    // A published course also goes off the VR headsets (specs/006 FR-021).
+    body:
+      c.status && c.status !== 'draft'
+        ? `“${c.name}” wordt verwijderd. Deze cursus is gepubliceerd. Na verwijderen is hij niet meer te downloaden op de VR-brillen.`
+        : `“${c.name}” wordt verwijderd.`,
     confirmLabel: 'Verwijderen',
     danger: true,
   })
@@ -103,7 +109,12 @@ async function remove(c) {
             {{ r.videos }} {{ r.videos === 1 ? 'video' : 'video’s' }} · {{ r.questions }} {{ r.questions === 1 ? 'vraag' : 'vragen' }} · bewerkt {{ timeAgo(r.updatedAt) }}
           </span>
         </RouterLink>
-        <span class="status draft">Concept</span>
+        <PublicationStatus
+          class="row-status"
+          compact
+          :status="r.c.status"
+          :publication="r.c.publication ?? null"
+        />
         <button class="icon-btn" title="Verwijderen" @click="remove(r.c)"><Icon name="trash" :size="16" /></button>
       </li>
     </ul>
@@ -173,7 +184,7 @@ async function remove(c) {
 .form { display: grid; gap: 16px; }
 @media (max-width: 600px) {
   .row { flex-wrap: wrap; gap: 0 12px; padding-bottom: 12px; }
-  .row .status { padding-left: 20px; }
+  .row .row-status { padding-left: 20px; }
   .row .icon-btn { opacity: 1; margin-left: auto; }
 }
 </style>

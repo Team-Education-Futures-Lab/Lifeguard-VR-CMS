@@ -1,10 +1,12 @@
 /** Error from the API, in the format of contracts/api.md. `message` is customer-facing (Dutch). */
 export class ApiError extends Error {
-  constructor(status, code, message, fields = {}) {
+  constructor(status, code, message, fields = {}, issues = []) {
     super(message)
     this.status = status
     this.code = code
     this.fields = fields
+    // The messages of a refused publication (specs/006 contracts/api.md, course_incomplete).
+    this.issues = issues
   }
 }
 
@@ -48,6 +50,7 @@ export async function api(path, { method = 'GET', body, formData } = {}) {
     e.code ?? 'unknown_error',
     e.message ?? 'Er ging iets mis. Probeer het later opnieuw.',
     e.fields ?? {},
+    e.issues ?? [],
   )
   if (res.status === 401 && !QUIET_401.some((pattern) => pattern.test(path))) {
     unauthorizedHandler?.(error)

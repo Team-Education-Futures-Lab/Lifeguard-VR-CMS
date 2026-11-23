@@ -105,8 +105,8 @@ describe('the course list (FR-004)', () => {
     await createStepRow({ versionId: old.versionId, stepType: 'video' })
     await createStepRow({ versionId: old.versionId, stepType: 'question' })
     expect(await list('a')).toEqual([
-      { id: recent.courseId, name: 'Nieuw', updatedAt: '2026-06-01T00:00:00.000Z', videoStepCount: 0, questionStepCount: 0, status: 'draft' },
-      { id: old.courseId, name: 'Oud', updatedAt: '2026-01-01T00:00:00.000Z', videoStepCount: 2, questionStepCount: 1, status: 'draft' },
+      { id: recent.courseId, name: 'Nieuw', updatedAt: '2026-06-01T00:00:00.000Z', videoStepCount: 0, questionStepCount: 0, status: 'draft', publication: null, lastPublishedVersionNumber: null },
+      { id: old.courseId, name: 'Oud', updatedAt: '2026-01-01T00:00:00.000Z', videoStepCount: 2, questionStepCount: 1, status: 'draft', publication: null, lastPublishedVersionNumber: null },
     ])
   })
 
@@ -125,7 +125,7 @@ describe('the course list (FR-004)', () => {
   it('puts a course that was just saved on top', async () => {
     const first = await createCourseRow({ organisationId: a.id, name: 'Eerst', updatedAt: new Date('2026-01-01T00:00:00Z') })
     await createCourseRow({ organisationId: a.id, name: 'Later', updatedAt: new Date('2026-02-01T00:00:00Z') })
-    await as.a.put(`/api/organisation/courses/${first.courseId}`).send({ name: 'Eerst', description: 'D', steps: [] })
+    await as.a.put(`/api/organisation/courses/${first.courseId}`).send({ draftVersionNumber: 1, name: 'Eerst', description: 'D', steps: [] })
     expect((await list('a')).map((c) => c.name)).toEqual(['Eerst', 'Later'])
   })
 })
@@ -134,7 +134,7 @@ describe('changing a course (US5, FR-005)', () => {
   it('saves a new name and moves the course to the top of the list', async () => {
     const first = await createCourseRow({ organisationId: a.id, name: 'Oud', updatedAt: new Date('2026-01-01T00:00:00Z') })
     await createCourseRow({ organisationId: a.id, name: 'Ander', updatedAt: new Date('2026-02-01T00:00:00Z') })
-    const response = await as.a.put(`/api/organisation/courses/${first.courseId}`).send({ name: 'Nieuw', description: 'D', steps: [] })
+    const response = await as.a.put(`/api/organisation/courses/${first.courseId}`).send({ draftVersionNumber: 1, name: 'Nieuw', description: 'D', steps: [] })
     expect(response.status).toBe(200)
     expect((await db('CourseVersion').where({ id: first.versionId }).first()).name).toBe('Nieuw')
     expect((await list('a')).map((c) => c.name)).toEqual(['Nieuw', 'Ander'])
@@ -172,7 +172,7 @@ describe('deleting a course (US5, FR-006, SC-006)', () => {
     expect(await list('a')).toEqual([])
     const responses = [
       await as.a.get(url()),
-      await as.a.put(url()).send({ name: 'X', description: 'Y', steps: [] }),
+      await as.a.put(url()).send({ draftVersionNumber: 1, name: 'X', description: 'Y', steps: [] }),
       await as.a.delete(url()),
       await as.a.get(`${url()}/steps/${videoStep.id}/videos/${video.id}/thumbnail`),
     ]

@@ -1,16 +1,23 @@
 <!--
 Sync Impact Report
-- Versie: 1.0.0 → 2.0.0 (MAJOR: principe VI opnieuw gedefinieerd)
+- Versie: 2.0.0 → 3.0.0 (MAJOR: regel over verwijderde video's in principe V opnieuw
+  gedefinieerd)
 - Gewijzigde principes:
-  VI. Taalconventies: codecommentaar is nu Engels in plaats van Nederlands; alle code
-  (namen, routes, commentaar, foutcodes, logregels) is Engels; Nederlands alleen nog voor
-  teksten die de klant ziet. Documentatie en specificaties blijven Nederlands.
+  V. Zachte verwijdering: "bij opnieuw publiceren MUST een vervangende video gekozen worden"
+  is vervangen. Een verwijderde video blijft werken in een gepubliceerde cursus, ook in een
+  nieuwe versie daarvan; alleen een cursus die niet gepubliceerd is (of een oude versie uit de
+  geschiedenis die opnieuw gepubliceerd wordt) moet eerst een andere video kiezen.
 - Toegevoegde secties: geen
 - Verwijderde secties: geen
 - Templates: niet aangepast (lezen de constitution tijdens runtime)
-- Volgwerk: specs/001-organisation-accounts-login/tasks.md vraagt nog om Nederlands
-  commentaar; aanpassen aan principe VI
-- Uitgestelde TODO's: geen
+- Volgwerk: specs/006-course-publishing (FR-012, plan Constitution Check) volgt deze regel;
+  specs/005-course-step-branching noemt nog de oude regel bij "Onbeschikbare video" (historisch,
+  niet aangepast)
+- Uitgestelde TODO's: verduidelijking "eerst zacht, echt weg als niemand hem meer gebruikt"
+  (docs/backlog.md, "Cursussen en video's van verwijderde cursussen echt opruimen")
+
+Vorige wijziging: 1.0.0 → 2.0.0 (MAJOR: principe VI opnieuw gedefinieerd; alle code Engels,
+Nederlands alleen voor teksten die de klant ziet)
 -->
 
 # Futurelabs VR Lifeguard CMS Constitution
@@ -70,11 +77,18 @@ verwijderen.
   `deletedAt`-tijdstempel gezet; het record en (voor video's) het bestand blijven bestaan.
 - Standaardqueries MUST records met een gevulde `deletedAt` uitsluiten, tenzij een
   functie expliciet met verwijderde records moet werken (zoals de versiegeschiedenis).
-- Oude cursusversies in de geschiedenis MUST hun verwijzingen naar zacht verwijderde
-  video's behouden; bij opnieuw publiceren MUST een vervangende video gekozen worden.
+- Cursusversies (het concept, de gepubliceerde versie en oude versies in de geschiedenis)
+  MUST hun verwijzingen naar zacht verwijderde video's behouden.
+- Een zacht verwijderde video blijft werken in een gepubliceerde cursus: zit hij in de
+  versie die nu gepubliceerd is, dan mag hij ook mee in een nieuwe versie van die cursus.
+- Is een cursus niet gepubliceerd (nooit gepubliceerd of ingetrokken) en zit er een zacht
+  verwijderde video in, dan MUST vóór het publiceren een andere video gekozen worden. Dat
+  geldt ook voor het opnieuw publiceren van een oude versie uit de geschiedenis.
 
 **Rationale**: de stakeholder heeft bevestigd dat verwijderen zacht is, zodat de
-versiegeschiedenis van cursussen intact blijft (zie FR-11 en FR-13).
+versiegeschiedenis van cursussen intact blijft (zie FR-11 en FR-13). Alleen een
+gepubliceerde cursus houdt een verwijderde video in gebruik (FR-13); een cursus die niet
+gepubliceerd is, mag hem daarom niet opnieuw in gebruik nemen.
 
 ### VI. Taalconventies
 
@@ -121,4 +135,4 @@ bij het team en de stakeholder.
   principes, MINOR voor nieuwe principes of secties, PATCH voor verduidelijkingen.
 - Elke pull request en review MUST controleren of de wijziging aan deze principes voldoet.
 
-**Version**: 2.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-10-21
+**Version**: 3.0.0 | **Ratified**: 2026-10-20 | **Last Amended**: 2026-11-23

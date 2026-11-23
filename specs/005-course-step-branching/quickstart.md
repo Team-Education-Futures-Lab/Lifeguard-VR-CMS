@@ -46,14 +46,9 @@ Verwacht: alles groen, inclusief `courseConnections.test.js` (SC-002, SC-006),
 | --- | --- | --- |
 | 17 | Iets wijzigen in een cursus zonder meldingen, "Opslaan als concept" (punt 1) | Kort "Concept opgeslagen" met een vinkje naast de knop; de knop kleurt kort groen; daarna weer "Opgeslagen" |
 | 18 | Hetzelfde met nog 3 meldingen open (punt 1) | Kort "Opgeslagen, nog 3 punten open"; de meldingen worden rood, maar het opslaan zelf ziet er geslaagd uit |
-| 19 | Besturingssysteem op "minder beweging" zetten en opslaan (punt 1) | Dezelfde tekst, zonder animatie of kleurovergang |
-| 20 | Tussenpunt van een pijl slepen (punt 2) | **Uitgesteld**: zie `docs/backlog.md`, "Lijnen verplaatsen en lijnstijl" |
-| 21 | Lijnstijl "Vloeiend"/"Hoekig" voor het canvas en per pijl (punt 3) | **Uitgesteld**: zie `docs/backlog.md` |
-| 22 | Een vraag waarvan antwoord A en B naar hetzelfde onderdeel gaan (punt 4) | Twee pijlen die naast elkaar binnenkomen (niet over elkaar), elk in de kleur van hun letter, met "A" en "B" op de pijl; pijlen van video's grijs |
-| 23 | Met de muis op een pijl, daarna een pijl aanklikken (punt 4) | De pijl wordt dikker, zijn bron en doel lichten op, de rest van het canvas wordt gedimd; weg met de muis of klik op het canvas: alles weer normaal |
-| 24 | Met de muis op een blok waar geen of één pijl binnenkomt (punt 5) | Geen tooltip resp. "Wordt bereikt vanuit 1 verbinding"; nergens een permanente "← n" |
-| 25 | Een route met een start-probleem, twee video's zonder video en een open antwoord; "n nog te doen" openen (punt 6) | Groep "Cursus" apart bovenaan, daaronder "Antwoorden zonder vervolg" (1) en "Video-onderdelen zonder video" (2); bij minder dan 5 punten open, anders dicht; klik op een kop klapt hem, klik op een regel opent het blok |
-| 26 | "Canvas ordenen", daarna "Ongedaan maken" in de melding (punt 7) | De blokken staan weer waar ze stonden; Ctrl+Y ordent opnieuw |
+| 19 | Met de muis op een blok waar geen of één pijl binnenkomt (punt 5) | Geen tooltip resp. "Wordt bereikt vanuit 1 verbinding"; nergens een permanente "← n" |
+| 20 | Een route met een start-probleem, twee video's zonder video en een open antwoord; "n nog te doen" openen (punt 6) | Groep "Cursus" apart bovenaan, daaronder "Antwoorden zonder vervolg" (1) en "Video-onderdelen zonder video" (2); bij minder dan 5 punten open, anders dicht; klik op een kop klapt hem, klik op een regel opent het blok |
+| 21 | "Canvas ordenen", daarna "Ongedaan maken" in de melding (punt 7) | De blokken staan weer waar ze stonden; Ctrl+Y ordent opnieuw |
 
 ## Ongeldige verzoeken (SC-006)
 

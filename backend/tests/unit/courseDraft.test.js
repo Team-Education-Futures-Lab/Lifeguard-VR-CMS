@@ -21,7 +21,7 @@ const questionStep = (extra = {}) => ({
   ],
   ...extra,
 })
-const draft = (extra = {}) => ({ name: 'Cursus', description: 'Beschrijving', steps: [], ...extra })
+const draft = (extra = {}) => ({ draftVersionNumber: 1, name: 'Cursus', description: 'Beschrijving', steps: [], ...extra })
 
 /** The `fields` of the validation error thrown for `body`. */
 function fieldsOf(body) {
@@ -263,5 +263,14 @@ describe('keys and connections (specs/005 research R2)', () => {
     expect(fieldsOf(draft({ steps: [videoStep({ key: 'v' }), questionStep({ nextStepKey: 'v' })] }))['steps.1.nextStepKey']).toBe(
       'Een vraag gaat verder via haar antwoorden.',
     )
+  })
+})
+
+describe('the number of the loaded draft (specs/006 research R14)', () => {
+  it('is required as a positive whole number', () => {
+    for (const draftVersionNumber of [undefined, null, 0, -1, 1.5, '1']) {
+      expect(fieldsOf(draft({ draftVersionNumber }))).toEqual({ draftVersionNumber: 'Laad de pagina opnieuw om verder te werken.' })
+    }
+    expect(validateDraft(draft({ draftVersionNumber: 3 })).draftVersionNumber).toBe(3)
   })
 })

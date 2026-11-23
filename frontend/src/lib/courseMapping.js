@@ -9,9 +9,19 @@ const answerKey = (id) => `a${id}`
 const serverId = (key) => Number(key.slice(1))
 const nextKey = (id) => (id ? stepKey(id) : null)
 
+/** The publication fields of a draft document or a course list row (specs/006 contracts/api.md). */
+export function publicationOf(doc) {
+  return {
+    status: doc.status ?? 'draft',
+    publication: doc.publication ?? null,
+    lastPublishedVersionNumber: doc.lastPublishedVersionNumber ?? null,
+  }
+}
+
 /**
  * The editor model and the video details per video id. The video details stay out of the course,
- * so they are not part of undo or of the "unsaved changes" check (research R5b).
+ * so they are not part of undo or of the "unsaved changes" check (research R5b). `draftVersionNumber`
+ * goes back with every save (specs/006 research R14).
  */
 export function toEditor(doc) {
   const stepVideos = {}
@@ -19,8 +29,10 @@ export function toEditor(doc) {
     const base = { id: stepKey(step.id), type: step.stepType, x: step.positionX, y: step.positionY }
     if (step.stepType === 'video') {
       if (step.video) {
-        const { name, durationSeconds, thumbnailUrl, available } = step.video
-        stepVideos[step.videoId] = { name, durationSeconds, thumbnailUrl, available }
+        const { name, durationSeconds, thumbnailUrl, available, keptByLiveVersion } = step.video
+        // keptByLiveVersion: the video is in the live version, so it may stay although it is no
+        // longer available (specs/006 FR-012, FR-013).
+        stepVideos[step.videoId] = { name, durationSeconds, thumbnailUrl, available, keptByLiveVersion: keptByLiveVersion === true }
       }
       return { ...base, videoId: step.videoId, next: nextKey(step.nextStepId) }
     }
@@ -44,8 +56,12 @@ export function toEditor(doc) {
     startId: start ? stepKey(start.id) : null,
     nodes,
   }
-  return { course, stepVideos }
+  return { course, stepVideos, draftVersionNumber: doc.draftVersionNumber ?? null, ...publicationOf(doc) }
 }
+
+/** The editor key of a server step or answer id, for messages of the server (specs/006 research R7). */
+export const stepKeyOf = stepKey
+export const answerKeyOf = answerKey
 
 /** The keys of every step and answer in a saved draft document. */
 export function savedKeys(doc) {
@@ -106,11 +122,13 @@ export function applyKeyChanges(course, changes) {
 /**
  * The request body for "Opslaan als concept". Only keys that exist in the last saved draft
  * (`saved`) are sent as ids; everything else is new, also a step that came back through undo
- * after its removal was saved (research R10).
+ * after its removal was saved (research R10). `draftVersionNumber` is the number of the draft the
+ * editor loaded; the server refuses the save when the course was published since (specs/006 R14).
  */
-export function toPayload(course, saved) {
+export function toPayload(course, saved, draftVersionNumber) {
   const idOf = (key) => (saved.has(key) ? { id: serverId(key) } : {})
   return {
+    draftVersionNumber,
     name: course.name,
     description: course.description,
     steps: course.nodes.map((node) => {

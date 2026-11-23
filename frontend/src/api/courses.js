@@ -1,6 +1,6 @@
 import { api } from './client'
 
-// Course API (specs/004 contracts/api.md). Everything is a draft in this feature.
+// Course API (specs/004, 005 and 006 contracts/api.md).
 
 export async function listCourses() {
   const data = await api('/api/organisation/courses')
@@ -22,4 +22,14 @@ export function saveCourse(id, draft) {
 
 export function deleteCourse(id) {
   return api(`/api/organisation/courses/${id}`, { method: 'DELETE' })
+}
+
+/** Publishes the saved draft; returns the (new) draft document (specs/006 contracts/api.md). */
+export function publishCourse(id) {
+  return api(`/api/organisation/courses/${id}/publish`, { method: 'POST' })
+}
+
+/** Takes the live version off the Quests; returns the draft document (specs/006 FR-016). */
+export function unpublishCourse(id) {
+  return api(`/api/organisation/courses/${id}/unpublish`, { method: 'POST' })
 }

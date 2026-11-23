@@ -44,7 +44,7 @@ const courseUrl = () => `/api/organisation/courses/${course.courseId}`
 const thumbnailUrl = (courseId = course.courseId, stepId = step.id, videoId = video.id) =>
   `/api/organisation/courses/${courseId}/steps/${stepId}/videos/${videoId}/thumbnail`
 const savedStep = (extra = {}) => ({ key: 'saved', id: step.id, stepType: 'video', isStart: true, positionX: 0, positionY: 0, videoId: video.id, ...extra })
-const save = (steps) => as.a.put(courseUrl()).send({ name: 'Cursus', description: 'D', steps })
+const save = (steps) => as.a.put(courseUrl()).send({ draftVersionNumber: 1, name: 'Cursus', description: 'D', steps })
 
 const CASES = {
   'restricted by the owner': () => restrictVideo(video.id),
@@ -67,6 +67,7 @@ for (const [label, makeUnavailable] of Object.entries(CASES)) {
         durationSeconds: 61,
         thumbnailUrl: thumbnailUrl(),
         available: false,
+        keptByLiveVersion: false,
       })
     })
 

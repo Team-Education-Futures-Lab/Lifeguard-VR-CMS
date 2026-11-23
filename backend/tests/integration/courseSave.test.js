@@ -26,7 +26,8 @@ beforeEach(async () => {
 })
 
 const url = () => `/api/organisation/courses/${course.courseId}`
-const put = (body) => agent.put(url()).send(body)
+// Every save request carries the number of the draft (specs/006 research R14).
+const put = (body) => agent.put(url()).send(body && typeof body === 'object' && !Array.isArray(body) ? { draftVersionNumber: 1, ...body } : body)
 const answers = (...texts) => texts.map((answerText, i) => ({ answerText, isCorrect: i === 0 }))
 // Every step in a save request has a key; connections point to keys (specs/005 research R1).
 let keyCount = 0

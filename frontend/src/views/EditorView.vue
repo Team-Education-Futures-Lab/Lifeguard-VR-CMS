@@ -1,12 +1,20 @@
 <script setup>
-// Loads the draft of a course and shows the editor (specs/004 contracts/ui.md § Editor).
+// Loads the draft of a course and shows the editor (specs/004 contracts/ui.md § Editor). After a
+// publication the draft is a new copy with new ids (specs/006 research R14): the editor starts
+// again on that draft, with a fresh undo history.
 import { ref, watch } from 'vue'
 import { getCourse } from '../api/courses'
 import CourseEditor from '../editor/CourseEditor.vue'
 
 const props = defineProps({ id: String })
 const doc = ref(null)
+const notice = ref('')
 const state = ref('loading') // loading | ready | missing | error
+
+function onPublished(next, message) {
+  notice.value = message
+  doc.value = next
+}
 
 async function load() {
   state.value = 'loading'
@@ -30,5 +38,5 @@ watch(() => props.id, load, { immediate: true })
     <p>De cursus kon niet worden geladen.</p>
     <button class="btn" @click="load">Opnieuw</button>
   </div>
-  <CourseEditor v-else :key="doc.id" :doc="doc" />
+  <CourseEditor v-else :key="`${doc.id}-${doc.draftVersionNumber}`" :doc="doc" :notice="notice" @published="onPublished" />
 </template>

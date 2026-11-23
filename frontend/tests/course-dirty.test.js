@@ -12,6 +12,10 @@ const doc = {
   id: 12,
   name: 'Redding',
   description: 'Diep bad',
+  draftVersionNumber: 4,
+  status: 'draft',
+  publication: null,
+  lastPublishedVersionNumber: 3,
   steps: [
     {
       id: 103,
@@ -117,6 +121,8 @@ describe('saving', () => {
     })
     expect(await ed.saveDraft()).toBe(true)
     const payload = save.mock.calls[0][0]
+    // The number of the loaded draft goes along (specs/006 research R14).
+    expect(payload.draftVersionNumber).toBe(4)
     expect(payload.steps[0].id).toBe(103)
     expect(payload.steps[1]).not.toHaveProperty('id')
     expect(ed.course.nodes.map((n) => n.id)).toEqual(['s103', 's104'])
@@ -186,5 +192,18 @@ describe('saving', () => {
     await ed.saveDraft()
     expect(save).toHaveBeenCalled()
     expect(ed.fieldErrors).toEqual({ 'steps.0.answers': 'Kies precies één goed antwoord.' })
+  })
+})
+
+describe('a draft that was published meanwhile (specs/006 research R14)', () => {
+  it('keeps the changes and remembers the message of the server', async () => {
+    mountEditor()
+    ed.addNode('video', { x: 0, y: 300 })
+    await settle()
+    const message = 'Deze cursus is intussen gepubliceerd. Laad de pagina opnieuw om verder te werken.'
+    save.mockRejectedValue(Object.assign(new Error(message), { status: 409, code: 'draft_replaced' }))
+    expect(await ed.saveDraft()).toBe(false)
+    expect(ed.draftReplaced).toBe(message)
+    expect(ed.dirty).toBe(true)
   })
 })

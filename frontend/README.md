@@ -1,4 +1,4 @@
-# VR Cursus Studio – frontend
+# Lifeguard VR CMS – frontend
 
 Vue 3-app van het CMS waarin docenten cursussen voor de Quest 3 maken: 360°-video's en
 vragen, verbonden tot een route.

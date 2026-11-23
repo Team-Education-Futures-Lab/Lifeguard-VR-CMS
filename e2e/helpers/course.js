@@ -14,10 +14,14 @@ export async function createCourse(api, { name, description = 'Beschrijving van 
   return res.json();
 }
 
-/** Opent de editor van deze cursus en wacht tot de knop Opslaan er staat. */
+/**
+ * Opent de editor van deze cursus, wacht tot de knop Opslaan er staat en kiest de weergave "Canvas".
+ * Een nieuwe browser begint in "Canvas + paneel"; daar opent een blok in een zijpaneel in plaats van een venster.
+ */
 export async function openCourse(page, id) {
   await page.goto(`/courses/${id}`);
   await expect(page.locator('[data-test="save"]')).toBeVisible();
+  await page.getByRole('radio', { name: 'Canvas', exact: true }).check();
 }
 
 /**

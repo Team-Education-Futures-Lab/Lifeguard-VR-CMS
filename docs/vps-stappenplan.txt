@@ -1,0 +1,80 @@
+LifeGuard VR CMS - installatie op de VPS (yonder.lifeguardvr.nl)
+=================================================================
+
+1. Mappen
+---------
+sudo mkdir -p /opt/lifeguard-cms /srv/lifeguard/logos /srv/lifeguard/videos
+sudo chown "$USER" /opt/lifeguard-cms
+
+
+2. Bestanden op de VPS
+----------------------
+Zet docker-compose.prod.yml en .env.prod.example (van main, na de merge) in /opt/lifeguard-cms/
+
+
+3. Database en .env
+-------------------
+In sudo mariadb:
+
+CREATE DATABASE cms CHARACTER SET utf8mb4;
+CREATE USER 'cms'@'172.%' IDENTIFIED BY '<wachtwoord>';
+GRANT ALL PRIVILEGES ON cms.* TO 'cms'@'172.%';
+
+Daarna in de shell:
+
+cd /opt/lifeguard-cms && cp .env.prod.example .env && chmod 600 .env && nano .env
+
+Invullen in .env:
+
+CMS_IMAGE_PREFIX=ghcr.io/team-education-futures-lab
+CMS_VERSION=1.1.1
+CMS_LOGOS_PATH=/srv/lifeguard/logos
+CMS_VIDEOS_PATH=/srv/lifeguard/videos
+DB_NAME=cms
+DB_USER=cms
+DB_PASSWORD=<wachtwoord>
+
+- CMS_VERSION: de versie uit de release-job, zonder "v".
+- De rest mag leeg blijven of zo blijven staan.
+- Is poort 8080 al bezet, pas dan CMS_HTTP_PORT aan (en gebruik die poort ook in stap 7).
+
+
+4. MariaDB bereikbaar vanuit Docker
+-----------------------------------
+De containers verbinden via het Docker-adres van de VPS (meestal 172.17.0.1) op poort 3306.
+MariaDB luistert standaard alleen op 127.0.0.1. Een firewall mag poort 3306 vanuit Docker ook
+niet blokkeren.
+
+
+5. Starten
+----------
+docker login ghcr.io -u <github-gebruikersnaam>
+(wachtwoord: een GitHub-token met read:packages)
+
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml logs --tail=20 api
+
+Goed als er "session cleanup: removed 0 expired sessions" staat.
+
+
+6. Tabellen en beheerder
+------------------------
+docker compose -f docker-compose.prod.yml exec api npx knex migrate:latest
+docker compose -f docker-compose.prod.yml exec api node scripts/create-admin.js beheer
+
+(create-admin vraagt twee keer het wachtwoord van de beheerder)
+
+
+7. Webserver (alleen voor deze site)
+------------------------------------
+Stuur yonder.lifeguardvr.nl door naar http://127.0.0.1:8080, met:
+
+client_max_body_size 40m;
+proxy_read_timeout 300s;
+proxy_send_timeout 300s;
+large_client_header_buffers 4 32k;
+
+- client_max_body_size 40m: video's gaan in stukken van 32 MB.
+- proxy_read_timeout / proxy_send_timeout 300s: het laatste stuk wacht op de controle van de video.
+- large_client_header_buffers 4 32k: de uploadgegevens zitten in een header.

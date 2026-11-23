@@ -22,3 +22,10 @@ vraagstijl aansluit bij bijvoorbeeld het examen. De stakeholder kijkt hier nog n
 ## Vraag als eindpunt
 
 Een vraag moet ook als eindpunt van een cursus kunnen gelden.
+
+## Video's van verwijderde cursussen echt opruimen
+
+Een verwijderde video blijft nu voorgoed op schijf staan als hij in een verwijderde cursus zat,
+omdat de onderdelen van die cursus blijven bestaan. Dat moet opgeruimd worden; uitzoeken hoe dit
+samengaat met delen en overnemen (FR-12) en versies (FR-11), en de constitution (principe V)
+daarbij bijwerken.

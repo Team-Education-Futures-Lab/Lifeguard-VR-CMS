@@ -1,5 +1,6 @@
 import { db } from '../../db/knex.js'
 import { notFound, validationError } from '../../lib/errors.js'
+import { withDeadlockRetry } from '../../lib/deadlockRetry.js'
 import { MESSAGES, validateCourseFields, validateDraft } from '../../lib/courseDraft.js'
 import * as repo from './courseRepository.js'
 
@@ -85,10 +86,12 @@ export async function listCourses(organisationId) {
 /** A new, empty draft for the organisation in the session (FR-001, FR-002). */
 export async function createCourse(organisationId, body) {
   const fields = validateCourseFields(body)
-  return db.transaction(async (trx) => {
-    const id = await repo.insertCourse(trx, organisationId, fields)
-    return getDraft(id, organisationId, trx)
-  })
+  return withDeadlockRetry(() =>
+    db.transaction(async (trx) => {
+      const id = await repo.insertCourse(trx, organisationId, fields)
+      return getDraft(id, organisationId, trx)
+    }),
+  )
 }
 
 export async function getDraft(courseId, organisationId, trx = db) {
@@ -195,9 +198,17 @@ async function saveConnections(trx, steps, stepIds, answerIds) {
   }
 }
 
-/** "Opslaan als concept": all or nothing (FR-009). Returns the saved draft document. */
+/**
+ * "Opslaan als concept": all or nothing (FR-009). Returns the saved draft document. Saves of
+ * different courses can deadlock on the foreign-key index of CourseStep.nextCourseStepId; the whole
+ * transaction is then run again (lib/deadlockRetry.js).
+ */
 export async function saveDraft(courseId, organisationId, body) {
   const draft = validateDraft(body)
+  return withDeadlockRetry(() => saveDraftTransaction(courseId, organisationId, draft))
+}
+
+function saveDraftTransaction(courseId, organisationId, draft) {
   return db.transaction(async (trx) => {
     // Locking the draft row makes two saves of the same course run one after the other.
     const course = await repo.findOwnCourse(courseId, organisationId, trx, { forUpdate: true })

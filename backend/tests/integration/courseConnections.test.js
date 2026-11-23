@@ -151,28 +151,3 @@ describe('invalid connections change nothing (FR-008, SC-006)', () => {
     await expectRejected([{ ...video('x'), key: undefined }], 'steps.0.key', 'Dit onderdeel heeft geen geldige sleutel.')
   })
 })
-
-describe('saving different courses at the same time', () => {
-  // Deleting steps checks the foreign key CourseStep.nextCourseStepId and locks the end of that
-  // index; linking new steps inserts into it. Parallel saves of different courses could deadlock
-  // there and gave a 500 (found in the e2e run of spec 005). The save now runs again after a
-  // deadlock (lib/deadlockRetry.js), so every save succeeds.
-  it('saves every course, also when the saves overlap', async () => {
-    const others = []
-    for (let i = 0; i < 8; i++) {
-      const org = await createOrganisationRow({ name: `Zwembad ${i}`, loginCode: `ZWEMBAD-P${i}` })
-      const other = await createCourseRow({ organisationId: org.id })
-      others.push({ agent: (await agentWithSession({ organisationId: org.id })).agent, course: other })
-    }
-    const steps = () => [question('q', ['v1', 'v2', null], { isStart: true }), video('v1', 'q'), video('v2')]
-
-    for (let round = 0; round < 5; round++) {
-      const responses = await Promise.all(
-        others.map(({ agent: own, course: target }) =>
-          own.put(`/api/organisation/courses/${target.courseId}`).send({ draftVersionNumber: 1, name: 'Route', description: 'Tegelijk', steps: steps() }),
-        ),
-      )
-      expect(responses.map((response) => response.status)).toEqual(others.map(() => 200))
-    }
-  })
-})

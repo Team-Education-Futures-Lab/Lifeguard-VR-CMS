@@ -20,7 +20,9 @@ Bron: `specs/005-course-step-branching/quickstart.md`. Dit document zegt per sce
 - **Een andere route klaarzetten via de API** (scenario 9, 10, 13 en 20): een `PUT` met `key` en `nextStepKey` (contracts/api.md van spec 005). Alleen de handeling die het scenario test, gaat via het scherm.
 - **Verbinden via het menu, niet door te slepen.** Eén klik op een verbindingspunt ("+" onder een video, de letter onder een antwoord) opent het menu met "Nieuw video-onderdeel", "Nieuwe vraag", "Bestaand onderdeel" en "Verbinding weghalen". Slepen op het canvas (Vue Flow) is kwetsbaar en geeft hetzelfde resultaat (ook scenario 6, de lus).
 - **Video's klaarzetten** via `uploadVideos` uit `helpers/video-upload.js`, alleen waar een gekozen video nodig is (scenario 2 en 17). Eigen video's, "Alleen eigen organisatie".
-- De editor opent met `openCourse`, die de weergave "Canvas" kiest. Een nieuw onderdeel opent meteen zijn venster; sluit het met "Klaar".
+- De editor opent met `openCourse(page, id, { view: 'Canvas + paneel' })`. In "Canvas" opent een klik op een verbindingspunt ook het venster van het blok, en de achtergrond daarvan ligt over het menu. In "Canvas + paneel" opent het blok in het zijpaneel (`complementary`) en is het menu bruikbaar.
+- Een nieuw blok staat soms buiten beeld; klik daarna op "Alles in beeld" voordat de test het aanklikt.
+- Een blok toont alleen zijn eerste melding. Alle meldingen van een onderdeel staan in het paneel.
 - Kleuren (oranje, rood, groen) en de vorm van pijlen zijn handmatig. De tests controleren teksten, aantallen en wat er na herladen staat.
 
 ## Nieuwe helper (`e2e/helpers/course.js`)
@@ -31,22 +33,22 @@ Verder geen nieuwe helpers; wat een paar keer terugkomt (een verbindingspunt aan
 
 ## Teksten en selectors
 
-De teksten komen uit `specs/005-course-step-branching/contracts/ui.md` en de quickstart. De locators (`data-test` en rollen) worden bij het schrijven van de eerste test nagegaan en hier aangevuld.
+De teksten komen uit `specs/005-course-step-branching/contracts/ui.md` en de quickstart; de locators zijn bij het schrijven van de tests op het scherm nagegaan.
 
 | Wat | Tekst of locator |
 |---|---|
-| Blok op het canvas | `[data-test="block"]`; badges "Start" en "Einde" in `[data-test="badges"]` |
-| Pijl | een `group` met de naam "Edge from <bron> to <doel>"; de letter van het antwoord op de pijl; "B ↺" bij een lus |
-| Verbindingspunt | "+" onder een video-onderdeel; de letter (A–D) onder een vraag ("Klik of sleep om antwoord A te verbinden") |
-| Menu bij een punt | "Nieuw video-onderdeel", "Nieuwe vraag", "Bestaand onderdeel" (lijst, met zoekveld bij meer dan 8), "Verbinding weghalen" |
-| Tooltip op een blok | "Wordt bereikt vanuit 1 verbinding" / "Wordt bereikt vanuit 2 verbindingen"; nooit een vaste "← n" |
-| Balk | "n nog te doen" (opent de lijst met meldingen); "Cursus is compleet" |
+| Blok op het canvas | `.vue-flow__node[data-id="s<id van het onderdeel>"]` (een nieuw, nog niet opgeslagen blok heeft een tijdelijke sleutel); daarin `[data-test="block"]`, `[data-test="badges"]` met "Start", `[data-test="end"]` ("Einde") en `[data-test="issue"]` (de eerste melding) |
+| Pijl | `group` met de naam "Edge from <bron> to <doel>" (de `data-id` van de blokken); klikken op de lijn zelf (`.vue-flow__edge-interaction`); de letter op de pijl `[data-letter="B"]`, met "↺" bij een lus |
+| Verbindingspunt | `title` "Klik of sleep om te verbinden" ("+" onder een video) en "Klik of sleep om antwoord A te verbinden" (per antwoord) |
+| Menu bij een punt | `role="menu"` (`[data-test="connect-menu"]`); `menuitem` "Nieuw video-onderdeel", "Nieuwe vraag"; onder "Bestaand onderdeel" een `menuitem` per onderdeel met zijn label ("Vraag: Wat doe je?", "Kies een video" of de naam van de video) |
+| Tooltip op een blok | `title` van `[data-test="block"]`: "Wordt bereikt vanuit 1 verbinding" / "… 2 verbindingen"; zonder binnenkomende pijl geen `title`; nooit een vaste "← n" |
+| Balk | knop "n nog te doen" (opent de lijst); tekst "Cursus is compleet" |
 | Opslaan | `[data-test="save"]`; korte melding "Concept opgeslagen" of "Opgeslagen, nog n punten open" |
-| Meldingen | "Kies een video", "Antwoord B is nog niet verbonden", "Niet bereikbaar vanaf de start", "De route heeft geen einde", "Vanaf hier eindigt de route nooit", "Kies een startonderdeel" |
-| Lijst "nog te doen" | groep "Cursus" bovenaan; "Antwoorden zonder vervolg"; "Video-onderdelen zonder video" |
-| Bewerkformulier | video: "Daarna"; vraag: per antwoord "Gaat naar…"; `[data-test="start"]` |
-| Weergave "Lijst" | "Einde", "Verder bij “…”", "Nog niet verbonden", "Niet bereikbaar", "Nog geen startonderdeel" |
-| Canvas ordenen | knop "Canvas ordenen"; melding "Canvas geordend" met "Ongedaan maken" |
+| Meldingen | "Kies een video", "Vul de vraag in", "Antwoord B is nog niet verbonden", "Niet bereikbaar vanaf de start", "De route heeft geen einde", "Vanaf hier eindigt de route nooit", "Kies een startonderdeel" |
+| Lijst "nog te doen" | per groep een knop met naam en aantal ("Cursus 1", "Antwoorden zonder vervolg 1", "Video-onderdelen zonder video 2") en `aria-expanded`; per melding een knop ("Kies een video …") |
+| Zijpaneel | `complementary` met kop "Video-onderdeel" of "Vraag"; video: combobox "Daarna", `[data-test="video-option"]`; vraag: `[data-test="answer"]`, `[data-test="add-answer"]`; beide: `[data-test="start"]`, `[data-test="remove-step"]` |
+| Weergave "Lijst" | knop "Wat doe je? Start"; tekst "A. Ik grijp in"; knop "Verder bij “Wat doe je?”"; "Einde"; "Niet bereikbaar" |
+| Canvas ordenen | knop "Canvas ordenen"; melding "Canvas geordend" met knop "Ongedaan maken" |
 
 ## Scenario's
 
@@ -61,7 +63,7 @@ De teksten komen uit `specs/005-course-step-branching/contracts/ui.md` en de qui
 | 7 | Herladen: alle pijlen gelijk (SC-002) | A | Route uit 6 opslaan; de pijlen (bron, doel, letter) voor en na herladen vergelijken | `route-save.spec.js` |
 | 8 | Pijl van A aanklikken, Delete | A | Pijl weg; "Antwoord A is nog niet verbonden"; de losse video "Niet bereikbaar vanaf de start" | `route-issues.spec.js` |
 | 9 | Twee video's naar elkaar, één als start | A | Route via de API; meldingen "De route heeft geen einde" en bij beide blokken "Vanaf hier eindigt de route nooit" | `route-issues.spec.js` |
-| 10 | Onderdeel met twee binnenkomende pijlen verwijderen, Ctrl+Z (SC-007) | A | Route via de API; na verwijderen staan de bronnen zonder vervolg en gemeld; na Ctrl+Z zijn het onderdeel en beide pijlen terug | `route-issues.spec.js` |
+| 10 | Onderdeel met twee binnenkomende pijlen verwijderen, Ctrl+Z (SC-007) | A | Route via de API: antwoord A en B naar hetzelfde videoblok, antwoord C naar een ander (anders is de vraag na het verwijderen een "Einde" en worden de losse antwoorden niet gemeld); na verwijderen staan A en B zonder vervolg en gemeld; na Ctrl+Z zijn het onderdeel en beide pijlen terug | `route-issues.spec.js` |
 | 11 | Het startvakje uitzetten | A | Alleen "Kies een startonderdeel"; geen meldingen over bereikbaarheid | `route-issues.spec.js` |
 | 12 | Klik op een melding in "nog te doen" | A+H | Het venster van dat onderdeel opent. Of het in beeld schuift, is handmatig | `route-issues.spec.js` |
 | 13 | Weergave "Lijst" | A | Route via de API met een vertakking, een lus en een los onderdeel: A/B-vertakkingen, "Einde", "Verder bij “…”", het losse onderdeel onder "Niet bereikbaar" | `route-views.spec.js` |
@@ -101,5 +103,9 @@ Dat zijn 21 tests in 5 bestanden.
 
 ## Open punten
 
-- De naam van een vraag-onderdeel in het menu "Bestaand onderdeel" en in "Daarna" (bijvoorbeeld "Vraag: Wat doe je?", zoals in het "Daarna"-menu van spec 004) bij het schrijven nagaan.
-- Hoe het menu van een verbindingspunt heet (rol `menu` of een lijst met knoppen) bij de eerste test nagaan.
+- Geen. Het menu (`role="menu"`) en de namen in "Bestaand onderdeel" zijn nagegaan (zie Teksten en selectors).
+
+## Bevindingen in de app
+
+- **In de weergave "Canvas" is het menu bij een verbindingspunt niet te gebruiken:** de klik op het punt opent ook het venster van het blok, en de achtergrond daarvan ligt over het menu. In "Canvas + paneel" werkt het wel.
+- **Opslaan kan een 500 geven bij gelijktijdig opslaan:** MariaDB meldt een deadlock (`ER_LOCK_DEADLOCK`) bij het invoegen van een `Answer`, ook tussen cursussen van verschillende organisaties. De API probeert het niet opnieuw. Gezien tijdens een parallelle run (scenario 21); daarna niet meer.

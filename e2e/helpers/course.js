@@ -15,13 +15,15 @@ export async function createCourse(api, { name, description = 'Beschrijving van 
 }
 
 /**
- * Opent de editor van deze cursus, wacht tot de knop Opslaan er staat en kiest de weergave "Canvas".
+ * Opent de editor van deze cursus, wacht tot de knop Opslaan er staat en kiest de weergave (standaard "Canvas").
  * Een nieuwe browser begint in "Canvas + paneel"; daar opent een blok in een zijpaneel in plaats van een venster.
+ * De tests van spec 005 gebruiken "Canvas + paneel": in "Canvas" ligt het venster van het blok over het menu van
+ * een verbindingspunt.
  */
-export async function openCourse(page, id) {
+export async function openCourse(page, id, { view = 'Canvas' } = {}) {
   await page.goto(`/courses/${id}`);
   await expect(page.locator('[data-test="save"]')).toBeVisible();
-  await page.getByRole('radio', { name: 'Canvas', exact: true }).check();
+  await page.getByRole('radio', { name: view, exact: true }).check();
 }
 
 /**

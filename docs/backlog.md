@@ -46,3 +46,23 @@ nu zelf uitzoeken in welke cursussen hij nog zit. De eigenaar wil bij een verwij
 zien waar hij nog gebruikt wordt (welke cursussen en versies, ook van andere organisaties), zodat
 dit zonder zoeken op te lossen is. Uitzoeken hoeveel de eigenaar van andermans cursussen mag zien,
 en of de eigenaar het gebruik ook zelf kan beëindigen of alleen een verzoek kan sturen.
+
+## Versiegeschiedenis bekijken en een oude versie opnieuw publiceren (FR-11b)
+
+Afgesplitst van FR-11 op 2026-11-24 en op Could gezet: het belangrijke deel van FR-11 (verder werken
+naast de live versie, zien welke versie op de Quest staat) is gebouwd in spec 006; een
+geschiedenisscherm is vooral een vangnet en kan snel onhandig worden voor docenten. Het gaat om:
+per cursus de gepubliceerde versies zien (nummer, datum, live of offline), een oude versie alleen-lezen
+bekijken, en een oude versie opnieuw publiceren. Bij dat laatste moet een video die intussen is
+verwijderd eerst vervangen worden (FR-13, constitutie principe V).
+
+Er staat geen gat open: sinds spec 006 blijft elke gepubliceerde versie volledig bewaard (eigen
+onderdelen, antwoorden, verbindingen, posities, nummer en datum) en verandert nooit, en de code leest
+van de oude versies alleen de hoogste. Een latere feature hoeft alleen het scherm en het terugzetten te
+bouwen; `copyVersionAsDraft` in `backend/src/modules/courses/courseRepository.js` kopieert al een versie
+naar een nieuw concept.
+
+Kleinere variant als er alleen een vangnet nodig is: in het publicatiemenu "Concept terugzetten naar de
+live versie" (het concept verknoeid → terug naar wat er op de Quest staat), zonder versielijst. Een
+kant-en-klare Spec Kit-prompt voor de volledige variant is op 2026-11-24 geschreven (Claude-sessie over
+spec 006).

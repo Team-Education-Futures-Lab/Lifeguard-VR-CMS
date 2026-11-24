@@ -38,3 +38,11 @@ export const forbidden = () =>
   new AppError(403, 'forbidden', 'Je hebt geen toegang tot deze pagina.')
 
 export const invalidCredentials = (message) => new AppError(401, 'invalid_credentials', message)
+
+/** A quest link code that belongs to no active organisation (specs/007 FR-002, research R7). */
+export const invalidLinkCode = () =>
+  new AppError(401, 'invalid_link_code', 'Deze koppelcode klopt niet. Controleer de code in het CMS.')
+
+/** No, an unknown or a renewed link code in the Authorization header (specs/007 FR-004). */
+export const relinkRequired = () =>
+  new AppError(401, 'relink_required', 'Deze Quest is niet meer gekoppeld. Koppel opnieuw met de koppelcode.')

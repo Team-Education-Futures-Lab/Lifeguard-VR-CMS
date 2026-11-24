@@ -19,6 +19,16 @@ export function findActiveByLoginCode(loginCode) {
     .first('id', 'passwordHash')
 }
 
+/** The active organisation with this quest link code (specs/007 research R1), or undefined. */
+export function findActiveByQuestLinkCode(code, trx = db) {
+  return trx('Organisation').where({ questLinkCode: code }).whereNull('deletedAt').first('id', 'name')
+}
+
+/** Replaces the quest link code (specs/007 FR-018); returns the number of updated rows. */
+export function updateQuestLinkCode(trx, id, code) {
+  return trx('Organisation').where({ id }).whereNull('deletedAt').update({ questLinkCode: code })
+}
+
 /**
  * True when `code` equals the loginCode or questLinkCode of any organisation, deleted ones
  * included (FR-005, FR-012). `excludeId` only ignores that organisation's own loginCode.

@@ -164,6 +164,24 @@ export async function versionVideoIds(versionId, trx = db) {
   return new Set(rows.map((row) => row.videoId))
 }
 
+/**
+ * The stored files of videos, Map videoId → { id, storageKey, fileSizeBytes, durationSeconds }.
+ * Deliberately not filtered on deletedAt, visibility or VideoAccess: a video in a live version
+ * stays available to the Quest (specs/007 FR-014, constitution V).
+ */
+export async function videoFiles(videoIds, trx = db) {
+  if (videoIds.length === 0) return new Map()
+  const rows = await trx('Video').whereIn('id', videoIds).select('id', 'storageKey', 'fileSizeBytes', 'durationSeconds')
+  return new Map(rows.map((row) => [row.id, { ...row, fileSizeBytes: Number(row.fileSizeBytes) }]))
+}
+
+/** Whether a video is used by a step of one of these versions (specs/007 data-model.md). */
+export async function isVideoInVersions(videoId, versionIds, trx = db) {
+  if (versionIds.length === 0) return false
+  const row = await trx('CourseStep').whereIn('courseVersionId', versionIds).where({ videoId }).first('id')
+  return Boolean(row)
+}
+
 /** Puts the draft in the past: it becomes a published version (specs/006 research R3). */
 export function freezeDraft(trx, versionId) {
   return trx('CourseVersion').where({ id: versionId }).whereNull('publishedAt').update({ publishedAt: db.raw('UTC_TIMESTAMP()') })

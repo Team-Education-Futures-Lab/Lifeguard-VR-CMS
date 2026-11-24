@@ -29,10 +29,27 @@ function nameProblem(name) {
 
 const isDuplicateEntry = (err) => err?.code === 'ER_DUP_ENTRY'
 
-async function generateUniqueQuestLinkCode() {
+export async function generateUniqueQuestLinkCode() {
   for (;;) {
     const code = generateQuestLinkCode()
     if (!(await repo.isCodeTaken(code))) return code
+  }
+}
+
+/**
+ * Gives the organisation a new quest link code (specs/007 FR-018). The old code stops working at
+ * once, also on Quests that stored it (FR-004). Retried on a race for the unique index.
+ */
+export async function renewQuestLinkCode(organisationId) {
+  for (let attempt = 1; ; attempt++) {
+    const questLinkCode = await generateUniqueQuestLinkCode()
+    try {
+      const updated = await repo.updateQuestLinkCode(db, organisationId, questLinkCode)
+      if (updated === 0) throw notFound()
+      return { questLinkCode }
+    } catch (err) {
+      if (!isDuplicateEntry(err) || attempt >= 3) throw err
+    }
   }
 }
 

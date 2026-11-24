@@ -28,6 +28,18 @@ export function suggestLoginCodeBase(name) {
     .replace(/-+$/, '')
 }
 
+const QUEST_LINK_PATTERN = new RegExp(`^[${QUEST_LINK_ALPHABET}]{${QUEST_LINK_LENGTH}}$`)
+
+/** Trims and upper-cases a quest link code (specs/007 research R2); anything else becomes ''. */
+export function normalizeQuestLinkCode(value) {
+  return typeof value === 'string' ? value.trim().toUpperCase() : ''
+}
+
+/** Exactly 8 characters from QUEST_LINK_ALPHABET, so a login code can never match. */
+export function isValidQuestLinkCode(code) {
+  return QUEST_LINK_PATTERN.test(code)
+}
+
 export function generateQuestLinkCode() {
   let code = ''
   for (let i = 0; i < QUEST_LINK_LENGTH; i++) {

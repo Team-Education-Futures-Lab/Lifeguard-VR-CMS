@@ -31,6 +31,29 @@ publicatiedatum), FR-03-VR (de hele cursus met alle video's in één keer downlo
 Bouwt voort op feature 001 (organisaties, koppelcode bij aanmaken), feature 002/003 (video's achter
 toegangscontrole via nginx) en feature 006 (live versie, versienummer, publicatiedatum).
 
+## Clarifications
+
+### Session 2026-11-24
+
+- Q: Wat gebeurt er met Quests die al met de oude code gekoppeld waren als de organisatie een
+  nieuwe koppelcode maakt? → A: Ze worden direct afgesloten: elk volgend verzoek wordt geweigerd
+  met "opnieuw koppelen nodig" tot ze met de nieuwe code gekoppeld zijn (FR-004).
+- Q: Waar in het CMS ziet en vernieuwt de organisatie haar koppelcode? → A: Op een eigen pagina
+  "Quest koppelen" in het menu, met de code, een korte uitleg en de knop "Nieuwe koppelcode maken"
+  (FR-017).
+- Q: Hoe streng moet het CMS het raden van koppelcodes afremmen? → A: Dat hoeft niet; er komt geen
+  afremming van mislukte koppelpogingen in deze feature.
+- Q: Hoe laat een gekoppelde Quest bij elk verzoek zien dat hij bij de organisatie hoort? → A: De
+  Quest bewaart de koppelcode zelf en stuurt die bij elk verzoek mee. Er komt geen apart token,
+  geen extra geheim in `.env` en geen nieuwe tabel. Na een nieuwe koppelcode klopt de bewaarde
+  code niet meer en is de Quest direct afgesloten (FR-004).
+- Q: Welke tests horen bij deze feature? → A: Unit- en integratietests van de backend horen bij de
+  implementatie. De e2e-tests (Playwright) maakt het team zelf en vallen buiten de taken van deze
+  feature.
+- Q: Geeft de download feedback per antwoord of per vraag mee? → A: Eén feedbacktekst per vraag,
+  zoals in het CMS (feature 004/005); de Quest toont hem na elk antwoord. Geen datamodelwijziging
+  (FR-011).
+
 ## User Scenarios & Testing *(mandatory)*
 
 De "gebruiker" van de API in deze feature is de Quest-app (een programma, geen mens). De
@@ -102,7 +125,7 @@ Een Quest van A krijgt precies één cursus terug, met de gegevens van de live v
 ### User Story 3 - Eén cursus downloaden (Priority: P1)
 
 De Quest kiest een cursus uit de lijst en haalt de volledige inhoud van de live versie op: de
-onderdelen, de vragen en antwoorden (met goed/fout en feedback), de route (welk antwoord of
+onderdelen, de vragen (met hun feedback) en antwoorden (met goed/fout), de route (welk antwoord of
 onderdeel naar welk volgend onderdeel gaat, en het startonderdeel) en een lijst van de video's die
 erin zitten. Daarna haalt de Quest elke video op. Het CMS controleert per video of deze Quest hem
 mag hebben; de bytes zelf komen van nginx.
@@ -119,8 +142,8 @@ andere organisatie is niet op te halen.
 
 1. **Given** een live cursus van de eigen organisatie, **When** de Quest hem downloadt, **Then**
    krijgt hij in één antwoord de volledige inhoud van de live versie: cursusnaam, beschrijving,
-   versienummer, publicatiedatum, startonderdeel, alle onderdelen met hun soort, vraagteksten,
-   antwoorden met tekst, goed/fout en feedback, en per antwoord of onderdeel het volgende
+   versienummer, publicatiedatum, startonderdeel, alle onderdelen met hun soort, vraagteksten
+   met de feedback van de vraag, antwoorden met tekst en goed/fout, en per antwoord of onderdeel het volgende
    onderdeel (of dat het een einde is).
 2. **Given** die inhoud, **When** de Quest de lijst met video's bekijkt, **Then** staat elke video
    uit de live versie er precies één keer in (ook als hij in meerdere onderdelen zit), met een
@@ -154,17 +177,17 @@ nieuwe code.
 **Why this priority**: Nodig voor het koppelen in de praktijk en voor de veiligheid, maar zonder
 deze schermen is de API met een bekende code (bijvoorbeeld uit de beheeromgeving) al te testen.
 
-**Independent Test**: Open in het CMS de plek met de koppelcode: de code van de eigen organisatie
+**Independent Test**: Open in het CMS de pagina "Quest koppelen": de code van de eigen organisatie
 staat er. Vernieuw hem en bevestig: er staat een andere code, de oude code wordt geweigerd bij
 koppelen, een Quest die met de oude code gekoppeld was kan de lijst niet meer ophalen, en de
 nieuwe code werkt.
 
 **Acceptance Scenarios**:
 
-1. **Given** een ingelogde organisatie, **When** zij de plek in het CMS opent waar de Quest-koppeling
-   staat, **Then** ziet zij haar eigen koppelcode, goed leesbaar, met een korte uitleg in eenvoudige
+1. **Given** een ingelogde organisatie, **When** zij via het menu de pagina "Quest koppelen" opent,
+   **Then** ziet zij haar eigen koppelcode, goed leesbaar, met een korte uitleg in eenvoudige
    taal waarvoor de code dient en dat het iets anders is dan de organisatiecode om in te loggen.
-2. **Given** die plek, **When** zij op "Nieuwe koppelcode maken" klikt, **Then** verschijnt een
+2. **Given** die pagina, **When** zij op "Nieuwe koppelcode maken" klikt, **Then** verschijnt een
    bevestiging in eenvoudige taal die zegt dat de oude code daarna niet meer werkt en dat alle
    Quests van de organisatie opnieuw gekoppeld moeten worden met de nieuwe code.
 3. **Given** die bevestiging, **When** zij bevestigt, **Then** heeft de organisatie een nieuwe,
@@ -196,11 +219,13 @@ nieuwe code werkt.
   live versie van een cursus van de eigen organisatie, dan mag de Quest hem ophalen, ook als de
   eigenaar hem intussen heeft beperkt of verwijderd.
 - **Videobestand ontbreekt op schijf**: De download van die video mislukt met een fout; de lijst en
-  de cursusinhoud blijven werken. Dit wordt in de logs vastgelegd.
+  de cursusinhoud blijven werken. In productie legt nginx dit vast in zijn foutlog; zonder nginx
+  (ontwikkeling) logt de API de fout.
 - **Onjuiste of ontbrekende koppeling**: Elk verzoek zonder geldige koppeling (lijst, cursus of
   video) wordt geweigerd zonder iets over cursussen of organisaties prijs te geven.
-- **Raden van koppelcodes**: Herhaald proberen met verkeerde codes wordt afgeremd, zodat codes niet
-  binnen redelijke tijd te raden zijn.
+- **Raden van koppelcodes**: Herhaald proberen met verkeerde codes wordt niet afgeremd
+  (Clarifications). Elke foute poging krijgt hetzelfde antwoord "ongeldige koppelcode" (FR-002);
+  wie vermoedt dat de code bekend is, maakt een nieuwe (FR-018).
 - **Ingelogd in het CMS maar geen Quest**: Een sessie van het CMS (organisatie of beheerder) geeft
   geen toegang tot de Quest-verzoeken, en een Quest-koppeling geeft geen toegang tot het CMS.
 - **Grote cursus**: Een cursus van 50 onderdelen wordt binnen de tijd van SC-003 als inhoud
@@ -216,16 +241,16 @@ nieuwe code werkt.
 
 - **FR-001**: Het CMS MUST een Quest laten koppelen met de koppelcode van een organisatie
   (`Organisation.questLinkCode`). Bij een geldige code van een niet-verwijderde organisatie MUST
-  de Quest een koppeling krijgen waarmee hij de volgende verzoeken doet, plus de naam van de
-  organisatie. Hoofdletters/kleine letters en spaties rond de code MUST NOT uitmaken.
+  de Quest de naam van de organisatie terugkrijgen; daarna doet hij de volgende verzoeken met
+  diezelfde koppelcode (Clarifications). Hoofdletters/kleine letters en spaties rond de code MUST NOT uitmaken.
 - **FR-002**: Een ongeldige code, de organisatiecode om in te loggen, of de code van een verwijderde
   organisatie MUST worden geweigerd met één en hetzelfde antwoord ("ongeldige koppelcode"), zodat
-  niet af te leiden is of een code ooit heeft bestaan. Herhaalde mislukte pogingen MUST worden
-  afgeremd.
+  niet af te leiden is of een code ooit heeft bestaan. Mislukte pogingen worden in deze feature
+  niet afgeremd (Clarifications).
 - **FR-003**: Een koppeling MUST precies bij één organisatie horen en alleen toegang geven tot wat
   FR-008 voor die organisatie bepaalt. Ze MUST NOT toegang geven tot het CMS, en een CMS-sessie
   MUST NOT toegang geven tot de Quest-verzoeken.
-- **FR-004**: Een koppeling MUST alleen werken zolang de koppelcode waarmee ze is gemaakt nog de
+- **FR-004**: Een koppeling MUST alleen werken zolang de koppelcode die de Quest meestuurt nog de
   geldige code van de organisatie is en de organisatie niet verwijderd is. Na het vernieuwen van de
   code (FR-018) of het verwijderen van de organisatie MUST elk verzoek met die koppeling worden
   geweigerd met een antwoord dat de app herkent als "opnieuw koppelen nodig", verschillend van
@@ -261,8 +286,8 @@ nieuwe code werkt.
 - **FR-011**: Een gekoppelde Quest MUST de inhoud van één cursus die hij volgens FR-007 ziet, in
   één antwoord kunnen ophalen. De inhoud MUST precies de live versie zijn: naam, beschrijving,
   versienummer, publicatiedatum, het startonderdeel, alle onderdelen (soort, en voor een
-  video-onderdeel welke video; voor een vraag de vraagtekst), alle antwoorden (tekst, goed of fout,
-  feedback) en de route (per antwoord of video-onderdeel het volgende onderdeel, of dat het een
+  video-onderdeel welke video; voor een vraag de vraagtekst en de feedback van de vraag, één tekst voor
+  alle antwoorden samen), alle antwoorden (tekst, goed of fout) en de route (per antwoord of video-onderdeel het volgende onderdeel, of dat het een
   einde is). Gegevens die alleen voor de editor zijn, zoals de plaats op het canvas, MUST NOT
   worden meegestuurd.
 - **FR-012**: De inhoud MUST een lijst bevatten van alle video's in de live versie, elke video één
@@ -287,8 +312,8 @@ nieuwe code werkt.
 
 **Koppelcode in het CMS**
 
-- **FR-017**: Een ingelogde organisatie MUST in het CMS haar eigen koppelcode kunnen zien, met een
-  korte uitleg in eenvoudige taal (NFR-03) dat de Quest hiermee aan de organisatie wordt gekoppeld
+- **FR-017**: Een ingelogde organisatie MUST haar eigen koppelcode kunnen zien op een eigen pagina
+  "Quest koppelen", bereikbaar vanuit het menu van het CMS, met een korte uitleg in eenvoudige taal (NFR-03) dat de Quest hiermee aan de organisatie wordt gekoppeld
   en dat het iets anders is dan de organisatiecode om in te loggen.
 - **FR-018**: Een ingelogde organisatie MUST een nieuwe koppelcode kunnen maken, na een bevestiging
   in eenvoudige taal die zegt dat de oude code daarna niet meer werkt en dat alle Quests opnieuw
@@ -313,10 +338,10 @@ nieuwe code werkt.
 
 - **Organisation** (bestaat, ERD): heeft één geldige koppelcode (`questLinkCode`). Vernieuwen
   vervangt de code; de oude code wordt niet bewaard als geldige code.
-- **Quest-koppeling**: de toegang die een Quest krijgt na koppelen; hoort bij één organisatie en
-  geldt alleen zolang de koppelcode waarmee ze gemaakt is de geldige code is (FR-004). Of dit een
-  nieuw opgeslagen gegeven wordt (en dus in het ERD komt) is een ontwerpkeuze voor het plan;
-  individuele Quests worden niet geregistreerd of beheerd in deze feature.
+- **Quest-koppeling**: de koppelcode die de Quest na een geslaagde koppeling bewaart en bij elk
+  verzoek meestuurt. Ze hoort bij één organisatie en werkt alleen zolang die code de geldige code
+  van de organisatie is (FR-004). Het CMS slaat hiervoor niets nieuws op en het ERD verandert niet
+  (Clarifications). Individuele Quests worden niet geregistreerd of beheerd in deze feature.
 - **Course** en **CourseVersion** (bestaan, feature 006): de lijst en de download tonen alleen de
   live versie. Versienummer en publicatiedatum komen van die versie.
 - **CourseStep** en **Answer** (bestaan): vormen de inhoud en de route van de download.

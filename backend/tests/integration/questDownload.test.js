@@ -42,6 +42,8 @@ describe('GET /api/quest/v1/courses/:courseId', () => {
       description: 'Beschrijving van Cursus',
       versionNumber: 1,
       publishedAt: '2026-11-20T10:00:00.000Z',
+      // specs/008: the route starts with a question whose answer A leads to `own`.
+      thumbnailUrl: `/api/quest/v1/courses/${course.courseId}/thumbnail?v=1`,
       startStepId: q.id,
       steps: [
         { id: v1.id, type: 'video', videoId: own.id, nextStepId: null },

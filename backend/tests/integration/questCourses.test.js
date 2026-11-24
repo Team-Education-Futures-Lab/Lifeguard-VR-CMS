@@ -31,7 +31,17 @@ describe('GET /api/quest/v1/courses', () => {
 
     const courses = await list()
     expect(courses.map((course) => course.id)).toEqual([live.courseId])
-    expect(Object.keys(courses[0]).sort()).toEqual(['description', 'downloadSizeBytes', 'id', 'name', 'publishedAt', 'versionNumber'])
+    expect(Object.keys(courses[0]).sort()).toEqual([
+      'description',
+      'downloadSizeBytes',
+      'id',
+      'name',
+      'publishedAt',
+      'thumbnailUrl',
+      'versionNumber',
+    ])
+    // specs/008 FR-006: the address carries the version number of the live version.
+    expect(courses[0].thumbnailUrl).toBe(`/api/quest/v1/courses/${live.courseId}/thumbnail?v=1`)
     expect(courses[0]).toMatchObject({
       name: 'Gepubliceerd',
       description: 'Beschrijving van Gepubliceerd',

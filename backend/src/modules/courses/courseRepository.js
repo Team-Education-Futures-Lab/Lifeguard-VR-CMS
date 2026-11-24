@@ -165,13 +165,16 @@ export async function versionVideoIds(versionId, trx = db) {
 }
 
 /**
- * The stored files of videos, Map videoId → { id, storageKey, fileSizeBytes, durationSeconds }.
- * Deliberately not filtered on deletedAt, visibility or VideoAccess: a video in a live version
- * stays available to the Quest (specs/007 FR-014, constitution V).
+ * The stored files of videos, Map videoId → { id, storageKey, thumbnailStorageKey, fileSizeBytes,
+ * durationSeconds }. Deliberately not filtered on deletedAt, visibility or VideoAccess: a video in
+ * a live version, and its thumbnail as course image, stays available to the Quest (specs/007
+ * FR-014, specs/008 FR-005, constitution V).
  */
 export async function videoFiles(videoIds, trx = db) {
   if (videoIds.length === 0) return new Map()
-  const rows = await trx('Video').whereIn('id', videoIds).select('id', 'storageKey', 'fileSizeBytes', 'durationSeconds')
+  const rows = await trx('Video')
+    .whereIn('id', videoIds)
+    .select('id', 'storageKey', 'thumbnailStorageKey', 'fileSizeBytes', 'durationSeconds')
   return new Map(rows.map((row) => [row.id, { ...row, fileSizeBytes: Number(row.fileSizeBytes) }]))
 }
 

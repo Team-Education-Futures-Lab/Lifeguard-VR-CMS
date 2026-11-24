@@ -34,6 +34,14 @@ questRoutes.get('/courses/:courseId', async (req, res) => {
   res.json(await service.getCourse(getQuestOrganisationId(req), idParam(req.params.courseId)))
 })
 
+// The course image (specs/008). Access check only, nginx delivers the bytes (constitution III).
+// The query parameter v is not read: it only makes the address unique per live version
+// (specs/008 research R3), so an old address gives the current image.
+questRoutes.get('/courses/:courseId/thumbnail', async (req, res) => {
+  const key = await service.getCourseThumbnailKey(getQuestOrganisationId(req), idParam(req.params.courseId))
+  await sendStoredFile(res, key, { contentType: 'image/jpeg', cacheControl: 'private, max-age=0, must-revalidate' })
+})
+
 // Access check only; nginx delivers the bytes and answers Range requests (constitution III,
 // research R5).
 questRoutes.get('/videos/:videoId', async (req, res) => {

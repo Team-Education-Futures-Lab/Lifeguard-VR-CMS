@@ -4,6 +4,7 @@ import { isVideoInVersions, versionContents, videoFiles } from '../courses/cours
 import { findActiveByQuestLinkCode } from '../organisations/organisationRepository.js'
 import { questLiveVersions } from './questCatalog.js'
 import { buildQuestContent, downloadSizeBytes } from './questContent.js'
+import { thumbnailVideoId } from './questThumbnail.js'
 
 // The Quest API (specs/007 contracts/quest-api.md). Which courses a Quest sees comes only from
 // questLiveVersions (FR-006).
@@ -42,6 +43,7 @@ export async function listCourses(organisationId) {
     description: content.description,
     versionNumber: content.versionNumber,
     publishedAt: content.publishedAt,
+    thumbnailUrl: content.thumbnailUrl,
     downloadSizeBytes: downloadSizeBytes(content),
   }))
   return { courses: courses.sort(byName) }
@@ -53,6 +55,22 @@ export async function getCourse(organisationId, courseId) {
   if (!version) throw notFound()
   const [content] = await buildContents([version])
   return content
+}
+
+/**
+ * The storage key of the image of a course the Quest sees (specs/008 FR-010, FR-012): the
+ * thumbnail of the first video on the route of the live version, also when the owner deleted or
+ * restricted that video (FR-005). No live version or no image is "not found".
+ */
+export async function getCourseThumbnailKey(organisationId, courseId) {
+  const version = (await questLiveVersions(organisationId)).get(courseId)
+  if (!version) throw notFound()
+  const { steps, answers } = (await versionContents([version.id])).get(version.id)
+  const videoIds = [...new Set(steps.filter((step) => step.videoId !== null).map((step) => step.videoId))]
+  const videos = await videoFiles(videoIds)
+  const videoId = thumbnailVideoId(steps, answers, videos)
+  if (videoId === null) throw notFound()
+  return videos.get(videoId).thumbnailStorageKey
 }
 
 /**

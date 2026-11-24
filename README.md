@@ -141,6 +141,11 @@ De organisatie ziet de koppelcode in het CMS onder "Quest koppelen". Een nieuwe 
 sluit meteen alle Quests af die de oude code gebruiken; die moeten opnieuw gekoppeld worden.
 Video's levert nginx via `X-Accel-Redirect`; de API controleert alleen de toegang.
 
+Per cursus geeft de API een `thumbnailUrl`, en `GET /api/quest/v1/courses/:courseId/thumbnail`
+levert die afbeelding: de thumbnail van de eerste video in de live versie, ook via
+`X-Accel-Redirect` (specs/008). Daarvoor is geen nieuwe map en geen `.env`-instelling nodig; de
+thumbnails staan al bij de video's.
+
 ## Productie
 
 Volledige uitleg, besluiten en het draaiboek voor de VPS: `docs/deployment-vps.md`.

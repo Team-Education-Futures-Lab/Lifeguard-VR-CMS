@@ -1,8 +1,18 @@
 // The course content a Quest downloads (specs/007 contracts/quest-api.md, research R4). The list
 // and the download both build it here, so downloadSizeBytes always matches what is sent (FR-010).
 
+import { thumbnailVideoId } from './questThumbnail.js'
+
 export function videoUrl(id) {
   return `/api/quest/v1/videos/${id}`
+}
+
+/**
+ * Address of the course image (specs/008 FR-006). `v` only makes the address change with every
+ * new live version, so the app can keep images per address; the server ignores it (research R3).
+ */
+export function thumbnailUrl(courseId, versionNumber) {
+  return `/api/quest/v1/courses/${courseId}/thumbnail?v=${versionNumber}`
 }
 
 const toIso = (value) => (value instanceof Date ? value.toISOString() : new Date(value).toISOString())
@@ -47,6 +57,9 @@ export function buildQuestContent(version, { steps, answers }, videosById) {
     description: version.description,
     versionNumber: version.versionNumber,
     publishedAt: toIso(version.publishedAt),
+    // Part of the content, so it counts in downloadSizeBytes; the image itself does not (specs/008 FR-009).
+    thumbnailUrl:
+      thumbnailVideoId(steps, answers, videosById) === null ? null : thumbnailUrl(version.courseId, version.versionNumber),
     startStepId: sortedSteps.find((step) => step.isStart)?.id ?? null,
     steps: questSteps,
     videos: videoIds.map((id) => {

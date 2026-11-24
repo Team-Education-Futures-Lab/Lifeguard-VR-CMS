@@ -26,8 +26,8 @@ const answers = [
   { id: 501, courseStepId: 11, answerText: 'Alarm slaan', isCorrect: 1, sortOrder: 0, nextCourseStepId: 12 },
 ]
 const videos = new Map([
-  [77, { id: 77, storageKey: 'videos/1/a.mp4', fileSizeBytes: 1000, durationSeconds: 95 }],
-  [78, { id: 78, storageKey: 'videos/1/b.mp4', fileSizeBytes: 2000, durationSeconds: null }],
+  [77, { id: 77, storageKey: 'videos/1/a.mp4', thumbnailStorageKey: 'thumbnails/1/a.jpg', fileSizeBytes: 1000, durationSeconds: 95 }],
+  [78, { id: 78, storageKey: 'videos/1/b.mp4', thumbnailStorageKey: 'thumbnails/1/b.jpg', fileSizeBytes: 2000, durationSeconds: null }],
 ])
 
 describe('buildQuestContent', () => {
@@ -40,6 +40,7 @@ describe('buildQuestContent', () => {
       description: version.description,
       versionNumber: 3,
       publishedAt: '2026-11-20T14:02:11.000Z',
+      thumbnailUrl: '/api/quest/v1/courses/345/thumbnail?v=3',
       startStepId: 10,
       steps: [
         { id: 10, type: 'video', videoId: 77, nextStepId: 11 },
@@ -63,9 +64,19 @@ describe('buildQuestContent', () => {
     })
   })
 
+  it('puts thumbnailUrl directly after publishedAt (specs/008 contract)', () => {
+    const keys = Object.keys(content)
+    expect(keys[keys.indexOf('publishedAt') + 1]).toBe('thumbnailUrl')
+  })
+
+  it('gives thumbnailUrl null when no video on the route has a thumbnail (specs/008 FR-004)', () => {
+    const withoutThumbnails = new Map([...videos].map(([id, video]) => [id, { ...video, thumbnailStorageKey: null }]))
+    expect(buildQuestContent(version, { steps, answers }, withoutThumbnails).thumbnailUrl).toBeNull()
+  })
+
   it('leaves out editor-only fields and storage keys', () => {
     const json = JSON.stringify(content)
-    for (const field of ['positionX', 'positionY', 'courseVersionId', 'isStart', 'storageKey', 'description":"x']) {
+    for (const field of ['positionX', 'positionY', 'courseVersionId', 'isStart', 'storageKey', 'StorageKey', 'description":"x']) {
       expect(json).not.toContain(field)
     }
   })

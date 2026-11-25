@@ -46,3 +46,15 @@ nu zelf uitzoeken in welke cursussen hij nog zit. De eigenaar wil bij een verwij
 zien waar hij nog gebruikt wordt (welke cursussen en versies, ook van andere organisaties), zodat
 dit zonder zoeken op te lossen is. Uitzoeken hoeveel de eigenaar van andermans cursussen mag zien,
 en of de eigenaar het gebruik ook zelf kan beëindigen of alleen een verzoek kan sturen.
+
+## Fingerprint-controle bij de deploy weer aanzetten (deze week)
+
+De deploy-stap in `.github/workflows/ci.yml` gaf een fout dat de fingerprint van de VPS niet
+herkend werd. Tijdelijk (2026-11-25) is de regel `fingerprint: ${{ secrets.VPS_HOST_FINGERPRINT }}`
+uitgecommentarieerd, zodat de deploy werkt. Zonder die regel controleert de deploy niet of hij met
+de echte VPS praat, dus dit moet terug zodra de product owner er weer is.
+
+Te doen: de juiste fingerprint ophalen (alleen het `SHA256:...`-deel, van het sleuteltype dat de
+server bij het verbinden gebruikt, meestal ed25519), bijvoorbeeld op de VPS met
+`ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2`. Die waarde opslaan als secret
+`VPS_HOST_FINGERPRINT`, de regel weer aanzetten en een deploy draaien om te controleren.

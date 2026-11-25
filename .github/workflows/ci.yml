@@ -313,7 +313,7 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          fingerprint: ${{ secrets.VPS_HOST_FINGERPRINT }}
+          # fingerprint: ${{ secrets.VPS_HOST_FINGERPRINT }}
           envs: APP_DIR
           script: |
             set -e

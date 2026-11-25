@@ -100,3 +100,14 @@ gedownloade cursussen bij ontkoppelen).
 Editortest spec 003 (E20, 2026-11-25): de meldingen staan nu goed en leesbaar, maar de woorden zelf moeten
 nog eens worden nagelopen. Alle teksten in `MenuTexts` (en de andere VR-teksten) samen met het team checken
 op eenvoudig Nederlands, toon en lengte.
+
+## Afbeeldingscache opruimen
+
+Editortest na spec 003 (2026-11-25): de map `thumbnails/` in `persistentDataPath` groeit steeds. Dat is de
+cache met afbeeldingen voor de kaarten op het cursussenscherm, per adres (`?v=<versie>`, research R11).
+Die wordt niet opgeruimd: niet als een cursus wordt verwijderd, niet bij een nieuwe versie (nieuw adres,
+oude afbeelding blijft) en niet als een cursus uit het CMS verdwijnt (regel P5 is in spec 003 bewust
+geschrapt, analyse M3). De afbeelding van een gedownloade cursus zelf (`courses/<id>/v<n>/thumbnail.jpg`)
+gaat wel weg bij verwijderen. Uitzoeken hoe de cache klein blijft, bijv. bij het opstarten afbeeldingen
+weggooien die bij geen cursus uit de laatste lijst horen, of een index adres → cursus-id bijhouden.
+Ook nagaan hoe groot dit in de praktijk wordt (±100 KB per afbeelding).

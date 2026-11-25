@@ -471,6 +471,6 @@ elke cursus toont de juiste status, en de gepubliceerde tonen versienummer en da
 - Het echt opruimen van video's blijft op de backlog; deze feature zorgt alleen dat een video in
   een live versie niet te vroeg verdwijnt (FR-014).
 - Buiten scope: de versiegeschiedenis bekijken, een oude versie terugzetten of opnieuw publiceren
-  (rest van FR-11); kiezen van beschikbaarheid, delen, overnemen en de centrale cursusbibliotheek
+  (FR-11b, op de backlog); kiezen van beschikbaarheid, delen, overnemen en de centrale cursusbibliotheek
   (FR-12); koppelcode en de API voor de Quest (FR-01-VR t/m FR-09-VR); het echt opruimen van
   video's.

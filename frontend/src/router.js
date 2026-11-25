@@ -10,6 +10,7 @@ import StyleSettingsView from './views/StyleSettingsView.vue'
 import CoursesView from './views/CoursesView.vue'
 import EditorView from './views/EditorView.vue'
 import VideosView from './views/VideosView.vue'
+import QuestLinkView from './views/QuestLinkView.vue'
 import ActionLogView from './views/admin/ActionLogView.vue'
 import OrganisationFormView from './views/admin/OrganisationFormView.vue'
 import OrganisationListView from './views/admin/OrganisationListView.vue'
@@ -40,6 +41,7 @@ export const routes = [
       { path: 'courses/:id', component: EditorView, props: true },
       { path: 'videos', component: VideosView },
       { path: 'settings/style', component: StyleSettingsView },
+      { path: 'quest', component: QuestLinkView },
       { path: 'organisation', redirect: '/settings/style' },
     ],
   },

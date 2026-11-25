@@ -47,6 +47,27 @@ zien waar hij nog gebruikt wordt (welke cursussen en versies, ook van andere org
 dit zonder zoeken op te lossen is. Uitzoeken hoeveel de eigenaar van andermans cursussen mag zien,
 en of de eigenaar het gebruik ook zelf kan beëindigen of alleen een verzoek kan sturen.
 
+## Versiegeschiedenis bekijken en een oude versie opnieuw publiceren (FR-11b)
+
+Afgesplitst van FR-11 op 2026-11-24 en op Could gezet: het belangrijke deel van FR-11 (verder werken
+naast de live versie, zien welke versie op de Quest staat) is gebouwd in spec 006; een
+geschiedenisscherm is vooral een vangnet en kan snel onhandig worden voor docenten. Het gaat om:
+per cursus de gepubliceerde versies zien (nummer, datum, live of offline), een oude versie alleen-lezen
+bekijken, en een oude versie opnieuw publiceren. Bij dat laatste moet een video die intussen is
+verwijderd eerst vervangen worden (FR-13, constitutie principe V).
+
+Er staat geen gat open: sinds spec 006 blijft elke gepubliceerde versie volledig bewaard (eigen
+onderdelen, antwoorden, verbindingen, posities, nummer en datum) en verandert nooit, en de code leest
+van de oude versies alleen de hoogste. Een latere feature hoeft alleen het scherm en het terugzetten te
+bouwen; `copyVersionAsDraft` in `backend/src/modules/courses/courseRepository.js` kopieert al een versie
+naar een nieuw concept.
+
+Kleinere variant als er alleen een vangnet nodig is: in het publicatiemenu "Concept terugzetten naar de
+live versie" (het concept verknoeid → terug naar wat er op de Quest staat), zonder versielijst. Een
+kant-en-klare Spec Kit-prompt voor de volledige variant is op 2026-11-24 geschreven (Claude-sessie over
+spec 006).
+
+<<<<<<< Updated upstream
 ## Fingerprint-controle bij de deploy weer aanzetten (deze week)
 
 De deploy-stap in `.github/workflows/ci.yml` gaf een fout dat de fingerprint van de VPS niet
@@ -58,3 +79,15 @@ Te doen: de juiste fingerprint ophalen (alleen het `SHA256:...`-deel, van het sl
 server bij het verbinden gebruikt, meestal ed25519), bijvoorbeeld op de VPS met
 `ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2`. Die waarde opslaan als secret
 `VPS_HOST_FINGERPRINT`, de regel weer aanzetten en een deploy draaien om te controleren.
+=======
+## Bug: lange videonaam duwt de cursus-editor naar rechts
+
+Gevonden op 2026-11-25. Is de naam van een video in de cursus-editor te lang, dan wordt alles rechts
+van het paneel te ver naar rechts geschoven. Een lange naam moet binnen het paneel blijven (afkappen
+of afbreken) zonder de rest van de layout te verschuiven.
+
+## Bug: bovenbalk van de cursus-editor verspringt bij opslaan
+
+Gevonden op 2026-11-25. Bij het opslaan in de cursus-editor verandert de hele layout van de
+bovenbalk. De bovenbalk moet tijdens en na het opslaan dezelfde indeling houden.
+>>>>>>> Stashed changes

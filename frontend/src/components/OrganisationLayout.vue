@@ -49,6 +49,7 @@ async function logout() {
         <RouterLink to="/courses" :class="{ on: route.path.startsWith('/courses') }">Cursussen</RouterLink>
         <RouterLink to="/videos" active-class="on">Video’s</RouterLink>
         <RouterLink to="/settings/style" active-class="on">Huisstijl</RouterLink>
+        <RouterLink to="/quest" active-class="on">Quest koppelen</RouterLink>
       </nav>
       <button class="topbar-logout" @click="logout">Uitloggen</button>
     </header>

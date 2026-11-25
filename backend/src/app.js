@@ -12,6 +12,7 @@ import { courseRoutes } from './modules/courses/courseRoutes.js'
 import { organisationDirectoryRoutes } from './modules/organisationDirectory/organisationDirectoryRoutes.js'
 import { organisationSelfRoutes } from './modules/organisationSelf/organisationSelfRoutes.js'
 import { adminOrganisationRoutes } from './modules/organisations/adminOrganisationRoutes.js'
+import { questRoutes } from './modules/quest/questRoutes.js'
 import { styleRoutes } from './modules/style/styleRoutes.js'
 import { videoRoutes } from './modules/videos/videoRoutes.js'
 import { videoUploadRoutes } from './modules/videos/videoUploadRoutes.js'
@@ -35,6 +36,10 @@ export function createApp() {
 
   // Outside the session middleware, so a health check never extends a session.
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
+
+  // The Quest API (specs/007) comes before cookieParser, csrf and session: it uses no cookies,
+  // no session and no CSRF header, only the quest link code as Bearer (research R1, R6).
+  app.use('/api/quest/v1', express.json({ limit: '10kb' }), questRoutes)
 
   // A saved course draft can hold 200 steps with long texts (specs/004 research R8). Parsed here
   // first; the general parser below then skips the already-read body.

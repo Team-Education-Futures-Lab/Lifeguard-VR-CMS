@@ -8,3 +8,6 @@ contract is de afspraak tussen beide kanten. Hoe de app is opgebouwd (mappen, on
 hoe een cursus uit het contract in beeld komt) staat met diagrammen in
 [docs/architectuur.md](https://github.com/Team-Education-Futures-Lab/Yonder-Futureslab-VR-Lifeguard/blob/main/docs/architectuur.md)
 van die repository (tot de merge naar `main` staat het op de branch `Development`).
+
+De uitgestelde wensen van de Quest-app staan in [backlog-quest-app.md](backlog-quest-app.md), een
+kopie van `docs/backlog.md` in de Quest-repository die gelijk wordt gehouden.

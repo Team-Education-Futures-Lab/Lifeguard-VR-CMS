@@ -66,3 +66,15 @@ Kleinere variant als er alleen een vangnet nodig is: in het publicatiemenu "Conc
 live versie" (het concept verknoeid → terug naar wat er op de Quest staat), zonder versielijst. Een
 kant-en-klare Spec Kit-prompt voor de volledige variant is op 2026-11-24 geschreven (Claude-sessie over
 spec 006).
+
+## Fingerprint-controle bij de deploy weer aanzetten (deze week)
+
+De deploy-stap in `.github/workflows/ci.yml` gaf een fout dat de fingerprint van de VPS niet
+herkend werd. Tijdelijk (2026-11-25) is de regel `fingerprint: ${{ secrets.VPS_HOST_FINGERPRINT }}`
+uitgecommentarieerd, zodat de deploy werkt. Zonder die regel controleert de deploy niet of hij met
+de echte VPS praat, dus dit moet terug zodra de product owner er weer is.
+
+Te doen: de juiste fingerprint ophalen (alleen het `SHA256:...`-deel, van het sleuteltype dat de
+server bij het verbinden gebruikt, meestal ed25519), bijvoorbeeld op de VPS met
+`ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2`. Die waarde opslaan als secret
+`VPS_HOST_FINGERPRINT`, de regel weer aanzetten en een deploy draaien om te controleren.

@@ -67,6 +67,7 @@ live versie" (het concept verknoeid → terug naar wat er op de Quest staat), zo
 kant-en-klare Spec Kit-prompt voor de volledige variant is op 2026-11-24 geschreven (Claude-sessie over
 spec 006).
 
+<<<<<<< Updated upstream
 ## Fingerprint-controle bij de deploy weer aanzetten (deze week)
 
 De deploy-stap in `.github/workflows/ci.yml` gaf een fout dat de fingerprint van de VPS niet
@@ -78,3 +79,15 @@ Te doen: de juiste fingerprint ophalen (alleen het `SHA256:...`-deel, van het sl
 server bij het verbinden gebruikt, meestal ed25519), bijvoorbeeld op de VPS met
 `ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2`. Die waarde opslaan als secret
 `VPS_HOST_FINGERPRINT`, de regel weer aanzetten en een deploy draaien om te controleren.
+=======
+## Bug: lange videonaam duwt de cursus-editor naar rechts
+
+Gevonden op 2026-11-25. Is de naam van een video in de cursus-editor te lang, dan wordt alles rechts
+van het paneel te ver naar rechts geschoven. Een lange naam moet binnen het paneel blijven (afkappen
+of afbreken) zonder de rest van de layout te verschuiven.
+
+## Bug: bovenbalk van de cursus-editor verspringt bij opslaan
+
+Gevonden op 2026-11-25. Bij het opslaan in de cursus-editor verandert de hele layout van de
+bovenbalk. De bovenbalk moet tijdens en na het opslaan dezelfde indeling houden.
+>>>>>>> Stashed changes

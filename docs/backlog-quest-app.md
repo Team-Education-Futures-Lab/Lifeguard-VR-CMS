@@ -24,12 +24,6 @@ plek voor (`CourseEndView.ExtraContentContainer`).
 Het prototype had per scenario een open reflectievraag aan het eind. Het CMS kent die niet. Ook hier
 eerst een CMS-spec en contractuitbreiding; de app toont hem daarna op het stopscherm.
 
-## Democursussen en -video's weghalen
-
-Zodra een cursus uit het CMS gedownload op de Quest te doorlopen is: `Assets/LifeGuard/DemoCourse/`,
-`Assets/LifeGuard/Scripts/App/Demo/` en `Assets/StreamingAssets/Videos/` weghalen. Daarmee vervalt de
-tijdelijke uitzondering in principe II van de constitution.
-
 ## UI verbeteren
 
 De UI is in spec 001 hergebruikt van het prototype en werkt, maar moet nog verbeterd worden: het menu
@@ -39,6 +33,11 @@ stopscherm (de oude reflectietekst is verborgen) en de vraag- en feedbackscherme
 
 Sinds spec 003 (editortest 2026-11-25, E8): de kaart van het cursussenscherm met voortgangsbalk en de
 knoppen "Pauzeren"/"Annuleren" werkt, maar de opmaak moet beter (`CourseCard.prefab`).
+
+Sinds spec 004 (editortest 2026-11-25): staan er geen cursussen op de bril, dan loopt de uitleg "Er staan nog
+geen cursussen op deze bril…" in het menu over de andere tekst heen. Die tekst (`EmptyText` in
+`MainMenu.unity`, gemaakt door het eenmalige script `Spec004MenuSetup` op de plek van de lijst) moet een
+eigen plek en grootte krijgen in de opmaak van het menu.
 
 ## UI volgt het hoofd te snel
 

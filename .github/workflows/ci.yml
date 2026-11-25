@@ -222,6 +222,10 @@ jobs:
     permissions:
       contents: write   # push the version tag
       packages: write   # push the images to GHCR
+    # Passed on to the deploy job.
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      skip: ${{ steps.version.outputs.skip }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -260,8 +264,8 @@ jobs:
       - name: Log in to GHCR
         if: steps.version.outputs.skip == 'false'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-      # Same images as built by hand for v1.0.0 (docs/deployment-vps.md): the web image with the
-      # nginx config for the VPS. The label links the packages to this repository.
+      # The web image is built with the nginx config for the VPS.
+      # The source label links the packages to this repository.
       - name: Build and push both images
         if: steps.version.outputs.skip == 'false'
         env:
@@ -270,6 +274,7 @@ jobs:
         run: |
           registry="ghcr.io/${OWNER,,}"
           labels="--label org.opencontainers.image.source=https://github.com/${{ github.repository }} --label org.opencontainers.image.version=$VERSION --label org.opencontainers.image.revision=${{ github.sha }}"
+          # Every image gets its version tag (for rollback) and latest (what the VPS runs).
           docker build $labels --target prod -t "$registry/lifeguard-cms-api:$VERSION" -t "$registry/lifeguard-cms-api:latest" backend
           docker build $labels -f frontend/Dockerfile --build-arg NGINX_CONF=default.prod.conf -t "$registry/lifeguard-cms-web:$VERSION" -t "$registry/lifeguard-cms-web:latest" .
           for image in lifeguard-cms-api lifeguard-cms-web; do
@@ -287,4 +292,37 @@ jobs:
           git tag -a "v$VERSION" -m "v$VERSION"
           git push origin "v$VERSION"
           echo "### Released v$VERSION" >> "$GITHUB_STEP_SUMMARY"
-          echo "On the VPS: set CMS_VERSION=$VERSION in .env, then pull and up -d (docs/deployment-vps.md)." >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy to the VPS
+    needs: release
+    # Runs only when release actually built a new version.
+    if: needs.release.outputs.skip == 'false'
+    runs-on: ubuntu-latest
+    # Never two deploys at the same time; a newer one waits for the running one.
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    steps:
+      - name: Deploy the latest images over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          APP_DIR: /opt/lifeguard-cms
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_PORT }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          fingerprint: ${{ secrets.VPS_HOST_FINGERPRINT }}
+          envs: APP_DIR
+          script: |
+            set -e
+            cd "$APP_DIR"
+            # .env has CMS_VERSION=latest, so pull fetches the images just released.
+            docker compose -f docker-compose.prod.yml pull
+            # Migrate with the new image before it starts serving, so new code never meets an old schema.
+            docker compose -f docker-compose.prod.yml run --rm api npx knex migrate:latest
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f
+      - name: Summary
+        run: echo "### Deployed v${{ needs.release.outputs.version }} to the VPS" >> "$GITHUB_STEP_SUMMARY"

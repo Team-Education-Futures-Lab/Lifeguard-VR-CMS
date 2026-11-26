@@ -28,6 +28,16 @@ export function courseIncomplete(issues) {
   return error
 }
 
+/** Sharing a course with restricted videos needs the owner's confirmation (specs/009 FR-009, FR-012). */
+export function sharedVideosWarning(videos) {
+  const error = new AppError(409, 'shared_videos_warning', "Deze cursus bevat video's die niet algemeen beschikbaar zijn.")
+  error.videos = videos
+  return error
+}
+
+/** Changing the availability needs a live version (specs/009 FR-006, research R9). */
+export const courseNotLive = () => new AppError(409, 'course_not_live', 'Publiceer de cursus eerst.')
+
 export const notAuthenticated = () =>
   new AppError(401, 'not_authenticated', 'Je bent niet ingelogd.')
 

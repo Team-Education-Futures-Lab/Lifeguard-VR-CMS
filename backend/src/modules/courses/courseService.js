@@ -1,9 +1,11 @@
 import { db } from '../../db/knex.js'
-import { courseIncomplete, draftReplaced, notFound, validationError } from '../../lib/errors.js'
+import { courseIncomplete, courseNotLive, draftReplaced, notFound, sharedVideosWarning, validationError } from '../../lib/errors.js'
 import { withDeadlockRetry } from '../../lib/deadlockRetry.js'
 import { checkCourse } from '../../lib/courseCheck.js'
 import { sameContent } from '../../lib/courseContent.js'
 import { MESSAGES, validateCourseFields, validateDraft } from '../../lib/courseDraft.js'
+import { sharedVideosWarning as videosToConfirm } from '../../lib/courseSharing.js'
+import { parseOrganisationIds, validateAccessOrganisations, validateVisibility } from '../../lib/videoChoices.js'
 import * as repo from './courseRepository.js'
 
 // Courses and their draft (specs/004 contracts/api.md). Saving replaces the whole draft in one
@@ -88,6 +90,7 @@ async function toDraftDocument(course, organisationId, trx) {
     status: info.status,
     publication: info.publication,
     lastPublishedVersionNumber: info.lastPublishedVersionNumber,
+    availability: await repo.courseAvailability(course.id, trx),
     updatedAt: new Date(course.updatedAt).toISOString(),
     steps: steps.map((step) => {
       const base = {
@@ -138,6 +141,7 @@ export async function listCourses(organisationId) {
       status,
       publication,
       lastPublishedVersionNumber,
+      visibility: row.visibility,
     }
   })
 }
@@ -334,10 +338,12 @@ async function contentOf(version, trx) {
  * - otherwise the draft itself becomes the published version and a copy is the new draft.
  * Returns the (new) draft document.
  */
-export function publishCourse(courseId, organisationId) {
+export async function publishCourse(courseId, organisationId, body = {}) {
+  const choices = parseSharingChoices(body, { required: false })
   return withDeadlockRetry(() =>
     db.transaction(async (trx) => {
       const course = await lockCurrentDraft(courseId, organisationId, trx)
+      const chosen = await resolveAvailability(choices, course.id, organisationId, trx)
       const doc = await toDraftDocument(course, organisationId, trx)
       const videoSteps = doc.steps.filter((step) => step.video)
       const issues = checkCourse(doc, {
@@ -347,9 +353,25 @@ export function publishCourse(courseId, organisationId) {
       if (issues.length > 0) throw courseIncomplete(issues)
 
       const latest = (await repo.latestPublishedVersions([course.id], trx)).get(course.id)
+      const live = (await repo.liveVersions([course.id], trx)).get(course.id)
       const draft = { id: course.versionId, name: course.name, description: course.description }
-      if (latest && sameContent(await contentOf(draft, trx), await contentOf(latest, trx))) {
-        if (latest.unpublishedAt === null) return doc
+      const same = latest && sameContent(await contentOf(draft, trx), await contentOf(latest, trx))
+
+      // The content that goes live: the draft, or the last published version when it is the same
+      // (specs/006 FR-017). Sharing it may need the owner's confirmation (specs/009 FR-009).
+      await checkSharingWarning(trx, {
+        ownerId: organisationId,
+        before: { live: Boolean(live), ...chosen.current },
+        after: { live: true, ...chosen.next },
+        contentVersionId: same ? latest.id : course.versionId,
+        previousVersionId: live?.id ?? null,
+        acknowledgedVideoIds: choices.acknowledgedVideoIds,
+      })
+
+      // Content and availability are saved together, or not at all (specs/009 FR-002, research R8).
+      await repo.setCourseAvailability(trx, course.id, chosen.next)
+      if (same) {
+        if (latest.unpublishedAt === null) return getDraft(course.id, organisationId, trx)
         await repo.setUnpublishedAt(trx, latest.id, false)
       } else {
         await repo.freezeDraft(trx, course.versionId)
@@ -375,6 +397,95 @@ export function unpublishCourse(courseId, organisationId) {
         await repo.setUnpublishedAt(trx, live.id, true)
         await repo.touchCourse(trx, course.id)
       }
+      return getDraft(course.id, organisationId, trx)
+    }),
+  )
+}
+
+/**
+ * The sharing fields of a request (specs/009 contracts/api.md): `visibility`,
+ * `accessOrganisationIds` (only for 'selective') and `acknowledgedVideoIds`. Checks the form of
+ * the values; whether the organisations exist is checked in resolveAvailability. Without
+ * `visibility` (only allowed when not `required`) the current availability stays.
+ */
+function parseSharingChoices(body, { required }) {
+  const fields = {}
+  const result = { visibility: undefined, accessOrganisationIds: [], acknowledgedVideoIds: [] }
+  if (body.visibility !== undefined || required) {
+    try {
+      result.visibility = validateVisibility(body.visibility)
+    } catch (err) {
+      Object.assign(fields, err.fields)
+    }
+  }
+  if (result.visibility === 'selective') {
+    try {
+      result.accessOrganisationIds = parseOrganisationIds(body.accessOrganisationIds)
+    } catch (err) {
+      Object.assign(fields, err.fields)
+    }
+  }
+  try {
+    result.acknowledgedVideoIds = parseOrganisationIds(body.acknowledgedVideoIds)
+  } catch {
+    fields.acknowledgedVideoIds = 'Laad de pagina opnieuw en probeer het nog eens.'
+  }
+  if (Object.keys(fields).length > 0) throw validationError(fields)
+  return result
+}
+
+/**
+ * The current and the new availability of a course, as { visibility, accessOrganisationIds }.
+ * The chosen organisations must be active and not the owner (specs/009 FR-003).
+ */
+async function resolveAvailability(choices, courseId, organisationId, trx) {
+  const stored = await repo.courseAvailability(courseId, trx)
+  const current = { visibility: stored.visibility, accessOrganisationIds: stored.accessOrganisations.map((o) => o.id) }
+  if (choices.visibility === undefined) return { current, next: current }
+  if (choices.visibility !== 'selective') return { current, next: { visibility: choices.visibility, accessOrganisationIds: [] } }
+  const ids = await validateAccessOrganisations(choices.accessOrganisationIds, organisationId, trx)
+  return { current, next: { visibility: 'selective', accessOrganisationIds: ids } }
+}
+
+/**
+ * Refuses with 409 shared_videos_warning when sharing needs a confirmation that the request does
+ * not hold for every video (specs/009 FR-009 – FR-012, research R3). Nothing has changed yet.
+ */
+async function checkSharingWarning(trx, { ownerId, before, after, contentVersionId, previousVersionId, acknowledgedVideoIds }) {
+  if (!after.live || after.visibility === 'private') return
+  const videos = videosToConfirm({
+    before,
+    after,
+    contentVideos: await repo.contentVideoRows(contentVersionId, trx),
+    previousVideoIds: previousVersionId ? [...(await repo.versionVideoIds(previousVersionId, trx))] : [],
+    allOrganisationIds: await repo.activeOrganisationIds(ownerId, trx),
+  })
+  const confirmed = new Set(acknowledgedVideoIds)
+  if (videos.some((video) => !confirmed.has(video.id))) throw sharedVideosWarning(videos)
+}
+
+/**
+ * "Beschikbaarheid wijzigen" (specs/009 FR-006, research R9): who sees a live course in the course
+ * library, without publishing again. Versions, status and Course.updatedAt stay. Returns the draft
+ * document.
+ */
+export async function changeAvailability(courseId, organisationId, body = {}) {
+  const choices = parseSharingChoices(body, { required: true })
+  return withDeadlockRetry(() =>
+    db.transaction(async (trx) => {
+      const course = await lockCurrentDraft(courseId, organisationId, trx)
+      const chosen = await resolveAvailability(choices, course.id, organisationId, trx)
+      const live = (await repo.liveVersions([course.id], trx)).get(course.id)
+      if (!live) throw courseNotLive()
+      await checkSharingWarning(trx, {
+        ownerId: organisationId,
+        before: { live: true, ...chosen.current },
+        after: { live: true, ...chosen.next },
+        contentVersionId: live.id,
+        previousVersionId: live.id,
+        acknowledgedVideoIds: choices.acknowledgedVideoIds,
+      })
+      await repo.setCourseAvailability(trx, course.id, chosen.next)
       return getDraft(course.id, organisationId, trx)
     }),
   )

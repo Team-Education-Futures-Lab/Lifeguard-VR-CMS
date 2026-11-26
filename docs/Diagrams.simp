@@ -4884,13 +4884,35 @@
               </text>
             </formatted-text>
           </item>
+          <item id="a711314a5f4e46bfb02021e4abaeb66b" cid="ENT023" type="erd-entity" name="CourseAccess" style-class="Flat Orange" creator="" creation-date="11/26/2026 10:00:00">
+            <style class="Flat Orange" />
+            <entity description="" />
+            <attributes>
+              <attribute uid="aed7f2c2d2bff4645aeb38fa061aa941c" cid="EA331" name="courseId" type="INT" type-id="INT" foreign-key="true" primary-key="true" nullable="false" creation-date="11/26/2026 10:00:00" />
+              <attribute uid="ad43448813ed14bcdad56510db41673e9" cid="EA332" name="organisationId" type="INT" type-id="INT" foreign-key="true" primary-key="true" nullable="false" creation-date="11/26/2026 10:00:00" />
+            </attributes>
+          </item>
+          <item id="5629a05824ce4bcfa44257e43413a451" cid="REL113" type="erd-relationship" creator="" creation-date="11/26/2026 10:00:00" from="585faf04d9744b2ca9c9126810a24eda" to="a711314a5f4e46bfb02021e4abaeb66b">
+            <erd-relation type="Identifying" multiplicity-from="1" multiplicity-to="0..*">
+              <attribute-pairs>
+                <attribute-pair from-attribute="" to-attribute="" />
+              </attribute-pairs>
+            </erd-relation>
+          </item>
+          <item id="cf4099f1b6e9454a96e096e06a4e91fa" cid="REL114" type="erd-relationship" creator="" creation-date="11/26/2026 10:00:00" from="f396de8621af43c5adf7f801675fb7dc" to="a711314a5f4e46bfb02021e4abaeb66b">
+            <erd-relation type="Identifying" multiplicity-from="1" multiplicity-to="0..*">
+              <attribute-pairs>
+                <attribute-pair from-attribute="" to-attribute="" />
+              </attribute-pairs>
+            </erd-relation>
+          </item>
           <item id="585faf04d9744b2ca9c9126810a24eda" cid="ENT003" type="erd-entity" name="Course" style-class="Flat Orange" creator="" creation-date="10/20/2026 08:29:24">
             <style class="Flat Orange" />
             <entity description="" />
             <attributes>
               <attribute uid="a07c9f2285279412d822a2130a845da2d990" cid="EA270" name="id" type="INT" type-id="INT" primary-key="true" nullable="false" creation-date="10/20/2026 08:29:24" />
               <attribute uid="a8032430ede1040bb95aa186578e67b2e" cid="EA271" name="parentCourseId" type="INT" type-id="INT" foreign-key="true" nullable="true" creation-date="10/20/2026 08:29:24" />
-              <attribute uid="aae06db42b8614d31ac9ad4c5298fbb35" cid="EA272" name="isSharedInLibrary" type="BOOLEAN" type-id="BOOLEAN" nullable="false" creation-date="10/20/2026 08:29:24" />
+              <attribute uid="aae06db42b8614d31ac9ad4c5298fbb35" cid="EA272" name="visibility" type="ENUM('public','selective','private')" type-id="ENUM('public','selective','private')" nullable="false" creation-date="10/20/2026 08:29:24" />
               <attribute uid="acd7db9ace3474a53861b4900bbf44777" cid="EA273" name="createdAt" type="DATETIME" type-id="DATETIME" nullable="false" creation-date="10/20/2026 08:29:24" />
               <attribute uid="ae6895fb2c55e4eceb76ee6b3929db24e" cid="EA274" name="updatedAt" type="DATETIME" type-id="DATETIME" nullable="false" creation-date="10/20/2026 08:29:24" />
               <attribute uid="aefe1f69d6d1a4c41a9061b18dfea1602" cid="EA275" name="deletedAt" type="DATETIME" type-id="DATETIME" nullable="true" creation-date="10/20/2026 08:29:24" />
@@ -5146,6 +5168,28 @@
           <item id="f9de60d5608a4cb2b3d38198a9db770e" iid="e357ab2a96e043b9b77ff913aa1ca62b" creation-date="10/21/2026 16:13:00" order-index="32" type="entity">
             <layout ax="14" ay="-537" awidth="140" aheight="154" x="14" y="-537" width="140" height="160" />
             <erd-entity show-nullability="true" />
+          </item>
+          <item id="a711314a5f4e46bfb02021e4abaeb66b" iid="11950fb614294211aaf6a7a1ded5ea1e" creation-date="11/26/2026 10:00:00" order-index="33" type="entity">
+            <layout ax="810" ay="-470" awidth="260" aheight="74" x="810" y="-470" width="260" height="74" />
+            <erd-entity show-nullability="true" />
+          </item>
+          <item id="5629a05824ce4bcfa44257e43413a451" iid="3b964c4a768c442eb260a785d4e5ccfb" creation-date="11/26/2026 10:00:00" order-index="34" type="relation">
+            <layout start-role-position="25,15" end-role-position="25,-15" line-style="oblique" lock-start-point="true" lock-end-point="true" lock-to-fields="false" auto-path="" x1="1180" y1="-270" x2="1070" y2="-440" start-border-pos="0" end-border-pos="0" start-local-pos="0" end-local-pos="0" name-position="0,20">
+              <points>
+                <point x="1180" y="-270" />
+                <point x="1070" y="-440" />
+              </points>
+            </layout>
+            <relation from="585faf04d9744b2ca9c9126810a24eda" from-iid="4e3374be73a54439b4048ed2a085aa87" to="a711314a5f4e46bfb02021e4abaeb66b" to-iid="11950fb614294211aaf6a7a1ded5ea1e" />
+          </item>
+          <item id="cf4099f1b6e9454a96e096e06a4e91fa" iid="f885cda57c464cb3bfd73d56bef94339" creation-date="11/26/2026 10:00:00" order-index="35" type="relation">
+            <layout start-role-position="25,15" end-role-position="25,-15" line-style="oblique" lock-start-point="true" lock-end-point="true" lock-to-fields="false" auto-path="" x1="640" y1="-210" x2="810" y2="-440" start-border-pos="0" end-border-pos="0" start-local-pos="0" end-local-pos="0" name-position="0,20">
+              <points>
+                <point x="640" y="-210" />
+                <point x="810" y="-440" />
+              </points>
+            </layout>
+            <relation from="f396de8621af43c5adf7f801675fb7dc" from-iid="9e5934d6aa414a5aa0c80ffcdc221380" to="a711314a5f4e46bfb02021e4abaeb66b" to-iid="11950fb614294211aaf6a7a1ded5ea1e" />
           </item>
         </layer>
       </diagram>

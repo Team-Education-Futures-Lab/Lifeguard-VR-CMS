@@ -46,7 +46,7 @@ describe('after publishing', () => {
     await flushPromises()
     expect(wrapper.emitted('published')).toEqual([[next, 'Gepubliceerd als versie 1']])
     // Publishing never saves: it works on the saved draft (verbeterronde V4).
-    expect(calls.map((c) => c.action).filter((a) => a !== 'GET')).toEqual(['publish'])
+    expect(calls.map((c) => c.action).filter((a) => a !== 'GET' && a !== 'organisations')).toEqual(['publish'])
   })
 
   it('shows the message it was given right away (after the view loaded the new draft)', async () => {

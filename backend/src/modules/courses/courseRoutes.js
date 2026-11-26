@@ -57,9 +57,17 @@ courseRoutes.put('/courses/:id', async (req, res) => {
   res.json(await service.saveDraft(courseId(req), getOrganisationId(req), { draftVersionNumber, name, description, steps }))
 })
 
-// Publishes the saved draft (specs/006 contracts/api.md); no body is read.
+// Publishes the saved draft (specs/006 contracts/api.md) with who sees it in the course library
+// (specs/009 contracts/api.md). Only these fields are read; the body may be empty.
 courseRoutes.post('/courses/:id/publish', async (req, res) => {
-  res.json(await service.publishCourse(courseId(req), getOrganisationId(req)))
+  const { visibility, accessOrganisationIds, acknowledgedVideoIds } = req.body ?? {}
+  res.json(await service.publishCourse(courseId(req), getOrganisationId(req), { visibility, accessOrganisationIds, acknowledgedVideoIds }))
+})
+
+// "Beschikbaarheid wijzigen" of a live course, without publishing again (specs/009 FR-006).
+courseRoutes.put('/courses/:id/availability', async (req, res) => {
+  const { visibility, accessOrganisationIds, acknowledgedVideoIds } = req.body ?? {}
+  res.json(await service.changeAvailability(courseId(req), getOrganisationId(req), { visibility, accessOrganisationIds, acknowledgedVideoIds }))
 })
 
 // Takes the live version off the Quests (specs/006 FR-016); no body is read.

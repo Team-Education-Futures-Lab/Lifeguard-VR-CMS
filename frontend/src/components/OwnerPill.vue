@@ -1,8 +1,14 @@
 <script setup>
-// Owner of a video (specs/003 FR-009, FR-025b): a coloured pill for another organisation, which
-// filters the library on that organisation when clicked, and a neutral "Eigen" pill for own videos.
-defineProps({ owner: { type: Object, required: true } })
+// Owner of a video (specs/003 FR-009, FR-025b) or of a course in the course library (specs/009): a
+// coloured pill for another organisation, which filters the library on that organisation when
+// clicked, and a neutral "Eigen" pill for own items.
+defineProps({
+  owner: { type: Object, required: true },
+  // What the filter shows: video's (specs/003) or cursussen (specs/009 course library).
+  subject: { type: String, default: 'video' },
+})
 const emit = defineEmits(['filter'])
+const VIDEOS = "video's"
 </script>
 
 <template>
@@ -11,7 +17,7 @@ const emit = defineEmits(['filter'])
     v-else
     type="button"
     class="pill other"
-    :title="`Toon alleen video's van ${owner.name}`"
+    :title="`Toon alleen ${subject === 'course' ? 'cursussen' : VIDEOS} van ${owner.name}`"
     data-test="owner"
     @click.stop="emit('filter', owner)"
   >

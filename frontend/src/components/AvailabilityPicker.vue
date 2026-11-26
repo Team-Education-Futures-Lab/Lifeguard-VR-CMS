@@ -1,6 +1,7 @@
 <script>
-// Who may see a video (specs/003 contracts/ui.md § Beschikbaarheid kiezen). Used in the upload
-// dialog and in the video window. Value: { visibility, accessOrganisationIds }.
+// Who may see a video (specs/003 contracts/ui.md § Beschikbaarheid kiezen) or a course in the
+// course library (specs/009 contracts/ui.md). Used in the upload dialog, the video window and the
+// publish dialogs. Value: { visibility, accessOrganisationIds }.
 
 export const NO_ORGANISATION_MESSAGE = 'Kies minstens één organisatie, of kies ‘Alleen eigen organisatie’.'
 
@@ -18,14 +19,29 @@ const props = defineProps({
   organisations: { type: Array, default: () => [] },
   // Unique per picker, so labels and radio groups of several pickers do not mix.
   idPrefix: { type: String, required: true },
+  // 'video' (default) or 'course': only the hints differ.
+  subject: { type: String, default: 'video', validator: (v) => ['video', 'course'].includes(v) },
 })
 const emit = defineEmits(['update:modelValue'])
 
-const OPTIONS = [
-  { value: 'public', label: 'Algemeen beschikbaar', hint: 'Alle organisaties kunnen deze video zien.' },
-  { value: 'selective', label: 'Selectief beschikbaar', hint: 'Alleen de organisaties die je kiest.' },
-  { value: 'private', label: 'Alleen eigen organisatie', hint: 'Alleen jouw organisatie ziet deze video.' },
-]
+// The hints per subject: a video (specs/003) or a course in the course library (specs/009 contracts/ui.md).
+const HINTS = {
+  video: {
+    public: 'Alle organisaties kunnen deze video zien.',
+    selective: 'Alleen de organisaties die je kiest.',
+    private: 'Alleen jouw organisatie ziet deze video.',
+  },
+  course: {
+    public: 'Alle organisaties zien deze cursus in de cursusbibliotheek.',
+    selective: 'Alleen de organisaties die je kiest.',
+    private: 'Alleen jouw organisatie gebruikt deze cursus. Hij staat niet in de cursusbibliotheek.',
+  },
+}
+const OPTIONS = computed(() => [
+  { value: 'public', label: 'Algemeen beschikbaar', hint: HINTS[props.subject].public },
+  { value: 'selective', label: 'Selectief beschikbaar', hint: HINTS[props.subject].selective },
+  { value: 'private', label: 'Alleen eigen organisatie', hint: HINTS[props.subject].private },
+])
 const FILTER_FROM = 10
 
 const filter = ref('')

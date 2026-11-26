@@ -61,6 +61,10 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
   // course from being published, shown in the "Nog niet klaar om te publiceren" dialog.
   const publishing = ref(false)
   const publishIssues = ref(null)
+  // Who sees the course in the course library (specs/009 FR-001), and a refused sharing that
+  // waits for the owner's confirmation: { videos, choices } (409 shared_videos_warning, FR-009).
+  const availability = reactive({ ...(doc.availability ?? { visibility: 'private', accessOrganisations: [] }) })
+  const shareWarning = ref(null)
 
   const ordered = computed(() => C.orderedNodes(course.value))
 
@@ -259,10 +263,11 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
    * "Publiceren" after the confirmation (specs/006 FR-001 – FR-007, research R7). Publishing works on
    * the saved draft only (verbeterronde V4): with unsaved changes nothing happens (the menu says
    * "Sla eerst je wijzigingen op"). With messages of the editor check nothing is sent: the dialog
-   * shows them. The server checks again; its messages go to the same dialog. Returns the new draft
-   * document, or null when nothing was published.
+   * shows them. The server checks again; its messages go to the same dialog. `choices` sets who sees
+   * the course in the course library (specs/009 FR-002); a warning about restricted videos is kept in
+   * `shareWarning` (FR-009). Returns the new draft document, or null when nothing was published.
    */
-  async function publish() {
+  async function publish(choices) {
     history.flush()
     if (dirty.value) return null
     const own = issues.value.issues
@@ -273,9 +278,12 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
     }
     publishing.value = true
     try {
-      return await publishRequest()
+      const result = await publishRequest(choices)
+      shareWarning.value = null
+      return result
     } catch (error) {
-      if (error.code === 'course_incomplete') {
+      if (error.code === 'shared_videos_warning') shareWarning.value = { videos: error.videos, choices }
+      else if (error.code === 'course_incomplete') {
         const list = (error.issues ?? []).map(fromServerIssue)
         flagIssues(list)
         publishIssues.value = list
@@ -296,6 +304,12 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
   function applyPublication(result) {
     Object.assign(publication, publicationOf(result))
     Object.assign(stepVideos, toEditor(result).stepVideos)
+    applyAvailability(result)
+  }
+
+  /** Takes over who sees the course in the course library from a draft document (specs/009). */
+  function applyAvailability(result) {
+    if (result.availability) Object.assign(availability, result.availability)
   }
 
   /** "Onpubliceren" after the confirmation (specs/006 FR-015, FR-016). Returns true when done. */
@@ -316,9 +330,10 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
     course, stepVideos, history, ordered, variant, issues,
     selectedId, selectedEdge, hoverEdge, focusEdge, focusEnds, modalId, focusRequest, showSettings,
     dirty, saving, fieldErrors, lostVideoNotices, draftVersionNumber, publication, draftReplaced, publishing, publishIssues,
+    availability, shareWarning,
     select, selectEdge, clearSelection, open, isFlagged,
     addNode, addLinked, connect, disconnect, tidyCanvas, removeNode, setStart, clearVideo, chooseVideo, confirmLosingVideo, saveDraft,
-    publish, unpublish, applyPublication,
+    publish, unpublish, applyPublication, applyAvailability,
   })
   provide(KEY, ctx)
   return ctx

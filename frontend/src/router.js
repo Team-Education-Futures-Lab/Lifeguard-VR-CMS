@@ -9,6 +9,7 @@ import HomeView from './views/HomeView.vue'
 import StyleSettingsView from './views/StyleSettingsView.vue'
 import CoursesView from './views/CoursesView.vue'
 import EditorView from './views/EditorView.vue'
+import CourseLibraryView from './views/CourseLibraryView.vue'
 import VideosView from './views/VideosView.vue'
 import QuestLinkView from './views/QuestLinkView.vue'
 import ActionLogView from './views/admin/ActionLogView.vue'
@@ -39,6 +40,7 @@ export const routes = [
       // Course and video screens are still the browser-only prototype (outside this feature).
       { path: 'courses', component: CoursesView },
       { path: 'courses/:id', component: EditorView, props: true },
+      { path: 'course-library', component: CourseLibraryView },
       { path: 'videos', component: VideosView },
       { path: 'settings/style', component: StyleSettingsView },
       { path: 'quest', component: QuestLinkView },

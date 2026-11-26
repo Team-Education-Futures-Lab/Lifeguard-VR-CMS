@@ -4,7 +4,11 @@
 // needs another video (FR-012, constitution V).
 import { onMounted, onBeforeUnmount } from 'vue'
 
-defineProps({ hasUnavailableVideo: { type: Boolean, default: false } })
+defineProps({
+  hasUnavailableVideo: { type: Boolean, default: false },
+  // The course is shared in the course library (specs/009 FR-025).
+  shared: { type: Boolean, default: false },
+})
 const emit = defineEmits(['confirm', 'cancel'])
 
 const onKey = (e) => e.key === 'Escape' && emit('cancel')
@@ -22,6 +26,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             De cursus is daarna niet meer te downloaden op de VR-brillen. Brillen die hem al hebben, kunnen hem blijven
             gebruiken. Je concept en eerdere versies blijven bewaard.
           </p>
+          <p v-if="shared" data-test="unpublish-library-note">Andere organisaties zien hem dan ook niet meer in de cursusbibliotheek.</p>
           <p v-if="hasUnavailableVideo" class="warn" data-test="unpublish-video-warning">
             Let op: een video in deze cursus is niet meer beschikbaar. Opnieuw publiceren kan pas met een andere video.
           </p>

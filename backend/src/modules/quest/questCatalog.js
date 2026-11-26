@@ -8,7 +8,10 @@ import { liveVersions } from '../courses/courseRepository.js'
  * In this feature: the courses the organisation owns (OrganisationCourse.isOwner = true) that
  * have a live version (specs/006: published, not unpublished, course not deleted).
  *
- * For courses taken over from the course library (FR-12, FR-008) only this function changes:
+ * Sharing a course in the course library (specs/009, FR-12 part 1) does not change this: a shared
+ * course is not on the Quests of other organisations (specs/009 FR-026).
+ *
+ * For courses taken over from the course library (FR-12 part 2) only this function changes:
  * allow OrganisationCourse rows with isOwner = false and let such a course point to the live
  * version of the original course (Course.parentCourseId). Callers stay the same.
  *

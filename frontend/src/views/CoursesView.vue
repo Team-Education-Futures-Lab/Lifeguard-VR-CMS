@@ -10,6 +10,7 @@ import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
 import DescriptionField from '../components/DescriptionField.vue'
 import PublicationStatus from '../components/PublicationStatus.vue'
+import { AVAILABILITY_LABEL } from '../lib/publication'
 
 const router = useRouter()
 const courses = ref([])
@@ -66,10 +67,12 @@ async function remove(c) {
   const ok = await confirmDialog({
     title: 'Cursus verwijderen?',
     // A published course also goes off the VR headsets (specs/006 FR-021).
+    // A shared course also leaves the course library (specs/009 FR-025).
     body:
-      c.status && c.status !== 'draft'
+      (c.status && c.status !== 'draft'
         ? `“${c.name}” wordt verwijderd. Deze cursus is gepubliceerd. Na verwijderen is hij niet meer te downloaden op de VR-brillen.`
-        : `“${c.name}” wordt verwijderd.`,
+        : `“${c.name}” wordt verwijderd.`) +
+      (c.visibility && c.visibility !== 'private' ? ' Andere organisaties zien hem dan ook niet meer in de cursusbibliotheek.' : ''),
     confirmLabel: 'Verwijderen',
     danger: true,
   })
@@ -109,12 +112,13 @@ async function remove(c) {
             {{ r.videos }} {{ r.videos === 1 ? 'video' : 'video’s' }} · {{ r.questions }} {{ r.questions === 1 ? 'vraag' : 'vragen' }} · bewerkt {{ timeAgo(r.updatedAt) }}
           </span>
         </RouterLink>
-        <PublicationStatus
-          class="row-status"
-          compact
-          :status="r.c.status"
-          :publication="r.c.publication ?? null"
-        />
+        <span class="row-status">
+          <PublicationStatus compact :status="r.c.status" :publication="r.c.publication ?? null" />
+          <!-- Who sees a published course in the course library (specs/009 contracts/ui.md). -->
+          <span v-if="r.c.status && r.c.status !== 'draft' && r.c.visibility" class="availability" data-test="course-availability">
+            {{ AVAILABILITY_LABEL[r.c.visibility] }}
+          </span>
+        </span>
         <button class="icon-btn" title="Verwijderen" @click="remove(r.c)"><Icon name="trash" :size="16" /></button>
       </li>
     </ul>
@@ -163,6 +167,8 @@ async function remove(c) {
 }
 .row { display: flex; align-items: center; gap: 16px; padding: 0 12px 0 0; }
 .row + .row { border-top: 1px solid var(--line); }
+.row-status { display: grid; gap: 2px; justify-items: start; }
+.availability { font-size: 0.8rem; color: var(--muted); }
 .row:hover { background: var(--brand-soft); }
 .row:hover .name { color: var(--brand-text); }
 .main { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 14px 20px; text-decoration: none; color: inherit; }

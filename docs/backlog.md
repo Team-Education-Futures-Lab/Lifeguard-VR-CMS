@@ -3,6 +3,45 @@
 Uitgestelde wensen voor het CMS. Een item hier is nog geen afspraak; het gaat via de Spec Kit-flow
 zodra het wordt opgepakt.
 
+## Gedeelde cursussen overnemen (FR-12, deel 2) — hoge prioriteit, volgende spec
+
+FR-12 is op 2026-11-26 opgedeeld in twee specs. Deel 1 (delen bij publiceren en de centrale
+cursusbibliotheek) is gebouwd in spec 009 (`specs/009-course-sharing-library`); dit is deel 2 en komt
+direct daarna. Het gaat om:
+
+- Een cursus uit de bibliotheek toevoegen aan de eigen organisatie, als verwijzing naar het
+  origineel (geen kopie).
+- Een eigen volledige kopie zodra de organisatie de cursus wil aanpassen; het origineel blijft
+  ongewijzigd en de kopie krijgt geen updates meer.
+- Een melding bij een organisatie met een verwijzing als de eigenaar een nieuwe versie publiceert;
+  zij kiest de nieuwe of de oude versie en de verwijzing wijst naar de gekozen versie.
+- De ontvanger mag video's die niet algemeen beschikbaar zijn binnen die cursus gebruiken en de
+  cursus verder volledig aanpassen; dit is niet terug te draaien (FR-14).
+- Een verwijderde cursus blijft bestaan zolang een andere organisatie hem via een verwijzing
+  gebruikt (zachte verwijdering, besloten bij feature 006). Hangt samen met "Cursussen en video's
+  van verwijderde cursussen echt opruimen" hieronder.
+- De Quest-API (feature 007) toont ook overgenomen cursussen; bij een verwijzing de gekozen versie.
+
+Open punten uit spec 009 (research R13):
+
+- Wat er met een verwijzing gebeurt als de eigenaar de cursus later beperkt (minder organisaties of
+  "Alleen eigen organisatie"): blijft de verwijzing werken, of verdwijnt hij?
+- Hoe de onomkeerbare toestemming voor beperkte video's wordt vastgelegd bij het overnemen. Spec 009
+  laat de eigenaar die video's bevestigen bij het delen, maar slaat de bevestiging niet op.
+- Spec 009 legt bij een cursus `Course.visibility` en `CourseAccess` vast; `questLiveVersions` in
+  `backend/src/modules/quest/questCatalog.js` is de enige plek die voor overgenomen cursussen hoeft te
+  veranderen.
+
+## Inhoud van een gedeelde cursus alleen-lezen bekijken
+
+Besloten bij spec 009 (2026-11-26): in de cursusbibliotheek ziet een andere organisatie nu alleen
+een samenvatting van een gedeelde cursus (naam, beschrijving, eigenaar, versie, datum, aantal
+onderdelen en video's). Wens: de volledige inhoud van de live versie alleen-lezen bekijken
+(onderdelen, vragen, antwoorden, verbindingen, video's met thumbnails), zodat een organisatie beter
+kan beslissen of zij de cursus overneemt. Uitzoeken: de thumbnails van video's die niet algemeen
+beschikbaar zijn worden dan zichtbaar; de waarschuwing bij delen (spec 009, FR-009 t/m FR-011) moet
+dat dan ook zeggen. Past mogelijk bij deel 2 (overnemen).
+
 ## Lijnen verplaatsen en lijnstijl
 
 Een pijl in de cursus-editor buigen of verleggen met een sleepbaar tussenpunt, en kiezen tussen
@@ -67,7 +106,6 @@ live versie" (het concept verknoeid → terug naar wat er op de Quest staat), zo
 kant-en-klare Spec Kit-prompt voor de volledige variant is op 2026-11-24 geschreven (Claude-sessie over
 spec 006).
 
-<<<<<<< Updated upstream
 ## Fingerprint-controle bij de deploy weer aanzetten (deze week)
 
 De deploy-stap in `.github/workflows/ci.yml` gaf een fout dat de fingerprint van de VPS niet
@@ -79,7 +117,7 @@ Te doen: de juiste fingerprint ophalen (alleen het `SHA256:...`-deel, van het sl
 server bij het verbinden gebruikt, meestal ed25519), bijvoorbeeld op de VPS met
 `ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2`. Die waarde opslaan als secret
 `VPS_HOST_FINGERPRINT`, de regel weer aanzetten en een deploy draaien om te controleren.
-=======
+
 ## Bug: lange videonaam duwt de cursus-editor naar rechts
 
 Gevonden op 2026-11-25. Is de naam van een video in de cursus-editor te lang, dan wordt alles rechts
@@ -90,4 +128,3 @@ of afbreken) zonder de rest van de layout te verschuiven.
 
 Gevonden op 2026-11-25. Bij het opslaan in de cursus-editor verandert de hele layout van de
 bovenbalk. De bovenbalk moet tijdens en na het opslaan dezelfde indeling houden.
->>>>>>> Stashed changes

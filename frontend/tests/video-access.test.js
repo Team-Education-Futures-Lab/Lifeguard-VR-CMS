@@ -25,4 +25,9 @@ describe('confirmationText', () => {
     expect(confirmationText(1)).toBe('1 organisatie kan deze video daarna niet meer zien.')
     expect(confirmationText(3)).toBe('3 organisaties kunnen deze video daarna niet meer zien.')
   })
+
+  it('speaks of the course library for a course (specs/009 FR-007)', () => {
+    expect(confirmationText(1, 'course')).toBe('1 organisatie kan deze cursus daarna niet meer zien in de cursusbibliotheek.')
+    expect(confirmationText(3, 'course')).toBe('3 organisaties kunnen deze cursus daarna niet meer zien in de cursusbibliotheek.')
+  })
 })

@@ -21,7 +21,7 @@ async function bulkCourses(count, stepsPerVersion) {
   const now = new Date('2026-11-20T10:00:00.000Z')
   const courseIds = []
   for (let i = 0; i < count; i++) {
-    const [id] = await db('Course').insert({ isSharedInLibrary: false, createdAt: now, updatedAt: now })
+    const [id] = await db('Course').insert({ createdAt: now, updatedAt: now })
     courseIds.push(id)
   }
   await db('OrganisationCourse').insert(courseIds.map((courseId) => ({ organisationId: a.id, courseId, isOwner: true, addedAt: now })))

@@ -111,4 +111,15 @@ describe('publishing and unpublishing', () => {
     }
     expect(await versionsOf(deleted.courseId)).toHaveLength(1)
   })
+
+  it('gives another organisation 404 when it sends an availability, also for a shared course (specs/009 FR-008)', async () => {
+    const base = `/api/organisation/courses/${course.courseId}`
+    expect((await as.a.post(`${base}/publish`).send({ visibility: 'public' })).status).toBe(200)
+    const before = await versionsOf(course.courseId)
+    expect((await as.b.post(`${base}/publish`).send({ visibility: 'private' })).status).toBe(404)
+    expect((await as.b.put(`${base}/availability`).send({ visibility: 'private' })).status).toBe(404)
+    expect((await as.b.get(base)).status).toBe(404)
+    expect(await versionsOf(course.courseId)).toEqual(before)
+    expect((await db('Course').where({ id: course.courseId }).first()).visibility).toBe('public')
+  })
 })

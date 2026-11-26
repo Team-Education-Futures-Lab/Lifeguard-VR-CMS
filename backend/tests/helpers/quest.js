@@ -33,8 +33,23 @@ export async function route(versionId, { first, second = first, questionText = '
  * and a draft with number n + 1. The last version is live unless it has `unpublishedAt`.
  * Returns { courseId, draftVersionId, versionIds, routes }.
  */
-export async function publishedCourse({ organisationId, name = 'Testcursus', versions, deletedAt = null }) {
-  const course = await createCourseRow({ organisationId, name: `${name} (concept)`, deletedAt })
+export async function publishedCourse({
+  organisationId,
+  name = 'Testcursus',
+  versions,
+  deletedAt = null,
+  visibility = 'private',
+  accessOrganisationIds = [],
+  parentCourseId = null,
+}) {
+  const course = await createCourseRow({
+    organisationId,
+    name: `${name} (concept)`,
+    deletedAt,
+    visibility,
+    accessOrganisationIds,
+    parentCourseId,
+  })
   await db('CourseVersion').where({ id: course.versionId }).update({ versionNumber: versions.length + 1 })
   const versionIds = []
   const routes = []

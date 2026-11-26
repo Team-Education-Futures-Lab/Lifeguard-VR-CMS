@@ -14,6 +14,7 @@ const COURSE = {
   videoStepCount: 1,
   questionStepCount: 2,
   status: 'draft',
+  visibility: 'private',
 }
 
 /** Answers the API calls of the view; `post` handles POST /courses. */
@@ -176,6 +177,36 @@ describe('CoursesView: publication status', () => {
     expect(ui.confirm.body).toBe(
       '“Redding in het diepe bad” wordt verwijderd. Deze cursus is gepubliceerd. Na verwijderen is hij niet meer te downloaden op de VR-brillen.',
     )
+    ui.confirm.resolve(false)
+    wrapper.unmount()
+  })
+})
+
+// Who sees a course in the course library (specs/009 contracts/ui.md § Status en overzicht, FR-025).
+describe('CoursesView: availability', () => {
+  const publication = { versionNumber: 1, publishedAt: '2026-11-23T13:05:00.000Z', hasUnavailableVideo: false }
+
+  it('shows the availability of a published course as text, and nothing for a draft', async () => {
+    mockApi({
+      courses: [
+        { ...COURSE, id: 1, name: 'Concept', visibility: 'public' },
+        { ...COURSE, id: 2, name: 'Eigen', status: 'published', publication, visibility: 'private' },
+        { ...COURSE, id: 3, name: 'Algemeen', status: 'published', publication, visibility: 'public' },
+        { ...COURSE, id: 4, name: 'Selectief', status: 'published_changed', publication, visibility: 'selective' },
+      ],
+    })
+    const { wrapper } = await mountView()
+    const labels = wrapper.findAll('.row').map((row) => row.find('[data-test="course-availability"]'))
+    expect(labels[0].exists()).toBe(false)
+    expect(labels.slice(1).map((label) => label.text())).toEqual(['Alleen eigen organisatie', 'Algemeen beschikbaar', 'Selectief beschikbaar'])
+    wrapper.unmount()
+  })
+
+  it('says that a shared course also leaves the course library when it is deleted', async () => {
+    mockApi({ courses: [{ ...COURSE, status: 'published', publication, visibility: 'public' }] })
+    const { wrapper } = await mountView()
+    await wrapper.find('button[title="Verwijderen"]').trigger('click')
+    expect(ui.confirm.body).toContain('Andere organisaties zien hem dan ook niet meer in de cursusbibliotheek.')
     ui.confirm.resolve(false)
     wrapper.unmount()
   })

@@ -47,6 +47,7 @@ async function logout() {
       </RouterLink>
       <nav class="nav" aria-label="Hoofdmenu">
         <RouterLink to="/courses" :class="{ on: route.path.startsWith('/courses') }">Cursussen</RouterLink>
+        <RouterLink to="/course-library" active-class="on">Cursusbibliotheek</RouterLink>
         <RouterLink to="/videos" active-class="on">Video’s</RouterLink>
         <RouterLink to="/settings/style" active-class="on">Huisstijl</RouterLink>
         <RouterLink to="/quest" active-class="on">Quest koppelen</RouterLink>

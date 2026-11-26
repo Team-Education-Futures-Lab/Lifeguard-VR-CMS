@@ -87,6 +87,13 @@ describe('GET /api/quest/v1/courses', () => {
     expect(row.downloadSizeBytes).toBe(1000 + Buffer.byteLength(download.text, 'utf8'))
   })
 
+  it('does not show courses that another organisation shares in the course library (specs/009 FR-026)', async () => {
+    const videoOfB = await createVideoRow({ organisationId: b.id, visibility: 'public' })
+    const shared = await publishedCourse({ organisationId: b.id, visibility: 'public', versions: [{ first: videoOfB.id }] })
+    expect(await list()).toEqual([])
+    expect((await questGet(`/courses/${shared.courseId}`, CODE)).status).toBe(404)
+  })
+
   it('asks to link again without a link code', async () => {
     const res = await questGet('/courses', null)
     expect(res.status).toBe(401)

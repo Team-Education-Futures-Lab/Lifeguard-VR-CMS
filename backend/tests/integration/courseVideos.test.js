@@ -84,6 +84,7 @@ describe('video details in the draft', () => {
       thumbnailUrl: `/api/organisation/courses/${courseId}/steps/${step.id}/videos/${videos.bPublic.id}/thumbnail`,
       available: true,
       keptByLiveVersion: false,
+      keptFromOriginal: false,
     })
     expect((await as.a.get(`/api/organisation/courses/${courseId}`)).body.steps[0].video).toEqual(step.video)
   })

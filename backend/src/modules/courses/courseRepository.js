@@ -31,9 +31,91 @@ export function ownCoursesQuery(organisationId, trx = db) {
 export function findOwnCourse(id, organisationId, trx = db, { forUpdate = false } = {}) {
   const query = ownCoursesQuery(organisationId, trx)
     .where('c.id', id)
-    .select('c.id', 'c.updatedAt', 'cv.id as versionId', 'cv.versionNumber', 'cv.name', 'cv.description')
+    .select('c.id', 'c.updatedAt', 'c.parentCourseId', 'cv.id as versionId', 'cv.versionNumber', 'cv.name', 'cv.description')
     .first()
   return forUpdate ? query.forUpdate() : query
+}
+
+/**
+ * A new own copy of a taken-over course (specs/011 research R1): Course with parentCourseId and
+ * visibility 'private' (a copy is never shared, FR-013) and the owner row of the organisation,
+ * at the database clock. The versions are added by the caller. Returns the new course id.
+ */
+export async function insertCopyCourse(trx, organisationId, originalCourseId) {
+  requireId(organisationId)
+  const now = db.raw('UTC_TIMESTAMP()')
+  const [courseId] = await trx('Course').insert({ parentCourseId: originalCourseId, visibility: 'private', createdAt: now, updatedAt: now })
+  await trx('OrganisationCourse').insert({ organisationId, courseId, isOwner: true, addedAt: now })
+  return courseId
+}
+
+/**
+ * The id of a not deleted own copy of `originalCourseId`, or undefined (specs/011 research R3,
+ * R8): a course with that parentCourseId that the organisation owns.
+ */
+export async function findOwnCopyOf(organisationId, originalCourseId, trx = db) {
+  requireId(organisationId)
+  const row = await trx('Course as c')
+    .join('OrganisationCourse as oc', function joinOwner() {
+      this.on('oc.courseId', '=', 'c.id').andOnVal('oc.organisationId', '=', organisationId).andOnVal('oc.isOwner', '=', true)
+    })
+    .where('c.parentCourseId', originalCourseId)
+    .whereNull('c.deletedAt')
+    .orderBy('c.id')
+    .first('c.id')
+  return row?.id
+}
+
+/**
+ * The only definition of "the videos a copy got from its original" (specs/011 FR-014, research
+ * R4): the videos in the steps of version 1 of a course with a parentCourseId, that are not soft
+ * deleted. Version 1 never changes and is exactly the chosen version, so it is the proof of the
+ * owner's permission. Restricting a video or deleting its owner does not matter; a soft-deleted
+ * video follows constitution V (FR-015). Map courseId → Set(videoId); copies only.
+ */
+export async function grantedVideoIds(courseIds, trx = db) {
+  const result = new Map()
+  if (courseIds.length === 0) return result
+  const rows = await trx('Course as c')
+    .join('CourseVersion as cv', function joinFirst() {
+      this.on('cv.courseId', '=', 'c.id').andOnVal('cv.versionNumber', '=', 1)
+    })
+    .join('CourseStep as s', 's.courseVersionId', 'cv.id')
+    .join('Video as v', 'v.id', 's.videoId')
+    .whereIn('c.id', courseIds)
+    .whereNotNull('c.parentCourseId')
+    .whereNull('v.deletedAt')
+    .distinct('c.id as courseId', 'v.id as videoId')
+  for (const row of rows) {
+    if (!result.has(row.courseId)) result.set(row.courseId, new Set())
+    result.get(row.courseId).add(row.videoId)
+  }
+  return result
+}
+
+/**
+ * "Gebaseerd op" of copies (specs/011 FR-012, research R6): Map courseId → { courseName,
+ * ownerName } with the name of the newest published version of the original (never a draft name)
+ * and the current name of its owner. Not filtered on deletedAt: a deleted original or owner keeps
+ * its last name. Courses without parentCourseId get no entry.
+ */
+export async function basedOnOf(courseIds, trx = db) {
+  const result = new Map()
+  if (courseIds.length === 0) return result
+  const copies = await trx('Course').whereIn('id', courseIds).whereNotNull('parentCourseId').select('id', 'parentCourseId')
+  if (copies.length === 0) return result
+  const parentIds = [...new Set(copies.map((row) => row.parentCourseId))]
+  const latest = await latestPublishedVersions(parentIds, trx)
+  const owners = await trx('OrganisationCourse as oc')
+    .join('Organisation as o', 'o.id', 'oc.organisationId')
+    .whereIn('oc.courseId', parentIds)
+    .where('oc.isOwner', true)
+    .select('oc.courseId', 'o.name')
+  const ownerName = new Map(owners.map((row) => [row.courseId, row.name]))
+  for (const row of copies) {
+    result.set(row.id, { courseName: latest.get(row.parentCourseId)?.name ?? '', ownerName: ownerName.get(row.parentCourseId) ?? '' })
+  }
+  return result
 }
 
 /**

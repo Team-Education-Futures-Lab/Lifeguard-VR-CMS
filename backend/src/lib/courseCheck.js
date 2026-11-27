@@ -26,11 +26,13 @@ function outgoing(step) {
 
 /**
  * Checks a draft document. `libraryVideoIds`: the videos in the organisation's library;
- * `liveVideoIds`: the videos in the course's live version. A video outside the library is only
- * reported when the live version does not have it (FR-012, constitution V). Returns the issues as
- * [{ code, message, stepId?, answerId? }]; an empty list means the course may be published.
+ * `liveVideoIds`: the videos in the course's live version; `grantedVideoIds`: the videos an own copy
+ * got from its original (specs/011 FR-014, research R4). A video outside the library is only
+ * reported when neither the live version nor the original has it (FR-012, constitution V).
+ * Returns the issues as [{ code, message, stepId?, answerId? }]; an empty list means the course
+ * may be published.
  */
-export function checkCourse(draft, { libraryVideoIds = new Set(), liveVideoIds = new Set() } = {}) {
+export function checkCourse(draft, { libraryVideoIds = new Set(), liveVideoIds = new Set(), grantedVideoIds = new Set() } = {}) {
   const issues = []
   const add = (code, stepId = null, answerId = null, letter = null) => {
     const issue = { code, message: CHECK_MESSAGES[code](letter) }
@@ -49,7 +51,7 @@ export function checkCourse(draft, { libraryVideoIds = new Set(), liveVideoIds =
   for (const step of steps) {
     if (step.stepType === 'video') {
       if (!step.videoId) add('noVideo', step.id)
-      else if (!libraryVideoIds.has(step.videoId) && !liveVideoIds.has(step.videoId)) add('videoUnavailable', step.id)
+      else if (!libraryVideoIds.has(step.videoId) && !liveVideoIds.has(step.videoId) && !grantedVideoIds.has(step.videoId)) add('videoUnavailable', step.id)
       continue
     }
     if (!step.questionText?.trim()) add('noQuestion', step.id)

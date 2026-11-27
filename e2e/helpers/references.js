@@ -34,3 +34,16 @@ export async function questVersions(t, questLinkCode) {
 
 /** De rij van een overgenomen cursus in het cursusoverzicht. */
 export const takenOverRow = (page, name) => page.locator('[data-test="taken-over-row"]').filter({ hasText: name });
+
+/**
+ * "Aanpassen" (spec 011): opent in het cursusoverzicht de overgenomen cursus met deze naam, kiest
+ * "Aanpassen", bevestigt en wacht tot de editor van de kopie open is. Geeft het id van de kopie.
+ */
+export async function copyTakenOverCourse(page, name) {
+  await page.goto('/courses');
+  await takenOverRow(page, name).getByRole('button').click();
+  await page.locator('[data-test="copy-reference"]').click();
+  await page.locator('.confirm-backdrop').getByRole('button', { name: 'Aanpassen', exact: true }).click();
+  await page.waitForURL(/\/courses\/\d+$/);
+  return Number(new URL(page.url()).pathname.split('/').pop());
+}

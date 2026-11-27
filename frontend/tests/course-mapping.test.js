@@ -66,8 +66,13 @@ describe('toEditor', () => {
 
   it('keeps video details apart, also for a video that is no longer available', () => {
     expect(toEditor(doc).stepVideos).toEqual({
-      17: { name: 'Zwembad', durationSeconds: 95, thumbnailUrl: '/api/organisation/courses/12/steps/101/videos/17/thumbnail', available: false, keptByLiveVersion: false },
+      17: { name: 'Zwembad', durationSeconds: 95, thumbnailUrl: '/api/organisation/courses/12/steps/101/videos/17/thumbnail', available: false, keptByLiveVersion: false, keptFromOriginal: false },
     })
+  })
+
+  it('keeps keptFromOriginal of a video (specs/011 FR-014)', () => {
+    const steps = doc.steps.map((step) => (step.video ? { ...step, video: { ...step.video, keptFromOriginal: true } } : step))
+    expect(toEditor({ ...doc, steps }).stepVideos[17].keptFromOriginal).toBe(true)
   })
 
   it('keeps keptByLiveVersion of a video (specs/006 FR-013)', () => {

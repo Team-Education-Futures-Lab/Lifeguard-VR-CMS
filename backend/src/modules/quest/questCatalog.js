@@ -7,7 +7,8 @@ import { referencesQuery } from '../courseReferences/courseReferenceRepository.j
  * The course list, the download and the video access check all start from this function.
  *
  * - The courses the organisation owns (OrganisationCourse.isOwner = true) that have a live
- *   version (specs/006: published, not unpublished, course not deleted).
+ *   version (specs/006: published, not unpublished, course not deleted). An own copy of a
+ *   taken-over course (specs/011, parentCourseId) is one of them; its reference is gone.
  * - Plus every course it took over from the course library (specs/010, FR-12 part 2): the chosen
  *   version of its reference (OrganisationCourse.isOwner = false, courseVersionId). Deliberately
  *   not filtered on the course being deleted, unpublished or restricted, or on its owner: the

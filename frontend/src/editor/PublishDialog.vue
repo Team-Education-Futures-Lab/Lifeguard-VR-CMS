@@ -8,7 +8,7 @@
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import AvailabilityPicker, { isAvailabilityValid } from '../components/AvailabilityPicker.vue'
 import { audience, confirmationText, countLosingAccess } from '../lib/videoAccess'
-import { losingReceiversSentence } from '../lib/courseReference'
+import { COPY_NOT_SHARED, losingReceiversSentence } from '../lib/courseReference'
 import IssueGroups from './IssueGroups.vue'
 
 const props = defineProps({
@@ -25,6 +25,8 @@ const props = defineProps({
   receivers: { type: Array, default: () => [] },
   // A choice to start from instead of the stored availability (back from the warning, contracts/ui.md).
   initialChoice: { type: Object, default: null },
+  // An own copy of a taken-over course: never shared, so no choice (specs/011 FR-013).
+  isCopy: { type: Boolean, default: false },
 })
 const emit = defineEmits(['confirm', 'cancel', 'open-step'])
 
@@ -50,6 +52,11 @@ const losingReceivers = computed(() => {
 const askRestrict = ref(false)
 
 function confirm() {
+  // A copy sends no availability: the server keeps it 'private' (specs/011 research R5).
+  if (props.isCopy) {
+    emit('confirm', {})
+    return
+  }
   if (!valid.value) return
   if (losing.value > 0 && !askRestrict.value) {
     askRestrict.value = true
@@ -85,13 +92,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             De wijzigingen komen op de VR-brillen van jullie organisatie. Ze vervangen wat daar nu staat (versie {{ liveVersionNumber }}).
           </p>
           <p v-else>De cursus wordt beschikbaar voor de VR-brillen van jullie organisatie.</p>
-          <AvailabilityPicker v-model="choice" :organisations="organisations" subject="course" id-prefix="publish" />
-          <p v-if="choice.visibility === 'public'" class="muted small library-note" data-test="library-note">
-            De cursus komt ook in de cursusbibliotheek, voor alle organisaties.
-          </p>
-          <p v-else-if="choice.visibility === 'selective'" class="muted small library-note" data-test="library-note">
-            De cursus komt ook in de cursusbibliotheek, voor de gekozen organisaties.
-          </p>
+          <p v-if="isCopy" class="muted small library-note" data-test="copy-not-shared">{{ COPY_NOT_SHARED }}</p>
+          <template v-else>
+            <AvailabilityPicker v-model="choice" :organisations="organisations" subject="course" id-prefix="publish" />
+            <p v-if="choice.visibility === 'public'" class="muted small library-note" data-test="library-note">
+              De cursus komt ook in de cursusbibliotheek, voor alle organisaties.
+            </p>
+            <p v-else-if="choice.visibility === 'selective'" class="muted small library-note" data-test="library-note">
+              De cursus komt ook in de cursusbibliotheek, voor de gekozen organisaties.
+            </p>
+          </template>
         </div>
 
         <div v-else class="modal-body issues">

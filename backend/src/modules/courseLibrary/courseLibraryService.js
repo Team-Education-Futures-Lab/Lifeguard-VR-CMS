@@ -88,11 +88,15 @@ export async function listLibraryCourses(organisationId) {
   return (await loadLibrary(organisationId)).map((entry) => entry.course)
 }
 
-/** One course of the library; anything else is "not found" (FR-021). */
+/**
+ * One course of the library; anything else is "not found" (FR-021). For a course of another
+ * organisation also `hasCopy`: the organisation already has an own copy of it (specs/011 FR-021).
+ */
 export async function getLibraryCourse(id, organisationId) {
   const [entry] = await loadLibrary(organisationId, id)
   if (!entry) throw notFound()
-  return entry.course
+  if (entry.course.owner.isOwn) return entry.course
+  return { ...entry.course, hasCopy: Boolean(await courses.findOwnCopyOf(organisationId, id)) }
 }
 
 /** The stored course image, with the same rule as thumbnailUrl; otherwise "not found". */

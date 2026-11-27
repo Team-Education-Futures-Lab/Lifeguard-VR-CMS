@@ -64,6 +64,25 @@ export function setDeclinedVersion(trx, organisationId, courseId, courseVersionI
     .update({ declinedCourseVersionId: courseVersionId })
 }
 
+/**
+ * Locks the reference row of the organisation (specs/011 research R3), so "Aanpassen" twice, or
+ * together with removing or changing the version, happens one after the other. Returns
+ * { courseVersionId } or undefined.
+ */
+export function lockReference(trx, organisationId, courseId) {
+  if (!organisationId) throw new Error('organisationId is required')
+  return trx('OrganisationCourse')
+    .where({ organisationId, courseId, isOwner: false })
+    .forUpdate()
+    .first('courseVersionId')
+}
+
+/** Removes the reference row inside a transaction (specs/011: the copy takes its place). */
+export function deleteReferenceInTransaction(trx, organisationId, courseId) {
+  if (!organisationId) throw new Error('organisationId is required')
+  return trx('OrganisationCourse').where({ organisationId, courseId, isOwner: false }).del()
+}
+
 /** "Verwijderen uit mijn organisatie" (FR-009): only the reference row. Returns the number removed. */
 export function deleteReference(organisationId, courseId) {
   if (!organisationId) throw new Error('organisationId is required')

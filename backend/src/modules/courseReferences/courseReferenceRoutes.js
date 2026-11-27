@@ -46,6 +46,11 @@ courseReferenceRoutes.post('/course-references/:courseId/keep', async (req, res)
   res.json(await service.keepVersion(getOrganisationId(req), courseId(req)))
 })
 
+// "Aanpassen" (specs/011): an own copy of the chosen version; { courseId } of the copy. No body is read.
+courseReferenceRoutes.post('/course-references/:courseId/copy', async (req, res) => {
+  res.status(201).json(await service.copyReference(getOrganisationId(req), courseId(req)))
+})
+
 // Access check only; nginx delivers the bytes via X-Accel-Redirect (constitution III). `v` is ignored.
 courseReferenceRoutes.get('/course-references/:courseId/thumbnail', async (req, res) => {
   const key = await service.getReferenceThumbnailKey(getOrganisationId(req), courseId(req))

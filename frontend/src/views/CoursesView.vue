@@ -12,7 +12,7 @@ import Modal from '../components/Modal.vue'
 import DescriptionField from '../components/DescriptionField.vue'
 import PublicationStatus from '../components/PublicationStatus.vue'
 import { AVAILABILITY_LABEL, formatPublishedAt } from '../lib/publication'
-import { newVersionLabel, receiversSentence, withdrawnText } from '../lib/courseReference'
+import { basedOnText, newVersionLabel, receiversSentence, withdrawnText } from '../lib/courseReference'
 import { useCourseReferences } from '../stores/courseReferences'
 import TakenOverCourseDialog from '../components/TakenOverCourseDialog.vue'
 
@@ -75,6 +75,12 @@ async function create() {
     serverErrors.value = error.fields && Object.keys(error.fields).length ? error.fields : { general: error.message }
   }
 }
+/** After "Aanpassen" the editor opens with the own copy (specs/011 FR-007). */
+function openCopy(courseId) {
+  openReference.value = null
+  router.push('/courses/' + courseId)
+}
+
 async function remove(c) {
   const ok = await confirmDialog({
     title: 'Cursus verwijderen?',
@@ -126,6 +132,8 @@ async function remove(c) {
       <li v-for="r in rows" :key="r.c.id" class="row">
         <RouterLink :to="'/courses/' + r.c.id" class="main">
           <span class="name">{{ r.c.name }}</span>
+          <!-- An own copy of a taken-over course (specs/011 FR-012). -->
+          <span v-if="r.c.basedOn" class="meta based-on" data-test="based-on">{{ basedOnText(r.c.basedOn) }}</span>
           <span class="meta">
             {{ r.videos }} {{ r.videos === 1 ? 'video' : 'video’s' }} · {{ r.questions }} {{ r.questions === 1 ? 'vraag' : 'vragen' }} · bewerkt {{ timeAgo(r.updatedAt) }}
           </span>
@@ -168,6 +176,8 @@ async function remove(c) {
       :reference="openReference"
       @close="openReference = null"
       @removed="openReference = null"
+      @copied="openCopy"
+      @stale="openReference = null; load()"
     />
 
     <Modal v-if="showNew" title="Nieuwe cursus" @close="showNew = false">

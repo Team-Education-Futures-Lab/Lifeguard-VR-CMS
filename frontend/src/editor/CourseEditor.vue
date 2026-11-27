@@ -8,6 +8,7 @@ import { onBeforeRouteLeave } from 'vue-router'
 import { changeCourseAvailability, publishCourse, saveCourse, unpublishCourse } from '../api/courses'
 import { listOtherOrganisations } from '../api/videos'
 import { toEditor } from '../lib/courseMapping'
+import { basedOnText } from '../lib/courseReference'
 import { useCourseHistory } from '../lib/history'
 import { confirmDialog } from '../lib/ui'
 import { provideEditor } from './context'
@@ -195,6 +196,7 @@ onBeforeRouteLeave((to) => {
         <span class="name">{{ course.name || 'Naamloze cursus' }}</span>
         <Icon name="down" :size="14" />
       </button>
+      <span v-if="ed.basedOn" class="based-on" data-test="editor-based-on">{{ basedOnText(ed.basedOn) }}</span>
       <div class="publication-bar">
         <PublicationStatus
           :status="ed.publication.status"
@@ -247,6 +249,7 @@ onBeforeRouteLeave((to) => {
       :organisations="organisations"
       :receivers="ed.receivers"
       :initial-choice="choiceAfterWarning"
+      :is-copy="Boolean(ed.basedOn)"
       @confirm="confirmPublish"
       @cancel="dialog = null"
     />
@@ -346,6 +349,7 @@ onBeforeRouteLeave((to) => {
   color: var(--muted);
 }
 .title:hover { background: var(--surface-2); }
+.based-on { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
 .name { font-size: 1.05rem; font-weight: 600; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
 .seg { margin-left: auto; }
 .right { display: flex; align-items: center; gap: 6px; }

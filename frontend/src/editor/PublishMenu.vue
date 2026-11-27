@@ -69,7 +69,8 @@ onBeforeUnmount(() => {
         <span v-if="reason" id="publish-reason" class="reason" data-test="publish-reason">{{ reason }}</span>
       </button>
       <!-- Changes nothing in the draft, so it also works with unsaved changes (specs/009 FR-006). -->
-      <button v-if="live" class="item" role="menuitem" data-test="change-availability" @click="choose('change-availability')">
+      <!-- An own copy of a taken-over course is never shared (specs/011 FR-013). -->
+      <button v-if="live && !ed.basedOn" class="item" role="menuitem" data-test="change-availability" @click="choose('change-availability')">
         <span class="item-label">Beschikbaarheid wijzigen</span>
       </button>
       <button v-if="live" class="item" role="menuitem" data-test="unpublish" @click="choose('unpublish')">

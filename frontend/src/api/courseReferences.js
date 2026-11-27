@@ -27,6 +27,11 @@ export function useNewVersion(courseId) {
   return api(`${BASE}/${courseId}/update`, { method: 'POST' })
 }
 
+/** "Aanpassen" (specs/011): an own copy of the chosen version; { courseId } of the copy. */
+export function copyReference(courseId) {
+  return api(`${BASE}/${courseId}/copy`, { method: 'POST' })
+}
+
 /** "Huidige versie houden". */
 export function keepVersion(courseId) {
   return api(`${BASE}/${courseId}/keep`, { method: 'POST' })

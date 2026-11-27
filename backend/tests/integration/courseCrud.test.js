@@ -105,8 +105,8 @@ describe('the course list (FR-004)', () => {
     await createStepRow({ versionId: old.versionId, stepType: 'video' })
     await createStepRow({ versionId: old.versionId, stepType: 'question' })
     expect(await list('a')).toEqual([
-      { id: recent.courseId, name: 'Nieuw', updatedAt: '2026-06-01T00:00:00.000Z', videoStepCount: 0, questionStepCount: 0, status: 'draft', publication: null, lastPublishedVersionNumber: null, visibility: 'private', receiverCount: 0 },
-      { id: old.courseId, name: 'Oud', updatedAt: '2026-01-01T00:00:00.000Z', videoStepCount: 2, questionStepCount: 1, status: 'draft', publication: null, lastPublishedVersionNumber: null, visibility: 'private', receiverCount: 0 },
+      { id: recent.courseId, name: 'Nieuw', updatedAt: '2026-06-01T00:00:00.000Z', videoStepCount: 0, questionStepCount: 0, status: 'draft', publication: null, lastPublishedVersionNumber: null, visibility: 'private', receiverCount: 0, basedOn: null },
+      { id: old.courseId, name: 'Oud', updatedAt: '2026-01-01T00:00:00.000Z', videoStepCount: 2, questionStepCount: 1, status: 'draft', publication: null, lastPublishedVersionNumber: null, visibility: 'private', receiverCount: 0, basedOn: null },
     ])
   })
 

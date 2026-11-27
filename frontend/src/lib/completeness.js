@@ -39,8 +39,13 @@ export function checkCourse(course, stepVideos = {}) {
     if (n.type === 'video') {
       if (!n.videoId) add('noVideo', n.id)
       // An unavailable video only blocks publishing when the live version does not have it
-      // (specs/006 FR-012, FR-013, constitution V).
-      else if (stepVideos[n.videoId]?.available === false && stepVideos[n.videoId]?.keptByLiveVersion !== true) {
+      // (specs/006 FR-012, FR-013, constitution V), and an own copy did not get it from its
+      // original (specs/011 FR-014).
+      else if (
+        stepVideos[n.videoId]?.available === false &&
+        stepVideos[n.videoId]?.keptByLiveVersion !== true &&
+        stepVideos[n.videoId]?.keptFromOriginal !== true
+      ) {
         add('videoUnavailable', n.id)
       }
       continue

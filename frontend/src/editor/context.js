@@ -66,6 +66,8 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
   const availability = reactive({ ...(doc.availability ?? { visibility: 'private', accessOrganisations: [] }) })
   // The organisations that took this course over from the course library (specs/010 FR-019).
   const receivers = ref(doc.receivers ?? [])
+  // "Gebaseerd op …" of an own copy of a taken-over course (specs/011 FR-012); never saved.
+  const basedOn = doc.basedOn ?? null
   const shareWarning = ref(null)
 
   const ordered = computed(() => C.orderedNodes(course.value))
@@ -135,9 +137,13 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
    */
   function confirmLosingVideo(node) {
     if (node?.type !== 'video' || !isLost(node.videoId)) return Promise.resolve(true)
+    // A video an own copy got from its original (specs/011 contracts/ui.md § Editor).
+    const fromOriginal = stepVideos[node.videoId]?.keptFromOriginal === true
     return confirmDialog({
-      title: 'Video niet meer beschikbaar',
-      body: 'Deze video is niet meer beschikbaar voor jouw organisatie (privé gemaakt of verwijderd). Haal je hem uit de cursus, dan kun je hem daarna niet opnieuw toevoegen.',
+      title: fromOriginal ? 'Video uit de oorspronkelijke cursus' : 'Video niet meer beschikbaar',
+      body: fromOriginal
+        ? 'Deze video komt uit de cursus waarop jouw kopie gebaseerd is en staat niet in jouw videobibliotheek. Haal je hem weg, dan kun je hem daarna niet opnieuw toevoegen.'
+        : 'Deze video is niet meer beschikbaar voor jouw organisatie (privé gemaakt of verwijderd). Haal je hem uit de cursus, dan kun je hem daarna niet opnieuw toevoegen.',
       confirmLabel: 'Doorgaan',
       danger: true,
     })
@@ -333,7 +339,7 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
     course, stepVideos, history, ordered, variant, issues,
     selectedId, selectedEdge, hoverEdge, focusEdge, focusEnds, modalId, focusRequest, showSettings,
     dirty, saving, fieldErrors, lostVideoNotices, draftVersionNumber, publication, draftReplaced, publishing, publishIssues,
-    availability, receivers, shareWarning,
+    availability, receivers, shareWarning, basedOn,
     select, selectEdge, clearSelection, open, isFlagged,
     addNode, addLinked, connect, disconnect, tidyCanvas, removeNode, setStart, clearVideo, chooseVideo, confirmLosingVideo, saveDraft,
     publish, unpublish, applyPublication, applyAvailability,

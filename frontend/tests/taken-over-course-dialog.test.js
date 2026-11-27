@@ -27,7 +27,7 @@ function mockApi(handlers = {}) {
   globalThis.fetch.mockImplementation(async (url, options = {}) => {
     const method = options.method ?? 'GET'
     calls.push({ url, method })
-    const key = url.endsWith('/update') ? 'update' : url.endsWith('/keep') ? 'keep' : method === 'DELETE' ? 'delete' : 'other'
+    const key = url.endsWith('/update') ? 'update' : url.endsWith('/keep') ? 'keep' : url.endsWith('/copy') ? 'copy' : method === 'DELETE' ? 'delete' : 'other'
     return handlers[key] ? handlers[key]() : jsonResponse(404, { error: { code: 'not_found', message: 'Niet gevonden.' } })
   })
 }
@@ -128,5 +128,61 @@ describe('TakenOverCourseDialog', () => {
     const wrapper = await mountDialog({ ...WITH_NOTICE, newVersion: null, notice: false, withdrawn: 'course_deleted' })
     expect(wrapper.get('[data-test="withdrawn"]').text()).toBe('De eigenaar heeft deze cursus verwijderd. Jullie houden versie 2.')
     expect(wrapper.find('[data-test="version-choice"]').exists()).toBe(false)
+  })
+
+  describe('Aanpassen (specs/011 US1)', () => {
+    it.each([null, 'unpublished', 'course_deleted', 'no_access', 'owner_deleted'])('is offered when withdrawn = %s, and with a notice', async (withdrawn) => {
+      mockApi()
+      const wrapper = await mountDialog({ ...WITH_NOTICE, withdrawn })
+      expect(wrapper.get('[data-test="copy-reference"]').text()).toBe('Aanpassen')
+    })
+
+    it('asks first; cancelling calls nothing', async () => {
+      mockApi()
+      const wrapper = await mountDialog(REFERENCE)
+      await wrapper.get('[data-test="copy-reference"]').trigger('click')
+      expect(ui.confirm.title).toBe('Deze cursus zelf aanpassen?')
+      expect(ui.confirm.body).toContain('versie 2 van “Redden in open water”')
+      expect(ui.confirm.confirmLabel).toBe('Aanpassen')
+      expect([ui.confirm.title, ui.confirm.body, wrapper.text()].join(' ').toLowerCase()).not.toContain('verwijzing')
+      await answerConfirm(false)
+      expect(calls.filter((c) => c.url.endsWith('/copy'))).toEqual([])
+    })
+
+    it('makes the copy, removes the course from the store and emits the copy id', async () => {
+      let resolve
+      mockApi({ copy: () => new Promise((r) => { resolve = () => r(jsonResponse(201, { courseId: 87 })) }) })
+      const store = useCourseReferences()
+      store.replace(REFERENCE)
+      const wrapper = await mountDialog(REFERENCE)
+      await wrapper.get('[data-test="copy-reference"]').trigger('click')
+      await answerConfirm(true)
+      expect(wrapper.get('[data-test="copy-reference"]').attributes('disabled')).toBeDefined()
+      resolve()
+      await flushPromises()
+      expect(calls.filter((c) => c.url.endsWith('/copy') && c.method === 'POST')).toHaveLength(1)
+      expect(wrapper.emitted('copied')).toEqual([[87]])
+      expect(store.references).toEqual([])
+      expect(ui.toasts.map((t) => t.message)).toContain('Je eigen kopie is klaar. Je kunt hem nu aanpassen.')
+    })
+
+    it('reports course_already_copied and asks for a reload', async () => {
+      const message = 'Deze cursus is al aangepast. De aangepaste cursus staat bij je cursussen.'
+      mockApi({ copy: () => jsonResponse(409, { error: { code: 'course_already_copied', message, courseId: 87 } }) })
+      const wrapper = await mountDialog(REFERENCE)
+      await wrapper.get('[data-test="copy-reference"]').trigger('click')
+      await answerConfirm(true)
+      expect(ui.toasts.map((t) => t.message)).toContain(message)
+      expect(wrapper.emitted('stale')).toEqual([[31]])
+    })
+
+    it('reports a course that is gone (404)', async () => {
+      mockApi()
+      const wrapper = await mountDialog(REFERENCE)
+      await wrapper.get('[data-test="copy-reference"]').trigger('click')
+      await answerConfirm(true)
+      expect(ui.toasts.map((t) => t.message)).toContain('Deze cursus staat niet meer bij jouw cursussen.')
+      expect(wrapper.emitted('stale')).toEqual([[31]])
+    })
   })
 })

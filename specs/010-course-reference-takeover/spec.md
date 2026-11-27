@@ -97,8 +97,8 @@ Story 2.)
    venster van de cursus opent, **Then** staat daar de knop "Toevoegen aan mijn organisatie".
 2. **Given** die knop, **When** de docent erop klikt, **Then** vraagt het systeem eerst om
    bevestiging in eenvoudige taal: de cursus komt op de Quests van de eigen organisatie, blijft van
-   de eigenaar, kan niet zelf bewerkt worden, en bij een nieuwe versie kiest de organisatie zelf of
-   zij die gebruikt. Met "Toevoegen" en "Annuleren".
+   de eigenaar (wie hem wil aanpassen, maakt later een eigen kopie; gewijzigd door spec 011), en bij
+   een nieuwe versie kiest de organisatie zelf of zij die gebruikt. Met "Toevoegen" en "Annuleren".
 3. **Given** de docent bevestigt, **When** het toevoegen gelukt is, **Then** staat de cursus in het
    eigen cursusoverzicht met de pil "Overgenomen van <naam eigenaar>", het versienummer van de
    gekozen versie (de live versie op het moment van toevoegen) en de status "Op de Quest: versie N

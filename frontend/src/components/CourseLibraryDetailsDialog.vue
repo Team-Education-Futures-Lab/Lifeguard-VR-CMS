@@ -3,9 +3,10 @@
 // een cursus): a summary of the live version. Another organisation only sees this summary and a
 // "Sluiten" button; the owner also sees with whom the course is shared and can open the editor.
 // Another organisation can add the course to its own organisation (specs/010 US1); the owner sees
-// who took it over (specs/010 FR-019).
+// who took it over (specs/010 FR-019). With an own copy already, a hint (specs/011 FR-021).
 import { computed, ref } from 'vue'
 import { addReference } from '../api/courseReferences'
+import { HAS_COPY_HINT, addConfirmationBody } from '../lib/courseReference'
 import { AVAILABILITY_LABEL, formatPublishedAt } from '../lib/publication'
 import { confirmDialog, toast } from '../lib/ui'
 import { useCourseReferences } from '../stores/courseReferences'
@@ -27,7 +28,7 @@ async function add() {
   const c = props.course
   const ok = await confirmDialog({
     title: 'Cursus toevoegen aan jouw organisatie?',
-    body: `“${c.name}” van ${c.owner.name} komt bij jouw cursussen en wordt te downloaden op de VR-brillen. De cursus blijft van ${c.owner.name}: je kunt hem niet zelf aanpassen. Komt er een nieuwe versie, dan kies je zelf of je die gebruikt.`,
+    body: addConfirmationBody(c),
     confirmLabel: 'Toevoegen',
   })
   if (!ok) return
@@ -91,7 +92,10 @@ const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`
         <span class="added" data-test="course-added">Toegevoegd</span>
         <RouterLink to="/courses" class="btn btn-ghost" data-test="view-taken-over">Bekijken bij mijn cursussen</RouterLink>
       </template>
-      <button v-else type="button" class="btn" :disabled="busy" data-test="add-course" @click="add">Toevoegen aan mijn organisatie</button>
+      <template v-else>
+        <span v-if="course.hasCopy" class="has-copy" data-test="has-copy-hint">{{ HAS_COPY_HINT }}</span>
+        <button type="button" class="btn" :disabled="busy" data-test="add-course" @click="add">Toevoegen aan mijn organisatie</button>
+      </template>
       <button type="button" class="btn btn-primary" data-test="details-close" @click="emit('close')">Sluiten</button>
     </template>
   </Modal>
@@ -106,5 +110,6 @@ const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 4px 0 0; font-size: 0.9rem; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; }
+.has-copy { align-self: center; font-size: 0.85rem; color: var(--muted); }
 .added { align-self: center; padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: var(--surface-2); color: var(--muted); }
 </style>

@@ -24,16 +24,29 @@ De open punten uit spec 009 (research R13) zijn in spec 010 uitgewerkt:
 - Spec 011 kan een verwijzing omzetten naar een kopie zonder bestaande gegevens om te zetten (spec
   010, research R13).
 
-## Eigen kopie van een overgenomen cursus bij aanpassen (FR-12, deel 3, spec 011) — hoge prioriteit, volgende spec
+## Eigen kopie van een overgenomen cursus bij aanpassen (FR-12, deel 3, spec 011) — gebouwd
 
-Komt na spec 010. Een organisatie met een verwijzing kiest "Aanpassen" en krijgt een volledige eigen
-kopie (nieuwe `Course` met `parentCourseId` naar het origineel; zij wordt eigenaar, haar verwijzing
-vervalt). De editor opent meteen met de kopie. Het origineel blijft ongewijzigd, de kopie krijgt geen
-updates meer en komt nooit in de cursusbibliotheek (spec 009, FR-014 d). In de kopie mag de ontvanger
-video's die niet algemeen beschikbaar zijn blijven gebruiken, ook als de eigenaar ze later beperkt;
-dit is niet terug te draaien (FR-14). Zulke video's staan niet in haar videobibliotheek en kunnen niet
-in andere cursussen gekozen worden. Uitzoeken: de status en het versienummer van de kopie (begint hij
-als concept of als gepubliceerd?), en wat er op de Quests staat tijdens het aanpassen.
+Spec 011 (`specs/011-course-reference-copy`) is gebouwd op 2026-11-27: "Aanpassen" in het venster van
+een overgenomen cursus geeft een eigen kopie van de gekozen versie (versie 1 gepubliceerd, versie 2 als
+concept), met "Gebaseerd op <cursus> van <organisatie>". De kopie is nooit te delen en krijgt geen
+nieuwe versies; meegekregen video's blijven werken, ook na beperken. De handmatige scenario's van
+`specs/011-course-reference-copy/quickstart.md` (taak T049) zijn nog niet doorgelopen.
+
+## Koppeling tussen oude en nieuwe cursus op de Quest na aanpassen
+
+Besloten bij spec 011 (2026-11-27, research R7): de Quest-API verandert niet. Na "Aanpassen" ziet een
+Quest de kopie als nieuwe cursus (opnieuw downloaden) en de oude overgenomen cursus als cursus die niet
+meer in het CMS staat. Wens: de Quest herkent dat de nieuwe cursus de oude vervangt (bijvoorbeeld een
+veld `replacesCourseId` in de lijst), zodat de docent niet twee keer dezelfde cursus ziet. Vraagt een
+afgesproken wijziging van het API-contract (spec 007) en de Quest-app; zie ook
+`docs/backlog-quest-app.md`.
+
+## Een aangepaste kopie delen met andere organisaties
+
+Besloten bij spec 011 (2026-11-27, Clarifications): een kopie kan niet gedeeld worden en komt nooit in
+de cursusbibliotheek (spec 009, FR-014 d). De toestemming voor meegekregen video's geldt alleen voor de
+organisatie die aanpaste. Als dit ooit gewenst is: eerst uitzoeken wat er met meegekregen video's moet
+gebeuren (toestemming van de oorspronkelijke eigenaar).
 
 ## Nieuwe versies van een overgenomen cursus automatisch gebruiken
 

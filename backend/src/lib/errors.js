@@ -49,6 +49,13 @@ export function noNewerVersion(reference) {
   return error
 }
 
+/** "Aanpassen" a second time (double click, second tab; specs/011 FR-006); `courseId` is the copy. */
+export function courseAlreadyCopied(courseId) {
+  const error = new AppError(409, 'course_already_copied', 'Deze cursus is al aangepast. De aangepaste cursus staat bij je cursussen.')
+  error.courseId = courseId
+  return error
+}
+
 export const notAuthenticated = () =>
   new AppError(401, 'not_authenticated', 'Je bent niet ingelogd.')
 

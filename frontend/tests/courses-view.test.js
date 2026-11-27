@@ -292,4 +292,31 @@ describe('taken-over courses', () => {
     await flushPromises()
     wrapper.unmount()
   })
+
+  it('shows "Gebaseerd op" at an own copy, without the taken-over pill (specs/011 FR-012)', async () => {
+    const copy = { ...COURSE, id: 87, name: 'Redden', status: 'published', basedOn: { courseName: 'Redden', ownerName: 'Brandweer Noord' } }
+    mockWithReferences({ courses: [copy, COURSE] })
+    const { wrapper } = await mountView()
+    const rows = wrapper.findAll('[data-test="based-on"]')
+    expect(rows).toHaveLength(1)
+    expect(rows[0].text()).toBe('Gebaseerd op Redden van Brandweer Noord')
+    expect(wrapper.find('[data-test="taken-over-pill"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('opens the editor of the copy after "Aanpassen" (specs/011 FR-007)', async () => {
+    mockWithReferences({ references: [REF] })
+    const inner = globalThis.fetch.getMockImplementation()
+    globalThis.fetch.mockImplementation(async (url, options = {}) =>
+      url === '/api/organisation/course-references/31/copy' ? jsonResponse(201, { courseId: 87 }) : inner(url, options),
+    )
+    const { wrapper, router } = await mountView()
+    await wrapper.get('[data-test="taken-over-row"] button').trigger('click')
+    await wrapper.get('[data-test="copy-reference"]').trigger('click')
+    await flushPromises()
+    ui.confirm.resolve(true)
+    await flushPromises()
+    expect(router.currentRoute.value.path).toBe('/courses/87')
+    wrapper.unmount()
+  })
 })

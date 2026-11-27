@@ -144,6 +144,9 @@ describe('taking over a course', () => {
     await wrapper.get('[data-test="add-course"]').trigger('click')
     expect(ui.confirm.title).toBe('Cursus toevoegen aan jouw organisatie?')
     expect(ui.confirm.body).toContain('van Brandweer Noord komt bij jouw cursussen en wordt te downloaden op de VR-brillen')
+    // Changed by specs/011: a taken-over course can be adapted as an own copy.
+    expect(ui.confirm.body).toContain('De cursus blijft van Brandweer Noord. Wil je hem aanpassen, dan maak je later een eigen kopie.')
+    expect(ui.confirm.body.toLowerCase()).not.toContain('verwijzing')
     await answer(false)
     expect(posts()).toEqual([])
 
@@ -153,6 +156,21 @@ describe('taking over a course', () => {
     expect(ui.toasts.map((t) => t.message)).toContain('Cursus toegevoegd aan jouw cursussen')
     expect(wrapper.find('[data-test="add-course"]').exists()).toBe(false)
     expect(wrapper.findAll('[data-test="course-added"]').length).toBeGreaterThan(0)
+  })
+
+  it('shows the hint when the organisation already has an own copy (specs/011 FR-021)', async () => {
+    vi.mocked(getLibraryCourse).mockImplementation(async (id) => ({ ...COURSES.find((c) => c.id === id), hasCopy: id === 11 }))
+    const wrapper = await mountView()
+    await openWindow(wrapper, 'Redden in open water')
+    expect(wrapper.get('[data-test="has-copy-hint"]').text()).toBe('Jullie hebben al een aangepaste kopie van deze cursus.')
+    expect(wrapper.find('[data-test="add-course"]').exists()).toBe(true)
+    expect(wrapper.text().toLowerCase()).not.toContain('verwijzing')
+  })
+
+  it('shows no hint without an own copy', async () => {
+    const wrapper = await mountView()
+    await openWindow(wrapper, 'Redden in open water')
+    expect(wrapper.find('[data-test="has-copy-hint"]').exists()).toBe(false)
   })
 
   it('reloads the library when the course is no longer available', async () => {

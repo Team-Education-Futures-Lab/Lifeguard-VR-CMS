@@ -1,6 +1,6 @@
 import { db } from '../../db/knex.js'
 import { withDeadlockRetry } from '../../lib/deadlockRetry.js'
-import { courseAlreadyAdded, noNewerVersion, notFound, validationError } from '../../lib/errors.js'
+import { courseAlreadyAdded, courseAlreadyCopied, noNewerVersion, notFound, validationError } from '../../lib/errors.js'
 import { referenceState } from '../../lib/courseReference.js'
 import * as courses from '../courses/courseRepository.js'
 import { libraryCoursesQuery } from '../courseLibrary/courseLibraryRepository.js'
@@ -157,12 +157,42 @@ export function useNewVersion(organisationId, courseId) {
   )
 }
 
+/**
+ * "Aanpassen" (specs/011 FR-003 – FR-008, research R1 – R3; specs/010 research R13): in one
+ * transaction the reference becomes an own copy of its chosen version. A new Course with
+ * parentCourseId (never in the course library, always private), the organisation as owner,
+ * version 1 published with the content of the chosen version (the Quests keep the same content)
+ * and version 2 as draft for the editor; the reference row goes. Nothing of the original is
+ * written or locked: the chosen version never changes. Without a reference: 409 when the
+ * organisation already has a copy (double click, second tab), otherwise 404.
+ */
+export function copyReference(organisationId, courseId) {
+  return withDeadlockRetry(() =>
+    db.transaction(async (trx) => {
+      const reference = await repo.lockReference(trx, organisationId, courseId)
+      if (!reference) {
+        const copyId = await courses.findOwnCopyOf(organisationId, courseId, trx)
+        throw copyId ? courseAlreadyCopied(copyId) : notFound()
+      }
+      const copyId = await courses.insertCopyCourse(trx, organisationId, courseId)
+      const firstId = await courses.copyVersionAsDraft(trx, reference.courseVersionId, copyId, 1)
+      await courses.freezeDraft(trx, firstId)
+      await courses.copyVersionAsDraft(trx, firstId, copyId, 2)
+      await repo.deleteReferenceInTransaction(trx, organisationId, courseId)
+      return { courseId: copyId }
+    }),
+  )
+}
+
 /** "Huidige versie houden" (FR-015): the notice for this live version goes away; nothing else changes. */
 export function keepVersion(organisationId, courseId) {
-  return db.transaction(async (trx) => {
-    const entry = await loadOne(organisationId, courseId, trx)
-    if (!entry.liveVersionId) return entry.reference
-    await repo.setDeclinedVersion(trx, organisationId, courseId, entry.liveVersionId)
-    return (await loadOne(organisationId, courseId, trx)).reference
-  })
+  // Retried like the other actions, e.g. when "Aanpassen" removes the reference meanwhile (specs/011).
+  return withDeadlockRetry(() =>
+    db.transaction(async (trx) => {
+      const entry = await loadOne(organisationId, courseId, trx)
+      if (!entry.liveVersionId) return entry.reference
+      await repo.setDeclinedVersion(trx, organisationId, courseId, entry.liveVersionId)
+      return (await loadOne(organisationId, courseId, trx)).reference
+    }),
+  )
 }

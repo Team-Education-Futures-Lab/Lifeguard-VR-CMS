@@ -16,9 +16,10 @@ import * as repo from './courseRepository.js'
 /**
  * The video of a video step: always name, duration and thumbnail, also when the video is no
  * longer in the library; `available` says whether it is (research R5a), `keptByLiveVersion`
- * whether the live version has it, so it may stay (specs/006 FR-012). Nothing else of the video.
+ * whether the live version has it, so it may stay (specs/006 FR-012), `keptFromOriginal` whether
+ * an own copy got it from its original (specs/011 FR-014). Nothing else of the video.
  */
-function toStepVideo(courseId, stepId, row, library, liveVideoIds) {
+function toStepVideo(courseId, stepId, row, library, liveVideoIds, grantedVideoIds) {
   return {
     id: row.id,
     name: row.name,
@@ -28,6 +29,7 @@ function toStepVideo(courseId, stepId, row, library, liveVideoIds) {
       : null,
     available: library.has(row.id),
     keptByLiveVersion: liveVideoIds.has(row.id),
+    keptFromOriginal: grantedVideoIds.has(row.id),
   }
 }
 
@@ -49,6 +51,8 @@ async function publicationInfo(courses, organisationId, trx = db) {
     liveVideos.set(courseId, new Set(contents.get(version.id).steps.filter((step) => step.videoId).map((step) => step.videoId)))
   }
   const library = await repo.libraryVideoIds(organisationId, [...new Set([...liveVideos.values()].flatMap((set) => [...set]))], trx)
+  // Videos an own copy got from its original are not unavailable (specs/011 FR-014).
+  const granted = await repo.grantedVideoIds(ids, trx)
 
   const info = new Map()
   for (const course of courses) {
@@ -69,7 +73,7 @@ async function publicationInfo(courses, organisationId, trx = db) {
       publication: {
         versionNumber: version.versionNumber,
         publishedAt: new Date(version.publishedAt).toISOString(),
-        hasUnavailableVideo: [...liveVideoIds].some((id) => !library.has(id)),
+        hasUnavailableVideo: [...liveVideoIds].some((id) => !library.has(id) && !granted.get(course.id)?.has(id)),
       },
     })
   }
@@ -83,6 +87,7 @@ async function toDraftDocument(course, organisationId, trx) {
   const videos = await repo.stepVideos(course.versionId, trx)
   const library = await repo.libraryVideoIds(organisationId, [...new Set([...videos.values()].map((row) => row.id))], trx)
   const info = (await publicationInfo([course], organisationId, trx)).get(course.id)
+  const granted = (await repo.grantedVideoIds([course.id], trx)).get(course.id) ?? new Set()
   return {
     id: course.id,
     name: course.name,
@@ -94,6 +99,8 @@ async function toDraftDocument(course, organisationId, trx) {
     availability: await repo.courseAvailability(course.id, trx),
     // Who took this course over (specs/010 FR-019); only the owner gets this document.
     receivers: (await receiversOf([course.id], trx)).get(course.id) ?? [],
+    // "Gebaseerd op …" of an own copy (specs/011 FR-012); null for any other course.
+    basedOn: (await repo.basedOnOf([course.id], trx)).get(course.id) ?? null,
     updatedAt: new Date(course.updatedAt).toISOString(),
     steps: steps.map((step) => {
       const base = {
@@ -108,7 +115,7 @@ async function toDraftDocument(course, organisationId, trx) {
         return {
           ...base,
           videoId: step.videoId,
-          video: row ? toStepVideo(course.id, step.id, row, library, info.liveVideoIds) : null,
+          video: row ? toStepVideo(course.id, step.id, row, library, info.liveVideoIds, granted) : null,
           nextStepId: step.nextCourseStepId ?? null,
         }
       }
@@ -134,6 +141,7 @@ export async function listCourses(organisationId) {
   const rows = await repo.listOwnCourses(organisationId)
   const info = await publicationInfo(rows, organisationId)
   const receivers = await receiversOf(rows.map((row) => row.id))
+  const basedOn = await repo.basedOnOf(rows.map((row) => row.id))
   return rows.map((row) => {
     const { status, publication, lastPublishedVersionNumber } = info.get(row.id)
     return {
@@ -147,6 +155,7 @@ export async function listCourses(organisationId) {
       lastPublishedVersionNumber,
       visibility: row.visibility,
       receiverCount: receivers.get(row.id)?.length ?? 0,
+      basedOn: basedOn.get(row.id) ?? null,
     }
   })
 }
@@ -348,12 +357,13 @@ export async function publishCourse(courseId, organisationId, body = {}) {
   return withDeadlockRetry(() =>
     db.transaction(async (trx) => {
       const course = await lockCurrentDraft(courseId, organisationId, trx)
-      const chosen = await resolveAvailability(choices, course.id, organisationId, trx)
+      const chosen = await resolveAvailability(choices, course, organisationId, trx)
       const doc = await toDraftDocument(course, organisationId, trx)
       const videoSteps = doc.steps.filter((step) => step.video)
       const issues = checkCourse(doc, {
         libraryVideoIds: new Set(videoSteps.filter((step) => step.video.available).map((step) => step.videoId)),
         liveVideoIds: new Set(videoSteps.filter((step) => step.video.keptByLiveVersion).map((step) => step.videoId)),
+        grantedVideoIds: new Set(videoSteps.filter((step) => step.video.keptFromOriginal).map((step) => step.videoId)),
       })
       if (issues.length > 0) throw courseIncomplete(issues)
 
@@ -441,10 +451,15 @@ function parseSharingChoices(body, { required }) {
 
 /**
  * The current and the new availability of a course, as { visibility, accessOrganisationIds }.
- * The chosen organisations must be active and not the owner (specs/009 FR-003).
+ * The chosen organisations must be active and not the owner (specs/009 FR-003). An own copy of a
+ * taken-over course (parentCourseId) is never shared: anything but 'private' is refused before
+ * anything changes (specs/011 FR-013, research R5).
  */
-async function resolveAvailability(choices, courseId, organisationId, trx) {
-  const stored = await repo.courseAvailability(courseId, trx)
+async function resolveAvailability(choices, course, organisationId, trx) {
+  if (course.parentCourseId && choices.visibility !== undefined && choices.visibility !== 'private') {
+    throw validationError({ visibility: 'Een aangepaste cursus kan niet gedeeld worden.' })
+  }
+  const stored = await repo.courseAvailability(course.id, trx)
   const current = { visibility: stored.visibility, accessOrganisationIds: stored.accessOrganisations.map((o) => o.id) }
   if (choices.visibility === undefined) return { current, next: current }
   if (choices.visibility !== 'selective') return { current, next: { visibility: choices.visibility, accessOrganisationIds: [] } }
@@ -479,7 +494,7 @@ export async function changeAvailability(courseId, organisationId, body = {}) {
   return withDeadlockRetry(() =>
     db.transaction(async (trx) => {
       const course = await lockCurrentDraft(courseId, organisationId, trx)
-      const chosen = await resolveAvailability(choices, course.id, organisationId, trx)
+      const chosen = await resolveAvailability(choices, course, organisationId, trx)
       const live = (await repo.liveVersions([course.id], trx)).get(course.id)
       if (!live) throw courseNotLive()
       await checkSharingWarning(trx, {

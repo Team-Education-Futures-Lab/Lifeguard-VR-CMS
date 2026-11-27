@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../../src/db/knex.js'
-import { agentWithSession, createCourseRow, createOrganisationRow, createVideoRow, resetDatabase } from '../helpers/testApp.js'
+import { agentWithSession, createCourseRow, createOrganisationRow, createReferenceRow, createVideoRow, resetDatabase } from '../helpers/testApp.js'
+import { addReference, copyReference, listReferences } from '../helpers/references.js'
 import { publishedCourse } from '../helpers/quest.js'
 import { library, publish, saveRoute } from '../helpers/sharing.js'
 
@@ -84,7 +85,8 @@ describe('GET /course-library', () => {
       thumbnailUrl: `/api/organisation/course-library/${course.courseId}/thumbnail`,
       takenOver: false,
     })
-    expect((await agentB.get(`/api/organisation/course-library/${course.courseId}`)).body).toEqual(row)
+    // The window also says whether B has an own copy (specs/011 FR-021).
+    expect((await agentB.get(`/api/organisation/course-library/${course.courseId}`)).body).toEqual({ ...row, hasCopy: false })
   })
 
   it('puts the newest publication first', async () => {
@@ -118,5 +120,28 @@ describe('leaving the library (FR-023, FR-024, SC-004)', () => {
     expect((await agentA.delete(`/api/organisation/courses/${course.courseId}`)).status).toBe(204)
     expect(await library(agentB)).toEqual([])
     expect((await agentB.get(`/api/organisation/course-library/${course.courseId}`)).status).toBe(404)
+  })
+})
+
+describe('hasCopy in the window (specs/011 FR-021)', () => {
+  it('says whether the organisation already has an own copy; adding again stays possible', async () => {
+    const course = await live('Redden', { visibility: 'public' })
+    await createReferenceRow({ organisationId: b.id, courseId: course.courseId, courseVersionId: course.versionIds[0] })
+    const details = async (agent) => (await agent.get(`/api/organisation/course-library/${course.courseId}`)).body
+    expect((await details(agentB)).hasCopy).toBe(false)
+
+    const copyId = (await copyReference(agentB, course.courseId)).body.courseId
+    expect((await details(agentB)).hasCopy).toBe(true)
+    expect((await details(agentC)).hasCopy).toBe(false)
+    expect((await details(agentA)).hasCopy).toBeUndefined()
+
+    // Adding the original again is allowed; then B has the copy and the taken-over course.
+    expect((await addReference(agentB, course.courseId)).status).toBe(201)
+    expect((await details(agentB)).takenOver).toBe(true)
+    expect((await agentB.get('/api/organisation/courses')).body.courses.map((c) => c.id)).toEqual([copyId])
+    expect((await listReferences(agentB)).references.map((r) => r.courseId)).toEqual([course.courseId])
+
+    expect((await agentB.delete(`/api/organisation/courses/${copyId}`)).status).toBe(204)
+    expect((await details(agentB)).hasCopy).toBe(false)
   })
 })

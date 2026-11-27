@@ -35,6 +35,13 @@ R4). Mogelijke oplossingen: een overzicht van alle cursussen op de Quest waarin 
 organisaties (en onleesbare cursussen) kunt verwijderen, of alle cursussen tonen terwijl alleen die van de
 eigen organisatie te spelen zijn. Let op constitutie III: nooit automatisch weggooien.
 
+## Aangepaste kopie herkennen (spec 011 van het CMS)
+
+Past een organisatie in het CMS een overgenomen cursus aan, dan krijgt zij een eigen kopie met een nieuw
+cursusnummer. De Quest ziet nu een nieuwe cursus en de oude als "niet meer in het CMS". Wens: de Quest
+herkent dat de nieuwe cursus de oude vervangt. Vraagt een afgesproken wijziging van het API-contract
+(zie `docs/backlog.md`, "Koppeling tussen oude en nieuwe cursus op de Quest na aanpassen").
+
 ## Reden tonen als je opnieuw moet koppelen
 
 Editortest spec 003 (E16): na een vernieuwde koppelcode werd je naar het koppelscherm gestuurd zonder dat

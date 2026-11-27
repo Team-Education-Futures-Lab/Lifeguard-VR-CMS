@@ -2,18 +2,19 @@
 // Window of a course taken over from the course library (specs/010 contracts/ui.md § Venster van
 // een overgenomen cursus): a summary of the chosen version, the choice for a newer version, the
 // explanation when the owner withdrew the course, and removing it from the own organisation.
-// Never a way to the editor (FR-008).
+// Never a way to the editor of the original (FR-008); "Aanpassen" makes an own copy (specs/011).
 import { computed, ref } from 'vue'
-import { removeReference, useNewVersion, keepVersion } from '../api/courseReferences'
+import { copyReference, removeReference, useNewVersion, keepVersion } from '../api/courseReferences'
 import { formatPublishedAt } from '../lib/publication'
-import { withdrawnText } from '../lib/courseReference'
+import { COPY_DONE, COPY_GONE, copyConfirmation, withdrawnText } from '../lib/courseReference'
 import { confirmDialog, toast } from '../lib/ui'
 import { useCourseReferences } from '../stores/courseReferences'
 import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 
 const props = defineProps({ reference: { type: Object, required: true } })
-const emit = defineEmits(['close', 'removed', 'changed'])
+// copied: the id of the own copy (specs/011); stale: the course is gone meanwhile, reload the lists.
+const emit = defineEmits(['close', 'removed', 'changed', 'copied', 'stale'])
 const store = useCourseReferences()
 
 const current = ref(props.reference)
@@ -48,6 +49,29 @@ async function keep() {
     update(await keepVersion(current.value.courseId))
   } catch (error) {
     toast(error.message)
+  } finally {
+    busy.value = false
+  }
+}
+
+/** "Aanpassen" (specs/011 US1): an own copy of the chosen version; the parent opens the editor. */
+async function copy() {
+  const r = current.value
+  if (!(await confirmDialog(copyConfirmation(r)))) return
+  busy.value = true
+  try {
+    const { courseId } = await copyReference(r.courseId)
+    store.remove(r.courseId)
+    toast(COPY_DONE)
+    emit('copied', courseId)
+  } catch (error) {
+    if (error.code === 'course_already_copied' || error.status === 404) {
+      store.remove(r.courseId)
+      toast(error.status === 404 ? COPY_GONE : error.message)
+      emit('stale', r.courseId)
+    } else {
+      toast(error.message)
+    }
   } finally {
     busy.value = false
   }
@@ -111,6 +135,7 @@ async function remove() {
     </div>
     <template #foot>
       <button type="button" class="btn btn-danger remove" data-test="remove-reference" @click="remove">Verwijderen uit mijn organisatie</button>
+      <button type="button" class="btn" :disabled="busy" data-test="copy-reference" @click="copy">Aanpassen</button>
       <button type="button" class="btn btn-primary" data-test="details-close" @click="emit('close')">Sluiten</button>
     </template>
   </Modal>

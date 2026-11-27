@@ -26,8 +26,9 @@ In de lijst van de bibliotheek (`CourseLibraryView`) krijgt een toegevoegde curs
 
 - **Titel**: "Cursus toevoegen aan jouw organisatie?"
 - **Tekst**: "“<naam>” van <eigenaar> komt bij jouw cursussen en wordt te downloaden op de
-  VR-brillen. De cursus blijft van <eigenaar>: je kunt hem niet zelf aanpassen. Komt er een nieuwe
-  versie, dan kies je zelf of je die gebruikt."
+  VR-brillen. De cursus blijft van <eigenaar>. Wil je hem aanpassen, dan maak je later een eigen
+  kopie. Komt er een nieuwe versie, dan kies je zelf of je die gebruikt." (gewijzigd door spec 011,
+  contracts/ui.md § Gewijzigde tekst)
 - **Knoppen**: "Toevoegen" en "Annuleren".
 - **Gelukt**: de toast "Cursus toegevoegd aan jouw cursussen". Het venster toont dan "Toegevoegd",
   en de store `courseReferences` wordt bijgewerkt.

@@ -12,6 +12,8 @@ export const getReference = (agent, courseId) => agent.get(`${BASE}/${courseId}`
 export const removeReference = (agent, courseId) => agent.delete(`${BASE}/${courseId}`)
 export const useNewVersion = (agent, courseId) => agent.post(`${BASE}/${courseId}/update`)
 export const keepVersion = (agent, courseId) => agent.post(`${BASE}/${courseId}/keep`)
+/** "Aanpassen" (specs/011): an own copy of the chosen version. */
+export const copyReference = (agent, courseId) => agent.post(`${BASE}/${courseId}/copy`)
 
 export async function listReferences(agent) {
   const response = await agent.get(BASE)

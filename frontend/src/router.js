@@ -5,10 +5,10 @@ import AdminLayout from './components/AdminLayout.vue'
 import OrganisationLayout from './components/OrganisationLayout.vue'
 import AdminLoginView from './views/AdminLoginView.vue'
 import LoginView from './views/LoginView.vue'
-import HomeView from './views/HomeView.vue'
 import StyleSettingsView from './views/StyleSettingsView.vue'
 import CoursesView from './views/CoursesView.vue'
 import EditorView from './views/EditorView.vue'
+import CourseLibraryView from './views/CourseLibraryView.vue'
 import VideosView from './views/VideosView.vue'
 import QuestLinkView from './views/QuestLinkView.vue'
 import ActionLogView from './views/admin/ActionLogView.vue'
@@ -35,10 +35,12 @@ export const routes = [
     component: OrganisationLayout,
     meta: { requiresOrganisation: true },
     children: [
-      { path: '', component: HomeView },
+      // No start page: an organisation starts at its courses (backlog, manual test 2026-11-27).
+      { path: '', redirect: '/courses' },
       // Course and video screens are still the browser-only prototype (outside this feature).
       { path: 'courses', component: CoursesView },
       { path: 'courses/:id', component: EditorView, props: true },
+      { path: 'course-library', component: CourseLibraryView },
       { path: 'videos', component: VideosView },
       { path: 'settings/style', component: StyleSettingsView },
       { path: 'quest', component: QuestLinkView },
@@ -67,7 +69,7 @@ export function installGuards(router) {
     if (requiresOrganisation && auth.role !== 'organisation') return { path: '/login', query: loginQuery }
     if (to.meta.guestOnly) {
       if (to.path === '/admin/login' && auth.role === 'admin') return '/admin'
-      if (to.path === '/login' && auth.role === 'organisation') return '/'
+      if (to.path === '/login' && auth.role === 'organisation') return '/courses'
     }
   })
 

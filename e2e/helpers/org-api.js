@@ -1,10 +1,10 @@
 // Hulpfuncties voor de tests van spec 001 die organisaties via de API klaarzetten en opruimen.
 // Dit bestand is nieuw; helpers/admin.js is niet aangepast.
 import { request as pwRequest } from '@playwright/test';
+import { BASE_URL } from './base-url.js';
 
-// Poort 80 stuurt in nginx door naar https (301). Een POST zou via zo'n redirect een GET worden,
-// dus API-aanroepen in deze tests gaan rechtstreeks naar https.
-export const BASE = 'https://localhost';
+// API-aanroepen gaan rechtstreeks naar https (zie helpers/base-url.js).
+export const BASE = BASE_URL;
 export const CSRF = { 'X-Requested-With': 'cms' }; // verplicht bij POST/PUT/PATCH/DELETE (contracts/api.md)
 export const ADMIN_STATE = 'playwright/.auth/admin.json';
 

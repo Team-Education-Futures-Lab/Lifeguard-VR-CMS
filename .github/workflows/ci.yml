@@ -111,6 +111,9 @@ jobs:
       E2E_ADMIN_LOGIN: testadmin
       E2E_ADMIN_PASSWORD: ci-e2e-admin-password
       E2E_PASSWORD: ci-e2e-org-password
+      # In CI is de app zelf de wegwerpomgeving (poort 443); lokaal draaien de tests op een aparte
+      # omgeving op poort 9443 (e2e/scripts/run-local.mjs, e2e/helpers/base-url.js).
+      E2E_BASE_URL: https://localhost
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

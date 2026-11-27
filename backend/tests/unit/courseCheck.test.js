@@ -30,6 +30,7 @@ describe('checkCourse with the shared cases', () => {
     const issues = checkCourse(testCase.draft, {
       libraryVideoIds: new Set(testCase.libraryVideoIds),
       liveVideoIds: new Set(testCase.liveVideoIds),
+      grantedVideoIds: new Set(testCase.grantedVideoIds ?? []),
     })
     const actual = issues
       .map(({ code, stepId, answerId }) => ({ code, stepId: stepId ?? null, answerId: answerId ?? null }))

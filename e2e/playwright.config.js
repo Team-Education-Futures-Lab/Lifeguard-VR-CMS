@@ -1,6 +1,7 @@
 // @ts-check
 import 'dotenv/config';
 import { defineConfig, devices } from '@playwright/test';
+import { BASE_URL } from './helpers/base-url.js';
 
 /**
  * Read environment variables from file.
@@ -29,7 +30,8 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: 'http://localhost',
+    // The separate e2e environment by default; see helpers/base-url.js.
+    baseURL: BASE_URL,
     ignoreHTTPSErrors: true,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

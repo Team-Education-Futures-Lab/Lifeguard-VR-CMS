@@ -1,6 +1,6 @@
 import { api } from './client'
 
-// Course API (specs/004, 005 and 006 contracts/api.md).
+// Course API (specs/004, 005, 006 and 009 contracts/api.md).
 
 export async function listCourses() {
   const data = await api('/api/organisation/courses')
@@ -24,9 +24,18 @@ export function deleteCourse(id) {
   return api(`/api/organisation/courses/${id}`, { method: 'DELETE' })
 }
 
-/** Publishes the saved draft; returns the (new) draft document (specs/006 contracts/api.md). */
-export function publishCourse(id) {
-  return api(`/api/organisation/courses/${id}/publish`, { method: 'POST' })
+/**
+ * Publishes the saved draft; returns the (new) draft document (specs/006 contracts/api.md).
+ * `choices` ({ visibility, accessOrganisationIds, acknowledgedVideoIds }) sets who sees the course
+ * in the course library (specs/009 contracts/api.md); without it the availability stays.
+ */
+export function publishCourse(id, choices) {
+  return api(`/api/organisation/courses/${id}/publish`, { method: 'POST', body: choices })
+}
+
+/** "Beschikbaarheid wijzigen" of a live course; returns the draft document (specs/009 FR-006). */
+export function changeCourseAvailability(id, choices) {
+  return api(`/api/organisation/courses/${id}/availability`, { method: 'PUT', body: choices })
 }
 
 /** Takes the live version off the Quests; returns the draft document (specs/006 FR-016). */

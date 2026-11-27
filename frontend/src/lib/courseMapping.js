@@ -29,10 +29,18 @@ export function toEditor(doc) {
     const base = { id: stepKey(step.id), type: step.stepType, x: step.positionX, y: step.positionY }
     if (step.stepType === 'video') {
       if (step.video) {
-        const { name, durationSeconds, thumbnailUrl, available, keptByLiveVersion } = step.video
+        const { name, durationSeconds, thumbnailUrl, available, keptByLiveVersion, keptFromOriginal } = step.video
         // keptByLiveVersion: the video is in the live version, so it may stay although it is no
-        // longer available (specs/006 FR-012, FR-013).
-        stepVideos[step.videoId] = { name, durationSeconds, thumbnailUrl, available, keptByLiveVersion: keptByLiveVersion === true }
+        // longer available (specs/006 FR-012, FR-013). keptFromOriginal: an own copy got it from its
+        // original and may keep it (specs/011 FR-014).
+        stepVideos[step.videoId] = {
+          name,
+          durationSeconds,
+          thumbnailUrl,
+          available,
+          keptByLiveVersion: keptByLiveVersion === true,
+          keptFromOriginal: keptFromOriginal === true,
+        }
       }
       return { ...base, videoId: step.videoId, next: nextKey(step.nextStepId) }
     }

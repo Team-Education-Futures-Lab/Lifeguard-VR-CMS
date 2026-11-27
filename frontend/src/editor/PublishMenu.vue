@@ -1,14 +1,15 @@
 <script setup>
 // One button with a menu for publishing, next to the status (specs/006 verbeterronde V2, V3, V5).
 // The button says what it does: "Publiceren" while the course is not on the VR headsets,
-// "Wijzigingen publiceren" once it is. The menu has that action and "Onpubliceren" (only when
-// live). Publishing works on the saved draft only (verbeterronde V4): with unsaved changes, or with
-// nothing new, the action is greyed out and says why, in the menu and not permanently in the bar.
+// "Wijzigingen publiceren" once it is. The menu has that action, and "Beschikbaarheid wijzigen"
+// (specs/009 FR-006) and "Onpubliceren", both only when live. Publishing works on the saved draft
+// only (verbeterronde V4): with unsaved changes, or with nothing new, the action is greyed out and
+// says why, in the menu and not permanently in the bar.
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useEditor } from './context'
 import Icon from '../components/Icon.vue'
 
-const emit = defineEmits(['publish', 'unpublish'])
+const emit = defineEmits(['publish', 'unpublish', 'change-availability'])
 const ed = useEditor()
 const open = ref(false)
 const root = ref(null)
@@ -63,6 +64,11 @@ onBeforeUnmount(() => {
       >
         <span class="item-label">{{ label }}</span>
         <span v-if="reason" id="publish-reason" class="reason" data-test="publish-reason">{{ reason }}</span>
+      </button>
+      <!-- Changes nothing in the draft, so it also works with unsaved changes (specs/009 FR-006). -->
+      <!-- An own copy of a taken-over course is never shared (specs/011 FR-013). -->
+      <button v-if="live && !ed.basedOn" class="item" role="menuitem" data-test="change-availability" @click="choose('change-availability')">
+        <span class="item-label">Beschikbaarheid wijzigen</span>
       </button>
       <button v-if="live" class="item" role="menuitem" data-test="unpublish" @click="choose('unpublish')">
         <span class="item-label">Onpubliceren</span>

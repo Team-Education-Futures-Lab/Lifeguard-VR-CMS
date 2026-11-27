@@ -24,7 +24,7 @@ export async function seedCourses(loginCode, courses, stepsPerCourse) {
   for (let c = 1; c <= courses; c++) {
     await db.transaction(async (trx) => {
       const now = new Date(Date.now() - c * 60 * 1000)
-      const [courseId] = await trx('Course').insert({ isSharedInLibrary: false, createdAt: now, updatedAt: now })
+      const [courseId] = await trx('Course').insert({ createdAt: now, updatedAt: now })
       await trx('OrganisationCourse').insert({ organisationId: organisation.id, courseId, isOwner: true, addedAt: now })
       const [courseVersionId] = await trx('CourseVersion').insert({
         courseId,

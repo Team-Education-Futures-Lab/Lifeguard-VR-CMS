@@ -1,0 +1,17 @@
+# E2e-testomgeving: los van de ontwikkelomgeving, zodat de Playwright-tests nooit testdata in de
+# ontwikkeldatabase achterlaten.
+#
+# Altijd samen met docker-compose.yml en projectnaam "e2e" gebruiken (e2e/scripts/run-local.mjs
+# doet dat al; start met `npm run test:local` in e2e/):
+#   docker compose -p e2e -f docker-compose.yml -f docker-compose.e2e.yml up -d
+#
+# Door de projectnaam krijgt de testomgeving eigen volumes (e2e_db-data, e2e_logos, e2e_videos),
+# een eigen netwerk en eigen containers. Het script begint elke run met een lege database en
+# ruimt de omgeving daarna weer op. Dit bestand regelt alleen de poorten.
+services:
+  web:
+    # De ontwikkelomgeving gebruikt 80 en 443, de usability-test 8443. De e2e-tests draaien op
+    # https://localhost:9443. Poort 80 wordt bewust niet doorgegeven: nginx stuurt HTTP door naar
+    # https://localhost zonder poort, en dat zou bij de ontwikkelomgeving uitkomen.
+    ports: !override
+      - "${E2E_HTTPS_PORT:-9443}:443"

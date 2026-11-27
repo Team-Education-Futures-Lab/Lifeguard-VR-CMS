@@ -14,7 +14,10 @@ export const app = createApp()
 
 /** Empties all tables (children first), the logos directory and the videos directory. */
 export async function resetDatabase() {
-  for (const table of ['Answer', 'CourseStep', 'CourseVersion', 'OrganisationCourse', 'Course', 'VideoAccess', 'Video', 'AdminActionLog', 'OrganisationStyle', 'Session', 'Organisation', 'Administrator']) {
+  // A copy points to its original (Course.parentCourseId, specs/009): undo that first.
+  await db('Course').whereNotNull('parentCourseId').update({ parentCourseId: null })
+  // OrganisationCourse before CourseVersion: a reference points to its chosen version (specs/010).
+  for (const table of ['Answer', 'CourseStep', 'OrganisationCourse', 'CourseVersion', 'CourseAccess', 'Course', 'VideoAccess', 'Video', 'AdminActionLog', 'OrganisationStyle', 'Session', 'Organisation', 'Administrator']) {
     await db(table).del()
   }
   await rm(config.LOGOS_DIR, { recursive: true, force: true })
@@ -73,7 +76,8 @@ export function softDeleteVideo(videoId) {
 
 /**
  * Inserts a course directly: Course, OrganisationCourse (owner) and its draft CourseVersion 1
- * (specs/004 research R1). Returns { courseId, versionId }.
+ * (specs/004 research R1). `visibility` and `accessOrganisationIds` set who sees the course in
+ * the course library (specs/009); `parentCourseId` marks a copy. Returns { courseId, versionId }.
  */
 export async function createCourseRow({
   organisationId,
@@ -81,11 +85,31 @@ export async function createCourseRow({
   description = 'Een cursus om mee te testen.',
   updatedAt = new Date(),
   deletedAt = null,
+  visibility = 'private',
+  accessOrganisationIds = [],
+  parentCourseId = null,
 } = {}) {
-  const [courseId] = await db('Course').insert({ isSharedInLibrary: false, createdAt: updatedAt, updatedAt, deletedAt })
+  const [courseId] = await db('Course').insert({ createdAt: updatedAt, updatedAt, deletedAt, visibility, parentCourseId })
+  if (accessOrganisationIds.length > 0) {
+    await db('CourseAccess').insert(accessOrganisationIds.map((accessId) => ({ courseId, organisationId: accessId })))
+  }
   await db('OrganisationCourse').insert({ organisationId, courseId, isOwner: true, addedAt: updatedAt })
   const [versionId] = await db('CourseVersion').insert({ courseId, versionNumber: 1, name, description, publishedAt: null })
   return { courseId, versionId }
+}
+
+/**
+ * Inserts a reference directly (specs/010 data-model.md): an OrganisationCourse row with
+ * isOwner = false that points to the chosen version.
+ */
+export async function createReferenceRow({
+  organisationId,
+  courseId,
+  courseVersionId,
+  declinedCourseVersionId = null,
+  addedAt = new Date('2026-11-25T10:00:00.000Z'),
+}) {
+  await db('OrganisationCourse').insert({ organisationId, courseId, isOwner: false, addedAt, courseVersionId, declinedCourseVersionId })
 }
 
 /**

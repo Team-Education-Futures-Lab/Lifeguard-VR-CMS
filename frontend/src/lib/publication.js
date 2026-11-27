@@ -28,3 +28,10 @@ export function statusLabel({ status, publication }, options = {}) {
   // Also after unpublishing: just "Concept" (verbeterronde V6).
   return { title: 'Concept', detail: '', dot: '' }
 }
+
+/** Who sees a course in the course library, as text (specs/009 contracts/ui.md § Status en overzicht). */
+export const AVAILABILITY_LABEL = {
+  public: 'Algemeen beschikbaar',
+  selective: 'Selectief beschikbaar',
+  private: 'Alleen eigen organisatie',
+}

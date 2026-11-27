@@ -68,6 +68,7 @@ for (const [label, makeUnavailable] of Object.entries(CASES)) {
         thumbnailUrl: thumbnailUrl(),
         available: false,
         keptByLiveVersion: false,
+        keptFromOriginal: false,
       })
     })
 

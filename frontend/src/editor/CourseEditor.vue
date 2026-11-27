@@ -1,11 +1,14 @@
 <script setup>
 // The course editor on a local copy of the draft, with "Opslaan als concept", undo/redo and a
 // question before leaving with unsaved changes (specs/004 FR-009, FR-009a, FR-020a, research R10),
-// and "Publiceren" / "Onpubliceren" with the publication status (specs/006 contracts/ui.md).
+// and "Publiceren" / "Onpubliceren" with the publication status (specs/006 contracts/ui.md), with
+// who sees the course in the course library (specs/009 contracts/ui.md).
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import { publishCourse, saveCourse, unpublishCourse } from '../api/courses'
+import { changeCourseAvailability, publishCourse, saveCourse, unpublishCourse } from '../api/courses'
+import { listOtherOrganisations } from '../api/videos'
 import { toEditor } from '../lib/courseMapping'
+import { basedOnText } from '../lib/courseReference'
 import { useCourseHistory } from '../lib/history'
 import { confirmDialog } from '../lib/ui'
 import { provideEditor } from './context'
@@ -19,6 +22,8 @@ import PublicationStatus from '../components/PublicationStatus.vue'
 import PublishDialog from './PublishDialog.vue'
 import PublishMenu from './PublishMenu.vue'
 import UnpublishDialog from './UnpublishDialog.vue'
+import CourseAvailabilityDialog from './CourseAvailabilityDialog.vue'
+import SharedVideosWarningDialog from '../components/SharedVideosWarningDialog.vue'
 
 // `notice`: a short message to show right away, after a publication that gave a new draft.
 const props = defineProps({ doc: Object, notice: { type: String, default: '' } })
@@ -33,7 +38,7 @@ const ed = provideEditor({
   doc: props.doc,
   history,
   save: (payload) => saveCourse(props.doc.id, payload),
-  publish: () => publishCourse(props.doc.id),
+  publish: (choices) => publishCourse(props.doc.id, choices),
   unpublish: () => unpublishCourse(props.doc.id),
 })
 
@@ -63,17 +68,37 @@ if (props.notice) flash(props.notice)
 // Publishing and unpublishing (specs/006 US1–US4, verbeterronde V2–V5), from the menu next to
 // the status. The confirmation comes first; with messages of the completeness check the
 // "Nog niet klaar" dialog opens straight away instead (FR-007).
-const dialog = ref(null) // null | 'publish' | 'unpublish'
+const dialog = ref(null) // null | 'publish' | 'unpublish' | 'availability'
 const live = computed(() => ed.publication.publication)
+const shared = computed(() => ed.availability.visibility !== 'private')
+// The other active organisations for "Selectief beschikbaar" (specs/009 FR-003), loaded when a
+// dialog with the picker opens. Without them only "Selectief beschikbaar" cannot be chosen.
+const organisations = ref([])
+async function loadOrganisations() {
+  try {
+    organisations.value = await listOtherOrganisations()
+  } catch {
+    organisations.value = []
+  }
+}
+// The choice to show again in the confirmation after "Annuleren" in the warning (contracts/ui.md).
+const choiceAfterWarning = ref(null)
+async function openWithOrganisations(name) {
+  await loadOrganisations()
+  dialog.value = name
+}
 function onPublish() {
   if (ed.issues.issues.length) ed.publish()
-  else dialog.value = 'publish'
+  else {
+    choiceAfterWarning.value = null
+    openWithOrganisations('publish')
+  }
 }
-async function confirmPublish() {
+async function confirmPublish(choices) {
   dialog.value = null
   const wasLive = Boolean(live.value)
   const lastNumber = ed.publication.lastPublishedVersionNumber
-  const result = await ed.publish()
+  const result = await ed.publish(choices)
   if (!result) return
   const number = result.publication?.versionNumber
   // FR-017: the last published version went live again, with its own number.
@@ -85,6 +110,23 @@ async function confirmPublish() {
   ed.applyPublication(result)
   flash(message)
 }
+// The warning about restricted videos (specs/009 US3): "Doorgaan" sends the same choice again with
+// the videos confirmed, "Annuleren" goes back to the confirmation with the choice still filled in.
+function continueSharing() {
+  const { videos, choices } = ed.shareWarning
+  ed.shareWarning = null
+  confirmPublish({ ...choices, acknowledgedVideoIds: videos.map((video) => video.id) })
+}
+function cancelSharing() {
+  choiceAfterWarning.value = ed.shareWarning.choices
+  ed.shareWarning = null
+  dialog.value = 'publish'
+}
+function availabilitySaved(result) {
+  dialog.value = null
+  ed.applyAvailability(result)
+}
+
 async function confirmUnpublish() {
   dialog.value = null
   if (await ed.unpublish()) flash('Cursus is niet meer gepubliceerd')
@@ -154,12 +196,17 @@ onBeforeRouteLeave((to) => {
         <span class="name">{{ course.name || 'Naamloze cursus' }}</span>
         <Icon name="down" :size="14" />
       </button>
+      <span v-if="ed.basedOn" class="based-on" data-test="editor-based-on">{{ basedOnText(ed.basedOn) }}</span>
       <div class="publication-bar">
         <PublicationStatus
           :status="ed.publication.status"
           :publication="ed.publication.publication"
         />
-        <PublishMenu @publish="onPublish" @unpublish="dialog = 'unpublish'" />
+        <PublishMenu
+          @publish="onPublish"
+          @unpublish="dialog = 'unpublish'"
+          @change-availability="openWithOrganisations('availability')"
+        />
       </div>
 
       <div class="seg" role="radiogroup" aria-label="Weergave">
@@ -198,7 +245,27 @@ onBeforeRouteLeave((to) => {
       v-if="dialog === 'publish'"
       mode="confirm"
       :live-version-number="live ? live.versionNumber : null"
+      :availability="ed.availability"
+      :organisations="organisations"
+      :receivers="ed.receivers"
+      :initial-choice="choiceAfterWarning"
+      :is-copy="Boolean(ed.basedOn)"
       @confirm="confirmPublish"
+      @cancel="dialog = null"
+    />
+    <SharedVideosWarningDialog
+      v-if="ed.shareWarning"
+      :videos="ed.shareWarning.videos"
+      @continue="continueSharing"
+      @cancel="cancelSharing"
+    />
+    <CourseAvailabilityDialog
+      v-if="dialog === 'availability'"
+      :availability="ed.availability"
+      :organisations="organisations"
+      :receivers="ed.receivers"
+      :save="(choices) => changeCourseAvailability(props.doc.id, choices)"
+      @saved="availabilitySaved"
       @cancel="dialog = null"
     />
     <PublishDialog
@@ -211,6 +278,8 @@ onBeforeRouteLeave((to) => {
     <UnpublishDialog
       v-if="dialog === 'unpublish'"
       :has-unavailable-video="Boolean(live?.hasUnavailableVideo)"
+      :shared="shared"
+      :receiver-count="ed.receivers.length"
       @confirm="confirmUnpublish"
       @cancel="dialog = null"
     />
@@ -280,6 +349,7 @@ onBeforeRouteLeave((to) => {
   color: var(--muted);
 }
 .title:hover { background: var(--surface-2); }
+.based-on { font-size: 0.82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
 .name { font-size: 1.05rem; font-weight: 600; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 340px; }
 .seg { margin-left: auto; }
 .right { display: flex; align-items: center; gap: 6px; }

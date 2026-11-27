@@ -11,7 +11,9 @@ function requireId(organisationId) {
 /**
  * The only definition of "courses this organisation may see and edit" (specs/004 research R2):
  * owned through OrganisationCourse, not deleted, joined with the draft (the version without
- * publishedAt). Every course route starts from this query.
+ * publishedAt). Every course route starts from this query. Owner rows only (isOwner = true):
+ * courses taken over from the library live in modules/courseReferences and can never be edited
+ * here (specs/010 FR-008).
  */
 export function ownCoursesQuery(organisationId, trx = db) {
   requireId(organisationId)
@@ -29,9 +31,91 @@ export function ownCoursesQuery(organisationId, trx = db) {
 export function findOwnCourse(id, organisationId, trx = db, { forUpdate = false } = {}) {
   const query = ownCoursesQuery(organisationId, trx)
     .where('c.id', id)
-    .select('c.id', 'c.updatedAt', 'cv.id as versionId', 'cv.versionNumber', 'cv.name', 'cv.description')
+    .select('c.id', 'c.updatedAt', 'c.parentCourseId', 'cv.id as versionId', 'cv.versionNumber', 'cv.name', 'cv.description')
     .first()
   return forUpdate ? query.forUpdate() : query
+}
+
+/**
+ * A new own copy of a taken-over course (specs/011 research R1): Course with parentCourseId and
+ * visibility 'private' (a copy is never shared, FR-013) and the owner row of the organisation,
+ * at the database clock. The versions are added by the caller. Returns the new course id.
+ */
+export async function insertCopyCourse(trx, organisationId, originalCourseId) {
+  requireId(organisationId)
+  const now = db.raw('UTC_TIMESTAMP()')
+  const [courseId] = await trx('Course').insert({ parentCourseId: originalCourseId, visibility: 'private', createdAt: now, updatedAt: now })
+  await trx('OrganisationCourse').insert({ organisationId, courseId, isOwner: true, addedAt: now })
+  return courseId
+}
+
+/**
+ * The id of a not deleted own copy of `originalCourseId`, or undefined (specs/011 research R3,
+ * R8): a course with that parentCourseId that the organisation owns.
+ */
+export async function findOwnCopyOf(organisationId, originalCourseId, trx = db) {
+  requireId(organisationId)
+  const row = await trx('Course as c')
+    .join('OrganisationCourse as oc', function joinOwner() {
+      this.on('oc.courseId', '=', 'c.id').andOnVal('oc.organisationId', '=', organisationId).andOnVal('oc.isOwner', '=', true)
+    })
+    .where('c.parentCourseId', originalCourseId)
+    .whereNull('c.deletedAt')
+    .orderBy('c.id')
+    .first('c.id')
+  return row?.id
+}
+
+/**
+ * The only definition of "the videos a copy got from its original" (specs/011 FR-014, research
+ * R4): the videos in the steps of version 1 of a course with a parentCourseId, that are not soft
+ * deleted. Version 1 never changes and is exactly the chosen version, so it is the proof of the
+ * owner's permission. Restricting a video or deleting its owner does not matter; a soft-deleted
+ * video follows constitution V (FR-015). Map courseId → Set(videoId); copies only.
+ */
+export async function grantedVideoIds(courseIds, trx = db) {
+  const result = new Map()
+  if (courseIds.length === 0) return result
+  const rows = await trx('Course as c')
+    .join('CourseVersion as cv', function joinFirst() {
+      this.on('cv.courseId', '=', 'c.id').andOnVal('cv.versionNumber', '=', 1)
+    })
+    .join('CourseStep as s', 's.courseVersionId', 'cv.id')
+    .join('Video as v', 'v.id', 's.videoId')
+    .whereIn('c.id', courseIds)
+    .whereNotNull('c.parentCourseId')
+    .whereNull('v.deletedAt')
+    .distinct('c.id as courseId', 'v.id as videoId')
+  for (const row of rows) {
+    if (!result.has(row.courseId)) result.set(row.courseId, new Set())
+    result.get(row.courseId).add(row.videoId)
+  }
+  return result
+}
+
+/**
+ * "Gebaseerd op" of copies (specs/011 FR-012, research R6): Map courseId → { courseName,
+ * ownerName } with the name of the newest published version of the original (never a draft name)
+ * and the current name of its owner. Not filtered on deletedAt: a deleted original or owner keeps
+ * its last name. Courses without parentCourseId get no entry.
+ */
+export async function basedOnOf(courseIds, trx = db) {
+  const result = new Map()
+  if (courseIds.length === 0) return result
+  const copies = await trx('Course').whereIn('id', courseIds).whereNotNull('parentCourseId').select('id', 'parentCourseId')
+  if (copies.length === 0) return result
+  const parentIds = [...new Set(copies.map((row) => row.parentCourseId))]
+  const latest = await latestPublishedVersions(parentIds, trx)
+  const owners = await trx('OrganisationCourse as oc')
+    .join('Organisation as o', 'o.id', 'oc.organisationId')
+    .whereIn('oc.courseId', parentIds)
+    .where('oc.isOwner', true)
+    .select('oc.courseId', 'o.name')
+  const ownerName = new Map(owners.map((row) => [row.courseId, row.name]))
+  for (const row of copies) {
+    result.set(row.id, { courseName: latest.get(row.parentCourseId)?.name ?? '', ownerName: ownerName.get(row.parentCourseId) ?? '' })
+  }
+  return result
 }
 
 /**
@@ -54,7 +138,7 @@ export async function ownCourseExists(id, organisationId, trx = db) {
 export function listOwnCourses(organisationId) {
   return ownCoursesQuery(organisationId)
     .leftJoin('CourseStep as s', 's.courseVersionId', 'cv.id')
-    .groupBy('c.id', 'c.updatedAt', 'cv.id', 'cv.name', 'cv.description')
+    .groupBy('c.id', 'c.updatedAt', 'c.visibility', 'cv.id', 'cv.name', 'cv.description')
     .orderBy([
       { column: 'c.updatedAt', order: 'desc' },
       { column: 'c.id', order: 'desc' },
@@ -62,6 +146,7 @@ export function listOwnCourses(organisationId) {
     .select(
       'c.id',
       'c.updatedAt',
+      'c.visibility',
       'cv.id as versionId',
       'cv.name',
       'cv.description',
@@ -78,7 +163,7 @@ export function listOwnCourses(organisationId) {
 export async function insertCourse(trx, organisationId, { name, description }) {
   requireId(organisationId)
   const now = db.raw('UTC_TIMESTAMP()')
-  const [courseId] = await trx('Course').insert({ isSharedInLibrary: false, createdAt: now, updatedAt: now })
+  const [courseId] = await trx('Course').insert({ createdAt: now, updatedAt: now })
   await trx('OrganisationCourse').insert({ organisationId, courseId, isOwner: true, addedAt: now })
   const [courseVersionId] = await trx('CourseVersion').insert({ courseId, versionNumber: 1, name, description, publishedAt: null })
   const video = async (positionX) => {
@@ -117,6 +202,20 @@ export async function latestPublishedVersions(courseIds, trx = db) {
     )
     .select('cv.id', 'cv.courseId', 'cv.versionNumber', 'cv.name', 'cv.description', 'cv.publishedAt', 'cv.unpublishedAt')
   return new Map(rows.map((row) => [row.courseId, row]))
+}
+
+/**
+ * Published versions by id (specs/010: the chosen versions of references), Map id → { id,
+ * courseId, versionNumber, name, description, publishedAt, unpublishedAt }, as
+ * latestPublishedVersions.
+ */
+export async function versionsByIds(versionIds, trx = db) {
+  if (versionIds.length === 0) return new Map()
+  const rows = await trx('CourseVersion')
+    .whereIn('id', versionIds)
+    .whereNotNull('publishedAt')
+    .select('id', 'courseId', 'versionNumber', 'name', 'description', 'publishedAt', 'unpublishedAt')
+  return new Map(rows.map((row) => [row.id, row]))
 }
 
 /**
@@ -357,4 +456,72 @@ export function setStepNext(trx, id, nextCourseStepId) {
 
 export function setAnswerNext(trx, id, nextCourseStepId) {
   return trx('Answer').where({ id }).update({ nextCourseStepId })
+}
+
+/**
+ * Who sees a course in the course library (specs/009 data-model.md): `visibility` and, for
+ * 'selective', the chosen organisations that are still active, by name. Only for own courses.
+ */
+export async function courseAvailability(courseId, trx = db) {
+  const course = await trx('Course').where({ id: courseId }).first('visibility')
+  const accessOrganisations = course.visibility === 'selective' ? ((await accessOrganisationsOf([courseId], trx)).get(courseId) ?? []) : []
+  return { visibility: course.visibility, accessOrganisations }
+}
+
+/** The chosen active organisations of several courses: Map courseId → [{ id, name }] by name. */
+export async function accessOrganisationsOf(courseIds, trx = db) {
+  const result = new Map()
+  if (courseIds.length === 0) return result
+  const rows = await trx('CourseAccess as a')
+    .join('Organisation as o', 'o.id', 'a.organisationId')
+    .whereIn('a.courseId', courseIds)
+    .whereNull('o.deletedAt')
+    .orderBy(['o.name', 'o.id'])
+    .select('a.courseId', 'o.id', 'o.name')
+  for (const row of rows) {
+    if (!result.has(row.courseId)) result.set(row.courseId, [])
+    result.get(row.courseId).push({ id: row.id, name: row.name })
+  }
+  return result
+}
+
+/**
+ * Sets who sees a course in the course library (specs/009 FR-001, FR-004). The chosen
+ * organisations are replaced; they only exist for 'selective'. Course.updatedAt stays as it is,
+ * so the status and the order of the course list do not change (research R9).
+ */
+export async function setCourseAvailability(trx, courseId, { visibility, accessOrganisationIds = [] }) {
+  await trx('Course').where({ id: courseId }).update({ visibility })
+  await trx('CourseAccess').where({ courseId }).del()
+  if (visibility === 'selective' && accessOrganisationIds.length > 0) {
+    await trx('CourseAccess').insert(accessOrganisationIds.map((organisationId) => ({ courseId, organisationId })))
+  }
+}
+
+/**
+ * The videos of the video steps of a version, in step order, each once, for the sharing warning
+ * (specs/009 research R4). No filter on deletedAt or visibility: whether a video is restricted is
+ * decided by lib/courseSharing.js.
+ */
+export async function contentVideoRows(versionId, trx = db) {
+  const rows = await trx('CourseStep as s')
+    .join('Video as v', 'v.id', 's.videoId')
+    .join('Organisation as o', 'o.id', 'v.ownerOrganisationId')
+    .where('s.courseVersionId', versionId)
+    .orderBy('s.id')
+    .select('v.id', 'v.name', 'v.visibility', 'v.deletedAt', 'o.deletedAt as ownerDeletedAt')
+  const seen = new Set()
+  const videos = []
+  for (const row of rows) {
+    if (seen.has(row.id)) continue
+    seen.add(row.id)
+    videos.push({ id: row.id, name: row.name, visibility: row.visibility, deletedAt: row.deletedAt, ownerDeleted: row.ownerDeletedAt !== null })
+  }
+  return videos
+}
+
+/** Ids of the active organisations other than `exceptId`. */
+export async function activeOrganisationIds(exceptId, trx = db) {
+  const rows = await trx('Organisation').whereNull('deletedAt').whereNot('id', exceptId).select('id')
+  return rows.map((row) => row.id)
 }

@@ -8,6 +8,8 @@ import { requireOrganisation } from './middleware/requireOrganisation.js'
 import { session } from './middleware/session.js'
 import { actionLogRoutes } from './modules/actionLog/actionLogRoutes.js'
 import { authRoutes } from './modules/auth/authRoutes.js'
+import { courseLibraryRoutes } from './modules/courseLibrary/courseLibraryRoutes.js'
+import { courseReferenceRoutes } from './modules/courseReferences/courseReferenceRoutes.js'
 import { courseRoutes } from './modules/courses/courseRoutes.js'
 import { organisationDirectoryRoutes } from './modules/organisationDirectory/organisationDirectoryRoutes.js'
 import { organisationSelfRoutes } from './modules/organisationSelf/organisationSelfRoutes.js'
@@ -56,7 +58,7 @@ export function createApp() {
   // getOrganisationId(req), never from params, query or body (FR-022, research R8).
   // express.json only reads application/json, so tus chunks (application/offset+octet-stream)
   // reach the tus server untouched.
-  app.use('/api/organisation', requireOrganisation, organisationSelfRoutes, organisationDirectoryRoutes, styleRoutes, videoRoutes, videoUploadRoutes, courseRoutes)
+  app.use('/api/organisation', requireOrganisation, organisationSelfRoutes, organisationDirectoryRoutes, styleRoutes, videoRoutes, videoUploadRoutes, courseRoutes, courseLibraryRoutes, courseReferenceRoutes)
 
   app.use('/api', notFoundHandler)
   app.use(errorHandler)

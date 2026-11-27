@@ -46,7 +46,7 @@ describe('after publishing', () => {
     await flushPromises()
     expect(wrapper.emitted('published')).toEqual([[next, 'Gepubliceerd als versie 1']])
     // Publishing never saves: it works on the saved draft (verbeterronde V4).
-    expect(calls.map((c) => c.action).filter((a) => a !== 'GET')).toEqual(['publish'])
+    expect(calls.map((c) => c.action).filter((a) => a !== 'GET' && a !== 'organisations')).toEqual(['publish'])
   })
 
   it('shows the message it was given right away (after the view loaded the new draft)', async () => {
@@ -107,5 +107,40 @@ describe('"Nog niet klaar om te publiceren" (US2, FR-007, verbeterronde V1)', ()
     expect(dialog(wrapper).get('[data-test="todo-item"]').text()).toContain('Video niet meer beschikbaar: kies een andere.')
     await wrapper.get('[data-test="publish-close"]').trigger('click')
     expect(dialog(wrapper).exists()).toBe(false)
+  })
+})
+
+describe('an own copy of a taken-over course (specs/011 FR-012, FR-013)', () => {
+  const copy = () => ({ ...complete(), basedOn: { courseName: 'Redden', ownerName: 'Brandweer Noord' } })
+
+  it('shows "Gebaseerd op" in the header', async () => {
+    const { wrapper } = await mountCourseEditor(copy())
+    expect(wrapper.get('[data-test="editor-based-on"]').text()).toBe('Gebaseerd op Redden van Brandweer Noord')
+  })
+
+  it('has no availability choice and sends none', async () => {
+    const { wrapper, calls } = await mountCourseEditor(copy(), { publish: () => jsonResponse(200, { ...copy(), status: 'published', publication: publication(1), lastPublishedVersionNumber: 1 }) })
+    await choose(wrapper, 'publish')
+    expect(dialog(wrapper).find('[data-test="copy-not-shared"]').text()).toBe('Een aangepaste cursus is alleen voor jouw organisatie en kan niet gedeeld worden.')
+    expect(dialog(wrapper).find('input[type="radio"]').exists()).toBe(false)
+    expect(dialog(wrapper).find('[data-test="library-note"]').exists()).toBe(false)
+    await wrapper.get('[data-test="publish-confirm"]').trigger('click')
+    await flushPromises()
+    const [sent] = calls.filter((c) => c.action === 'publish')
+    expect(sent.body?.visibility).toBeUndefined()
+  })
+
+  it('has no "Beschikbaarheid wijzigen" in the menu when live', async () => {
+    const { wrapper } = await mountCourseEditor(withStatus(copy(), 'published', 1))
+    await wrapper.get('[data-test="publish-menu"]').trigger('click')
+    expect(wrapper.find('[data-test="change-availability"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="unpublish"]').exists()).toBe(true)
+  })
+
+  it('a normal course keeps the choice and the header has no "Gebaseerd op"', async () => {
+    const { wrapper } = await mountCourseEditor(withStatus(complete(), 'published', 1))
+    expect(wrapper.find('[data-test="editor-based-on"]').exists()).toBe(false)
+    await wrapper.get('[data-test="publish-menu"]').trigger('click')
+    expect(wrapper.find('[data-test="change-availability"]').exists()).toBe(true)
   })
 })

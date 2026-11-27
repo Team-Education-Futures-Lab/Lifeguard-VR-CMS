@@ -1,5 +1,6 @@
 import { test as setup, expect, request  } from '@playwright/test';
 import fs from 'node:fs';
+import { BASE_URL } from '../helpers/base-url.js';
 
 const orgFile  = 'playwright/.auth/org.json';
 const adminFile = 'playwright/.auth/admin.json';
@@ -25,7 +26,7 @@ setup('inloggen als testorganisatie', async ({ page }) => {
   const name = `E2E-RUN-${Date.now()}`;
   const loginCode = name;
   const api = await request.newContext({
-    baseURL: 'https://localhost',
+    baseURL: BASE_URL,
     ignoreHTTPSErrors: true,
     storageState: adminFile,
         extraHTTPHeaders: { 'X-Requested-With': 'cms' },

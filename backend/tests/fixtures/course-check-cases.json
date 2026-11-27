@@ -981,5 +981,172 @@
       ]
     },
     "expected": []
+  },
+  {
+    "name": "unavailable video from the original of a copy",
+    "libraryVideoIds": [
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": false,
+            "keptByLiveVersion": false,
+            "keptFromOriginal": true
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [],
+    "grantedVideoIds": [
+      7
+    ]
+  },
+  {
+    "name": "unavailable video, not from the original",
+    "libraryVideoIds": [
+      8,
+      9
+    ],
+    "liveVideoIds": [],
+    "draft": {
+      "id": 1,
+      "name": "Testcursus",
+      "description": "Een cursus om mee te testen.",
+      "updatedAt": "2026-11-23T12:00:00.000Z",
+      "draftVersionNumber": 1,
+      "status": "draft",
+      "publication": null,
+      "lastPublishedVersionNumber": null,
+      "steps": [
+        {
+          "id": 1,
+          "stepType": "question",
+          "isStart": true,
+          "positionX": 0,
+          "positionY": 0,
+          "questionText": "Wat doe je?",
+          "feedback": null,
+          "answers": [
+            {
+              "id": 101,
+              "answerText": "Ik grijp in",
+              "isCorrect": true,
+              "nextStepId": 2
+            },
+            {
+              "id": 102,
+              "answerText": "Ik wacht af",
+              "isCorrect": false,
+              "nextStepId": 3
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": -130,
+          "positionY": 260,
+          "videoId": 7,
+          "video": {
+            "id": 7,
+            "name": "Video 7",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": false,
+            "keptByLiveVersion": false,
+            "keptFromOriginal": false
+          },
+          "nextStepId": null
+        },
+        {
+          "id": 3,
+          "stepType": "video",
+          "isStart": false,
+          "positionX": 130,
+          "positionY": 260,
+          "videoId": 8,
+          "video": {
+            "id": 8,
+            "name": "Video 8",
+            "durationSeconds": 60,
+            "thumbnailUrl": null,
+            "available": true,
+            "keptByLiveVersion": false
+          },
+          "nextStepId": null
+        }
+      ]
+    },
+    "expected": [
+      {
+        "code": "videoUnavailable",
+        "step": 1
+      }
+    ],
+    "grantedVideoIds": []
   }
 ]

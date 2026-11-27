@@ -6,7 +6,9 @@ const INTERVAL_MS = 15 * 60 * 1000
 /**
  * Soft-deleted videos whose files may go (specs/002 FR-020a, research R16): deleted, and not
  * referenced by any course step at all, also not by a step of a soft-deleted course
- * (specs/004 FR-016).
+ * (specs/004 FR-016). This also keeps the videos of the version a course reference points to
+ * (specs/010 FR-021, research R7): published versions and their steps are never deleted. The
+ * versions of an own copy (specs/011) point to the same videos, so those stay as well.
  */
 function removableVideos() {
   return db('Video as v')

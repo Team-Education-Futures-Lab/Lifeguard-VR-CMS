@@ -113,6 +113,8 @@ describe('each rule gives exactly its message (SC-003)', () => {
     const kept = course([video({ videoId: 9 })])
     expect(checkCourse(kept, { 9: { available: false, keptByLiveVersion: true } }).issues).toEqual([])
     expect(codes(kept, { 9: { available: false, keptByLiveVersion: false } })).toEqual(['videoUnavailable'])
+    // An own copy keeps a video from its original (specs/011 FR-014).
+    expect(checkCourse(kept, { 9: { available: false, keptByLiveVersion: false, keptFromOriginal: true } }).issues).toEqual([])
   })
 
   it('empty question and empty answer (FR-015)', () => {

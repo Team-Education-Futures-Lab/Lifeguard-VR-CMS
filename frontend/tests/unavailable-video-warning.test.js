@@ -202,3 +202,27 @@ describe('undo after replacing the video was saved (FR-020d)', () => {
     expect(node().videoId).toBe(20)
   })
 })
+
+describe('a video an own copy got from its original (specs/011 US3)', () => {
+  beforeEach(() => {
+    const step = stepVideo(17, false)
+    step.video.keptFromOriginal = true
+    mountEditor(docWith(step))
+  })
+
+  it('names where the video comes from before removing it', async () => {
+    const clearing = ed.clearVideo(node())
+    await nextTick()
+    expect(ui.confirm.title).toBe('Video uit de oorspronkelijke cursus')
+    expect(ui.confirm.body).toBe(
+      'Deze video komt uit de cursus waarop jouw kopie gebaseerd is en staat niet in jouw videobibliotheek. Haal je hem weg, dan kun je hem daarna niet opnieuw toevoegen.',
+    )
+    await answer(false)
+    await clearing
+    expect(node().videoId).toBe(17)
+  })
+
+  it('is not reported as unavailable by the check', () => {
+    expect(ed.issues.issues.map((issue) => issue.code)).not.toContain('videoUnavailable')
+  })
+})

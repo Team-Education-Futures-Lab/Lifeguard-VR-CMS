@@ -50,7 +50,7 @@ describe('creating a course (FR-001, FR-002)', () => {
     expect(left).toEqual({ id: expect.any(Number), stepType: 'video', isStart: false, positionX: -130, positionY: 260, videoId: null, video: null, nextStepId: null })
     expect(right).toMatchObject({ stepType: 'video', isStart: false, positionX: 130, positionY: 260, videoId: null, nextStepId: null })
     const id = response.body.id
-    expect(await db('Course').where({ id }).first()).toMatchObject({ parentCourseId: null, isSharedInLibrary: 0, deletedAt: null })
+    expect(await db('Course').where({ id }).first()).toMatchObject({ parentCourseId: null, visibility: 'private', deletedAt: null })
     expect(await db('OrganisationCourse').where({ courseId: id })).toEqual([
       expect.objectContaining({ organisationId: a.id, isOwner: 1 }),
     ])
@@ -105,8 +105,8 @@ describe('the course list (FR-004)', () => {
     await createStepRow({ versionId: old.versionId, stepType: 'video' })
     await createStepRow({ versionId: old.versionId, stepType: 'question' })
     expect(await list('a')).toEqual([
-      { id: recent.courseId, name: 'Nieuw', updatedAt: '2026-06-01T00:00:00.000Z', videoStepCount: 0, questionStepCount: 0, status: 'draft', publication: null, lastPublishedVersionNumber: null },
-      { id: old.courseId, name: 'Oud', updatedAt: '2026-01-01T00:00:00.000Z', videoStepCount: 2, questionStepCount: 1, status: 'draft', publication: null, lastPublishedVersionNumber: null },
+      { id: recent.courseId, name: 'Nieuw', updatedAt: '2026-06-01T00:00:00.000Z', videoStepCount: 0, questionStepCount: 0, status: 'draft', publication: null, lastPublishedVersionNumber: null, visibility: 'private', receiverCount: 0, basedOn: null },
+      { id: old.courseId, name: 'Oud', updatedAt: '2026-01-01T00:00:00.000Z', videoStepCount: 2, questionStepCount: 1, status: 'draft', publication: null, lastPublishedVersionNumber: null, visibility: 'private', receiverCount: 0, basedOn: null },
     ])
   })
 

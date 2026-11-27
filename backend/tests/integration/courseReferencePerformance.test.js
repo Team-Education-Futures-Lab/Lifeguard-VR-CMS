@@ -1,0 +1,94 @@
+import { performance } from 'node:perf_hooks'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { db } from '../../src/db/knex.js'
+import { agentWithSession, createOrganisationRow, createPublishedVersionRow, createVideoRow, resetDatabase } from '../helpers/testApp.js'
+import { publishedCourse } from '../helpers/quest.js'
+import { copyReference } from '../helpers/references.js'
+
+// Speed of the course overview with taken-over courses (specs/010 research R10). Data is inserted
+// in bulk to keep the setup fast.
+
+let a
+let b
+let agentB
+let video
+
+beforeEach(async () => {
+  await resetDatabase()
+  a = await createOrganisationRow({ name: 'Zwembad A', loginCode: 'ZWEMBAD-A' })
+  b = await createOrganisationRow({ name: 'Zwembad B', loginCode: 'ZWEMBAD-B' })
+  agentB = (await agentWithSession({ organisationId: b.id })).agent
+  video = await createVideoRow({ organisationId: a.id, visibility: 'public' })
+})
+
+/** Inserts `count` courses of `owner`, each with a published version 1 of four steps and a draft 2. Returns [{ courseId, versionId }]. */
+async function bulkCourses(owner, count) {
+  const now = new Date('2026-11-20T10:00:00.000Z')
+  const courseIds = []
+  for (let i = 0; i < count; i++) {
+    const [id] = await db('Course').insert({ createdAt: now, updatedAt: now, visibility: 'public' })
+    courseIds.push(id)
+  }
+  await db('OrganisationCourse').insert(courseIds.map((courseId) => ({ organisationId: owner, courseId, isOwner: true, addedAt: now })))
+  await db('CourseVersion').insert(courseIds.map((courseId, i) => ({ courseId, versionNumber: 1, name: `Cursus ${i}`, description: 'Snel', publishedAt: now })))
+  await db('CourseVersion').insert(courseIds.map((courseId, i) => ({ courseId, versionNumber: 2, name: `Cursus ${i}`, description: 'Snel', publishedAt: null })))
+  const versions = await db('CourseVersion').whereIn('courseId', courseIds).whereNotNull('publishedAt').select('id', 'courseId')
+  const steps = versions.flatMap((version) =>
+    [0, 1, 2, 3].map((s) => ({ courseVersionId: version.id, isStart: s === 0, stepType: 'video', videoId: video.id, positionX: 0, positionY: 0 })),
+  )
+  await db.batchInsert('CourseStep', steps, 500)
+  return versions.map((version) => ({ courseId: version.courseId, versionId: version.id }))
+}
+
+describe('course overview speed', () => {
+  it('shows 200 own and 200 taken-over courses within 2 seconds', async () => {
+    await bulkCourses(b.id, 200)
+    const shared = await bulkCourses(a.id, 200)
+    await db('OrganisationCourse').insert(
+      shared.map(({ courseId, versionId }) => ({ organisationId: b.id, courseId, isOwner: false, addedAt: new Date(), courseVersionId: versionId })),
+    )
+
+    const start = performance.now()
+    const [own, references] = await Promise.all([agentB.get('/api/organisation/courses'), agentB.get('/api/organisation/course-references')])
+    const ms = performance.now() - start
+    expect(own.body.courses).toHaveLength(200)
+    expect(references.body.references).toHaveLength(200)
+    expect(ms).toBeLessThan(2000)
+  })
+})
+
+describe('speed with own copies (specs/011 research R12)', () => {
+  it('makes a copy of a course with 100 steps within 2 seconds', async () => {
+    const course = await publishedCourse({ organisationId: a.id, name: 'Groot', visibility: 'public', versions: [{ first: video.id }] })
+    const big = await createPublishedVersionRow({ courseId: course.courseId, versionNumber: 3, name: 'Groot' })
+    await db('CourseVersion').where({ id: course.draftVersionId }).update({ versionNumber: 4 })
+    await db.batchInsert(
+      'CourseStep',
+      Array.from({ length: 100 }, (_, i) => ({ courseVersionId: big, isStart: i === 0, stepType: 'video', videoId: video.id, positionX: i, positionY: 0 })),
+      100,
+    )
+    await db('OrganisationCourse').insert({ organisationId: b.id, courseId: course.courseId, isOwner: false, addedAt: new Date(), courseVersionId: big })
+
+    const start = performance.now()
+    const response = await copyReference(agentB, course.courseId)
+    const ms = performance.now() - start
+    expect(response.status).toBe(201)
+    const copied = await db('CourseStep as s').join('CourseVersion as cv', 'cv.id', 's.courseVersionId').where('cv.courseId', response.body.courseId).count('* as n').first()
+    expect(Number(copied.n)).toBe(200)
+    expect(ms).toBeLessThan(2000)
+  })
+
+  it('shows 200 own courses, of which 100 copies, within 2 seconds', async () => {
+    const originals = await bulkCourses(a.id, 100)
+    const own = await bulkCourses(b.id, 200)
+    for (const [i, { courseId }] of own.slice(0, 100).entries()) {
+      await db('Course').where({ id: courseId }).update({ parentCourseId: originals[i].courseId, visibility: 'private' })
+    }
+    const start = performance.now()
+    const response = await agentB.get('/api/organisation/courses')
+    const ms = performance.now() - start
+    expect(response.body.courses).toHaveLength(200)
+    expect(response.body.courses.filter((row) => row.basedOn)).toHaveLength(100)
+    expect(ms).toBeLessThan(2000)
+  })
+})

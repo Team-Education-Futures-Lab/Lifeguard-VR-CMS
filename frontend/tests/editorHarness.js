@@ -64,7 +64,7 @@ export const docs = {
       ...extra,
     }
   },
-  // The draft document of specs/006 contracts/api.md: a draft that was never published.
+  // The draft document of specs/006 and 009 contracts/api.md: a draft that was never published.
   doc: (...steps) => ({
     id: 12,
     name: 'Redding',
@@ -73,6 +73,7 @@ export const docs = {
     status: 'draft',
     publication: null,
     lastPublishedVersionNumber: null,
+    availability: { visibility: 'private', accessOrganisations: [] },
     steps,
   }),
 }

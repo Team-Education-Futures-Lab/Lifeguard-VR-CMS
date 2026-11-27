@@ -1,6 +1,7 @@
 <script setup>
 // The organisation's courses with their publication status (specs/004 contracts/ui.md § Cursussen,
-// specs/006 contracts/ui.md § Cursusoverzicht).
+// specs/006 contracts/ui.md § Cursusoverzicht), and the courses taken over from the course library
+// (specs/010 contracts/ui.md § Cursusoverzicht).
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { listCourses, createCourse, deleteCourse } from '../api/courses'
@@ -10,21 +11,33 @@ import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
 import DescriptionField from '../components/DescriptionField.vue'
 import PublicationStatus from '../components/PublicationStatus.vue'
+import { AVAILABILITY_LABEL, formatPublishedAt } from '../lib/publication'
+import { basedOnText, newVersionLabel, receiversSentence, withdrawnText } from '../lib/courseReference'
+import { useCourseReferences } from '../stores/courseReferences'
+import TakenOverCourseDialog from '../components/TakenOverCourseDialog.vue'
 
 const router = useRouter()
+const references = useCourseReferences()
 const courses = ref([])
+const openReference = ref(null)
 const loadState = ref('loading') // loading | ready | error
 
 async function load() {
   loadState.value = 'loading'
   try {
-    courses.value = await listCourses()
+    const [own] = await Promise.all([listCourses(), references.load()])
+    courses.value = own
     loadState.value = 'ready'
   } catch {
     loadState.value = 'error'
   }
 }
 onMounted(load)
+
+// Taken-over courses below the own courses, by name (specs/010 contracts/ui.md).
+const takenOver = computed(() =>
+  [...references.references].sort((a, b) => a.name.localeCompare(b.name, 'nl', { sensitivity: 'base' }) || a.courseId - b.courseId),
+)
 
 const rows = computed(() =>
   courses.value.map((c) => ({ c, updatedAt: new Date(c.updatedAt).getTime(), videos: c.videoStepCount, questions: c.questionStepCount })),
@@ -62,14 +75,24 @@ async function create() {
     serverErrors.value = error.fields && Object.keys(error.fields).length ? error.fields : { general: error.message }
   }
 }
+/** After "Aanpassen" the editor opens with the own copy (specs/011 FR-007). */
+function openCopy(courseId) {
+  openReference.value = null
+  router.push('/courses/' + courseId)
+}
+
 async function remove(c) {
   const ok = await confirmDialog({
     title: 'Cursus verwijderen?',
     // A published course also goes off the VR headsets (specs/006 FR-021).
+    // A shared course also leaves the course library (specs/009 FR-025).
     body:
-      c.status && c.status !== 'draft'
+      (c.status && c.status !== 'draft'
         ? `“${c.name}” wordt verwijderd. Deze cursus is gepubliceerd. Na verwijderen is hij niet meer te downloaden op de VR-brillen.`
-        : `“${c.name}” wordt verwijderd.`,
+        : `“${c.name}” wordt verwijderd.`) +
+      (c.visibility && c.visibility !== 'private' ? ' Andere organisaties zien hem dan ook niet meer in de cursusbibliotheek.' : '') +
+      // Organisations that took it over keep their version (specs/010 FR-019).
+      (c.receiverCount ? ` ${receiversSentence(c.receiverCount)}` : ''),
     confirmLabel: 'Verwijderen',
     danger: true,
   })
@@ -96,28 +119,66 @@ async function remove(c) {
       <p>De cursussen konden niet worden geladen.</p>
       <button class="btn" @click="load">Opnieuw</button>
     </div>
-    <div v-else-if="!rows.length" class="empty">
+    <div v-else-if="!rows.length && !takenOver.length" class="empty">
       <p>Er zijn nog geen cursussen.</p>
       <button class="btn" @click="openNew">Maak de eerste cursus</button>
+      <p data-test="library-hint">
+        Je kunt ook een cursus van een andere organisatie toevoegen via de
+        <RouterLink to="/course-library">Cursusbibliotheek</RouterLink>.
+      </p>
     </div>
 
-    <ul v-else class="list">
+    <ul v-else-if="rows.length" class="list">
       <li v-for="r in rows" :key="r.c.id" class="row">
         <RouterLink :to="'/courses/' + r.c.id" class="main">
           <span class="name">{{ r.c.name }}</span>
+          <!-- An own copy of a taken-over course (specs/011 FR-012). -->
+          <span v-if="r.c.basedOn" class="meta based-on" data-test="based-on">{{ basedOnText(r.c.basedOn) }}</span>
           <span class="meta">
             {{ r.videos }} {{ r.videos === 1 ? 'video' : 'video’s' }} · {{ r.questions }} {{ r.questions === 1 ? 'vraag' : 'vragen' }} · bewerkt {{ timeAgo(r.updatedAt) }}
           </span>
         </RouterLink>
-        <PublicationStatus
-          class="row-status"
-          compact
-          :status="r.c.status"
-          :publication="r.c.publication ?? null"
-        />
+        <span class="row-status">
+          <PublicationStatus compact :status="r.c.status" :publication="r.c.publication ?? null" />
+          <!-- Who sees a published course in the course library (specs/009 contracts/ui.md). -->
+          <span v-if="r.c.status && r.c.status !== 'draft' && r.c.visibility" class="availability" data-test="course-availability">
+            {{ AVAILABILITY_LABEL[r.c.visibility] }}
+          </span>
+        </span>
         <button class="icon-btn" title="Verwijderen" @click="remove(r.c)"><Icon name="trash" :size="16" /></button>
       </li>
     </ul>
+
+    <template v-if="loadState === 'ready' && takenOver.length">
+      <h2 class="section-head" data-test="taken-over-section">Overgenomen cursussen</h2>
+      <ul class="list">
+        <li v-for="r in takenOver" :key="r.courseId" class="row" data-test="taken-over-row">
+          <button type="button" class="main ref" @click="openReference = r">
+            <img v-if="r.thumbnailUrl" class="ref-th" :src="r.thumbnailUrl" alt="" />
+            <span v-else class="ref-th placeholder" aria-hidden="true" />
+            <span class="ref-text">
+              <span class="name">{{ r.name }}</span>
+              <span class="pill" data-test="taken-over-pill">Overgenomen van {{ r.owner.name }}</span>
+            </span>
+          </button>
+          <span class="row-status">
+            <span class="publication-detail">Op de Quest: versie {{ r.version.versionNumber }} · {{ formatPublishedAt(r.version.publishedAt) }}</span>
+            <span v-if="withdrawnText(r)" class="withdrawn" data-test="withdrawn"><Icon name="info" :size="13" />{{ withdrawnText(r) }}</span>
+            <span v-else-if="r.notice" class="notice" data-test="new-version-notice"><Icon name="info" :size="13" />{{ newVersionLabel(r) }}</span>
+            <span v-else-if="r.newVersion" class="newer" data-test="newer-version">{{ newVersionLabel(r) }}</span>
+          </span>
+        </li>
+      </ul>
+    </template>
+
+    <TakenOverCourseDialog
+      v-if="openReference"
+      :reference="openReference"
+      @close="openReference = null"
+      @removed="openReference = null"
+      @copied="openCopy"
+      @stale="openReference = null; load()"
+    />
 
     <Modal v-if="showNew" title="Nieuwe cursus" @close="showNew = false">
       <form id="new-course" class="form" @submit.prevent="create">
@@ -163,6 +224,8 @@ async function remove(c) {
 }
 .row { display: flex; align-items: center; gap: 16px; padding: 0 12px 0 0; }
 .row + .row { border-top: 1px solid var(--line); }
+.row-status { display: grid; gap: 2px; justify-items: start; }
+.availability { font-size: 0.8rem; color: var(--muted); }
 .row:hover { background: var(--brand-soft); }
 .row:hover .name { color: var(--brand-text); }
 .main { flex: 1; min-width: 0; display: grid; gap: 2px; padding: 14px 20px; text-decoration: none; color: inherit; }
@@ -182,6 +245,14 @@ async function remove(c) {
   color: var(--muted);
 }
 .form { display: grid; gap: 16px; }
+.section-head { margin: 28px 0 10px; font-size: 1.05rem; }
+.ref { display: flex; align-items: center; gap: 12px; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.ref-th { width: 72px; aspect-ratio: 2 / 1; object-fit: cover; border-radius: var(--r); background: var(--surface-2); flex: none; }
+.ref-text { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.pill { padding: 1px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: var(--brand-soft); color: var(--brand-text); }
+.publication-detail { font-size: 0.85rem; }
+.withdrawn, .newer { display: inline-flex; gap: 4px; align-items: center; font-size: 0.8rem; color: var(--muted); }
+.notice { display: inline-flex; gap: 4px; align-items: center; font-size: 0.8rem; font-weight: 600; color: var(--brand-text); }
 @media (max-width: 600px) {
   .row { flex-wrap: wrap; gap: 0 12px; padding-bottom: 12px; }
   .row .row-status { padding-left: 20px; }

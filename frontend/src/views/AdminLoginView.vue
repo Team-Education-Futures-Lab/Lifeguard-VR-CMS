@@ -52,6 +52,7 @@ async function submit() {
 
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <button class="btn btn-primary" :disabled="busy">Inloggen</button>
+      <RouterLink to="/login" class="muted small other-login" data-test="organisation-login-link">Inloggen als organisatie</RouterLink>
     </form>
   </div>
 </template>

@@ -28,6 +28,34 @@ export function courseIncomplete(issues) {
   return error
 }
 
+/** Sharing a course with restricted videos needs the owner's confirmation (specs/009 FR-009, FR-012). */
+export function sharedVideosWarning(videos) {
+  const error = new AppError(409, 'shared_videos_warning', "Deze cursus bevat video's die niet algemeen beschikbaar zijn.")
+  error.videos = videos
+  return error
+}
+
+/** Changing the availability needs a live version (specs/009 FR-006, research R9). */
+export const courseNotLive = () => new AppError(409, 'course_not_live', 'Publiceer de cursus eerst.')
+
+/** The organisation already took over this course (specs/010 FR-005). */
+export const courseAlreadyAdded = () =>
+  new AppError(409, 'course_already_added', 'Deze cursus staat al bij jullie cursussen.')
+
+/** "Nieuwe versie gebruiken" without a newer version to choose (specs/010 FR-014); `reference` is the current state. */
+export function noNewerVersion(reference) {
+  const error = new AppError(409, 'no_newer_version', 'Er is geen nieuwere versie om te gebruiken.')
+  error.reference = reference
+  return error
+}
+
+/** "Aanpassen" a second time (double click, second tab; specs/011 FR-006); `courseId` is the copy. */
+export function courseAlreadyCopied(courseId) {
+  const error = new AppError(409, 'course_already_copied', 'Deze cursus is al aangepast. De aangepaste cursus staat bij je cursussen.')
+  error.courseId = courseId
+  return error
+}
+
 export const notAuthenticated = () =>
   new AppError(401, 'not_authenticated', 'Je bent niet ingelogd.')
 

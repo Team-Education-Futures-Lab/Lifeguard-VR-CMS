@@ -78,3 +78,31 @@ Verwacht:
   dezelfde cursus (SC-007).
 - Na scenario 17 is er geen rij meer voor C.
 - Er bestaat geen tabel voor een overnamegeschiedenis.
+
+## Resultaten handmatige test
+
+Getest op 2026-11-27 in de lokale ontwikkelomgeving, samen met de handmatige tests van 009 en 011.
+"Redden" stond al gepubliceerd en gedeeld.
+
+| # | Resultaat | Opmerking |
+| --- | --- | --- |
+| 1 | ✅ | Bevestiging heeft veel tekst → backlog "Teksten nalopen in het CMS" |
+| 2 | ✅ | |
+| 3 | ✅ | Eigen en overgenomen cursussen zien er anders uit → backlog |
+| 4 | open | Quest-test, later |
+| 5 | ✅ | Ook de knop "Aanpassen" (spec 011) staat erbij |
+| 6 | ✅ | |
+| 7 | ✅ | "Overgenomen door" in het publicatiemenu is te prominent → backlog |
+| 8 | ✅ | Quest-deel nog niet getest |
+| 9 | ✅ | Ontwerpvraag over "Huidige versie houden" → backlog. Quest-deel nog niet getest |
+| 10 | ✅ | |
+| 11 | ✅ | Quest-deel nog niet getest |
+| 12 | ✅ | Zin over overgenomen cursussen kan beter verwoord → backlog "Teksten nalopen in het CMS" |
+| 13 | ✅ | |
+| 14 | ✅ | |
+| 15 | ✅ | |
+| 16 | ✅ | Bevestiging heeft veel tekst → backlog "Teksten nalopen in het CMS" |
+| 17 | ✅ | |
+| 18 | ✅ | |
+
+De SQL-controle uit "Controle in de database" is nog niet gedaan.

@@ -67,3 +67,25 @@ SELECT courseId, versionNumber, publishedAt, unpublishedAt FROM CourseVersion WH
 
 Verwacht: kopie `private`; B is eigenaar van de kopie en heeft geen rij meer bij het origineel;
 versie 1 gepubliceerd, versie 2 concept.
+
+## Resultaten handmatige test
+
+Getest op 2026-11-27 in de lokale ontwikkelomgeving, samen met de handmatige tests van 009 en 010.
+De cursus heette daar "Zwemmen" in plaats van "Redden".
+
+| # | Resultaat | Opmerking |
+| --- | --- | --- |
+| 1 | ✅ | Bevestiging heeft veel tekst → backlog "Teksten nalopen in het CMS" |
+| 2 | ✅ | "Gebaseerd op" in de kop maakt de editor drukker → backlog "UI-refactor van de cursus-editor" |
+| 3 | ✅ | Kopie gezien; nakijken dat de overgenomen cursus en de melding weg zijn |
+| 4 | open | Quest-test, later |
+| 5 | ✅ | |
+| 6 | ✅ | |
+| 7 | ✅ | Wens: icoon voor origineel, overgenomen en kopie → backlog |
+| 8 | ✅ | |
+| 9 | ✅ | |
+| 10 | ✅ | |
+| 11 | ✅ | Hint kan duidelijker → UI-refactor |
+| 12 | ✅ | |
+
+De SQL-controle uit "Controle in de database" is nog niet gedaan.

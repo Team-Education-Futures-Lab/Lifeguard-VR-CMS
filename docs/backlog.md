@@ -6,13 +6,12 @@ zodra het wordt opgepakt.
 ## Handmatige test van spec 010 (gedeelde cursussen overnemen als verwijzing)
 
 Spec 010 (`specs/010-course-reference-takeover`, FR-12 deel 2) is gebouwd op 2026-11-27. De
-geautomatiseerde tests slagen (backend, frontend en de e2e-tests van 003, 006, 009 en 010), maar de
-handmatige scenario's 1–18 van `specs/010-course-reference-takeover/quickstart.md` zijn nog niet
-doorgelopen (taak T063); op 2026-11-27 bewust uitgesteld. Daarbij ook met de SQL-query uit de
-quickstart `addedAt`, `courseVersionId` en `declinedCourseVersionId` controleren en de resultaten
-noteren in een tabel "Resultaten handmatige test" in de quickstart. Ook nog open (taak T060): de usability-omgeving heeft nog geen overgenomen
-cursus met een nieuwere versie, dus de melding is daar pas te zien als iemand zelf een cursus deelt,
-overneemt en opnieuw publiceert.
+geautomatiseerde tests slagen (backend, frontend en de e2e-tests van 003, 006, 009 en 010). Van de
+handmatige scenario's 1–18 van `specs/010-course-reference-takeover/quickstart.md` (taak T063) zijn
+op 2026-11-27 1–3 en 5–18 goed bevonden (resultaten in de quickstart). Nog open: 4 en het Quest-deel
+van 8, 9 en 11 (Quest) en de SQL-controle uit de quickstart (`addedAt`, `courseVersionId`,
+`declinedCourseVersionId`). Ook nog open (taak T060):
+de usability-omgeving heeft nog geen overgenomen cursus met een nieuwere versie.
 
 De open punten uit spec 009 (research R13) zijn in spec 010 uitgewerkt:
 
@@ -29,8 +28,9 @@ De open punten uit spec 009 (research R13) zijn in spec 010 uitgewerkt:
 Spec 011 (`specs/011-course-reference-copy`) is gebouwd op 2026-11-27: "Aanpassen" in het venster van
 een overgenomen cursus geeft een eigen kopie van de gekozen versie (versie 1 gepubliceerd, versie 2 als
 concept), met "Gebaseerd op <cursus> van <organisatie>". De kopie is nooit te delen en krijgt geen
-nieuwe versies; meegekregen video's blijven werken, ook na beperken. De handmatige scenario's van
-`specs/011-course-reference-copy/quickstart.md` (taak T049) zijn nog niet doorgelopen.
+nieuwe versies; meegekregen video's blijven werken, ook na beperken. Van de handmatige scenario's van
+`specs/011-course-reference-copy/quickstart.md` (taak T049) zijn op 2026-11-27 1–3 en 5–12 goed
+bevonden (resultaten in de quickstart). Nog open: 4 (Quest) en de SQL-controle uit de quickstart.
 
 ## Koppeling tussen oude en nieuwe cursus op de Quest na aanpassen
 
@@ -59,13 +59,141 @@ nieuwe versie midden in een lesperiode binnenkomt.
 ## Handmatige test van spec 009 (cursussen delen en de cursusbibliotheek)
 
 Spec 009 is gebouwd en de geautomatiseerde tests slagen (backend, frontend en de e2e-tests van 003, 006
-en 009), maar de handmatige scenario's 1–16 van `specs/009-course-sharing-library/quickstart.md` zijn
-nog niet doorgelopen (taak T062). Daarbij ook met de SQL-query uit de quickstart controleren dat
-`Course.visibility` en `CourseAccess` kloppen, en de resultaten noteren in een tabel "Resultaten
-handmatige test" in de quickstart.
+en 009). Van de handmatige scenario's 1–16 van `specs/009-course-sharing-library/quickstart.md` (taak
+T062) zijn op 2026-11-27 1–9, 11–13, 15 en 16 goed bevonden (resultaten in de quickstart). Nog
+open: 10 (het venster van een cursus in de bibliotheek vóór toevoegen), 14
+(Quest) en de SQL-controle uit de quickstart.
 
 Ook nog open uit spec 009 (taak T058): de usability-omgeving heeft nog geen gedeelde cursus van een
 tweede organisatie, dus de cursusbibliotheek is daar leeg tot iemand zelf een cursus deelt.
+
+## Teksten nalopen in het CMS
+
+Verzamelplek voor teksten die korter, duidelijker of beter verwoord kunnen (NFR-03). Bij het oppakken
+alle punten in één keer nalopen, en de teksten in de contracten (`specs/*/contracts/ui.md`) en de tests
+meenemen.
+
+- **Waarschuwing bij delen van beperkte video's** (handmatige test 009, scenario 4): "Video's die niet
+  algemeen beschikbaar zijn" (`frontend/src/components/SharedVideosWarningDialog.vue`) heeft veel
+  tekst.
+- **Bevestiging "Toevoegen aan mijn organisatie"** (handmatige test 010, scenario 1): veel tekst
+  (`addConfirmationBody` in `frontend/src/lib/courseReference.js`).
+- **Beperk-bevestiging met overgenomen cursussen** (handmatige test 010, scenario 12): de zin "1
+  daarvan heeft deze cursus overgenomen en houdt haar huidige versie." kan beter verwoord worden
+  (`losingReceiversSentence` in `frontend/src/lib/courseReference.js`).
+- **Bevestiging "Aanpassen"** (handmatige test 011, scenario 1): veel tekst (`copyConfirmation` in
+  `frontend/src/lib/courseReference.js`).
+- **Bevestiging "Cursus verwijderen?" bij een cursus met ontvangers** (handmatige test 010, scenario
+  16): veel tekst. De zinnen over de VR-brillen, de cursusbibliotheek en de organisaties die de cursus
+  hebben overgenomen worden achter elkaar gezet (`remove` in `frontend/src/views/CoursesView.vue`,
+  `receiversSentence` in `frontend/src/lib/courseReference.js`). Hetzelfde geldt waarschijnlijk voor
+  onpubliceren (`frontend/src/editor/UnpublishDialog.vue`).
+
+## Link naar de beheerderslogin op de inlogpagina
+
+Uit de handmatige test van 2026-11-27 (009-15, 010-18: de beheerder moest een organisatie verwijderen).
+Op de gewone inlogpagina (`frontend/src/views/LoginView.vue`) is geen manier om naar de inlogpagina
+voor de beheerder te gaan; die is alleen bereikbaar via de URL `/admin/login`. Wens: een kleine,
+rustige link "Inloggen als beheerder" onder het inlogformulier (en eventueel terug vanaf de
+beheerderslogin).
+
+## Na inloggen meteen naar Cursussen
+
+Uit de handmatige test van 2026-11-27. Na het inloggen komt een organisatie op een startpagina met
+drie knoppen: Cursussen, Video's en Huisstijl (`frontend/src/views/HomeView.vue`, route `/` in
+`frontend/src/router.js`). Die tussenstap is overbodig: de navigatie heeft dezelfde ingangen. Wens:
+de startpagina weg, en na inloggen (en bij `/`) meteen naar Cursussen. Let op de `redirect` na
+inloggen en de terugval-route `/:pathMatch(.*)*`.
+
+## Iconen voor eigen, overgenomen en aangepaste cursussen
+
+Uit de handmatige test van spec 011 (2026-11-27, scenario 7). Of een cursus een eigen origineel is,
+een overgenomen cursus (spec 010) of een eigen kopie van een overgenomen cursus (spec 011), staat nu
+overal in tekst ("Eigen", "Overgenomen van …", "Gebaseerd op …"). Wens: één duidelijk icoon per soort,
+op dezelfde plek in het cursusoverzicht, de cursusbibliotheek en de editor, met de tekst als tooltip of
+toelichting. Samen oppakken met "Cursusoverzicht: eigen en overgenomen cursussen in dezelfde opmaak"
+en de UI-refactor van de cursus-editor.
+
+## UI-refactor van de cursus-editor
+
+Uit de handmatige tests van specs 009–011 (2026-11-27). Door de laatste features is de kop van de
+editor vol geraakt, en er komt steeds iets bij (spec 011: "Gebaseerd op …"). Bij een refactor eerst
+alles op een rij zetten wat er in de editor kan staan, en per onderdeel kiezen of het in de kop, een
+menu, een paneel of een venster hoort. Zie ook de bugs "lange videonaam duwt de cursus-editor naar
+rechts" en "bovenbalk van de cursus-editor verspringt bij opslaan".
+
+Wat er nu in de editor kan staan (`frontend/src/editor/`):
+
+- **Kop**
+  - Terug naar cursussen.
+  - Naam van de cursus, die het venster "Naam en beschrijving" opent.
+  - "Gebaseerd op <cursus> van <organisatie>" bij een eigen kopie (spec 011).
+  - Publicatiestatus: Concept, "Op de Quest: versie N · datum", of gepubliceerd met wijzigingen
+    (spec 006).
+  - Publicatiemenu (spec 006/009/010):
+    - "Publiceren" of "Wijzigingen publiceren", met de reden als het niet kan;
+    - "Beschikbaarheid wijzigen" (niet bij een kopie);
+    - "Onpubliceren";
+    - "Overgenomen door N organisaties: …" (zie het backlog-item "Overgenomen door … op een minder
+      prominente plek").
+  - Weergave: Canvas, Canvas + paneel, Lijst.
+  - Ongedaan maken en Opnieuw.
+  - Controlestatus ("nog N punten" / klaar om te publiceren, met de lijst van punten).
+  - Melding "Concept opgeslagen" / "Opgeslagen, nog N punten open".
+  - Opslaan en "Canvas ordenen".
+- **Canvas en lijst**
+  - Onderdelen (video en vraag) met badges: start, einde, problemen.
+  - Video-thumbnails, ook van video's die niet meer beschikbaar zijn, of die een kopie van het
+    origineel meekreeg.
+  - Verbindingen, het verbindmenu, het paneel of venster om een onderdeel te bewerken, en de
+    videokeuze.
+- **Vensters**
+  - Publiceren, met de keuze voor beschikbaarheid of bij een kopie de uitleg dat hij niet gedeeld
+    kan worden.
+  - "Nog niet klaar om te publiceren".
+  - Waarschuwing over beperkte video's.
+  - Beschikbaarheid wijzigen.
+  - Onpubliceren.
+  - "Cursus is intussen gepubliceerd".
+  - Waarschuwing bij het weghalen van een video die niet meer gekozen kan worden.
+  - Naam en beschrijving.
+- **Elders, maar hoort bij dezelfde vormgeving**
+  - De hint "Jullie hebben al een aangepaste kopie van deze cursus" in het venster van de
+    bibliotheek (handmatige test 011, scenario 11: kan duidelijker).
+  - De vensters van een overgenomen cursus.
+
+## Waarschuwing bij delen: ook de al gedeelde video's tonen
+
+Uit de handmatige test van spec 009 (2026-11-27, scenario 6). Bij een nieuwe versie noemt de
+waarschuwing alleen de beperkte video's die nu nieuw gedeeld worden. Wens: onder die lijst ook tonen
+welke beperkte video's al eerder met deze organisaties gedeeld waren (bijvoorbeeld "Al gedeeld: …"),
+zodat de eigenaar het hele plaatje ziet. Uitzoeken: of de server die lijst meestuurt (nu alleen de
+video's die bevestigd moeten worden, specs/009 FR-010).
+
+## Cursusoverzicht: eigen en overgenomen cursussen in dezelfde opmaak
+
+Uit de handmatige test van spec 010 (2026-11-27, scenario 3). Eigen cursussen (tekstregel met tellers
+en status) en overgenomen cursussen (met afbeelding en pil) zien er in `frontend/src/views/CoursesView.vue`
+heel anders uit. Wens: eigen cursussen ook in de opmaak van de overgenomen cursussen, met afbeelding,
+maar beide rijen iets minder dik.
+
+## "Overgenomen door …" op een minder prominente plek
+
+Uit de handmatige test van spec 010 (2026-11-27, scenario 7). In het publicatiemenu van de editor
+staat "Overgenomen door N organisaties: …" (specs/010 FR-019, `frontend/src/editor/PublishMenu.vue`).
+Dat menu is voor publiceren; deze informatie is daar niet echt relevant. Een andere plek zoeken
+(bijvoorbeeld het venster van de cursus in de bibliotheek, waar het ook al staat, of de instellingen
+van de cursus).
+
+## Kiezen bij een nieuwe versie eenvoudiger
+
+Uit de handmatige test van spec 010 (2026-11-27, scenario 9). Nu kiest een organisatie met een
+overgenomen cursus bij een melding "Nieuwe versie gebruiken" of "Huidige versie houden". "Huidige
+versie houden" verandert de versie niet (die verandert nooit vanzelf); het laat alleen de melding en
+de teller verdwijnen (specs/010 FR-015). Daarna staat "Nieuwe versie gebruiken" er nog, wat dubbel
+voelt. Voorstel: alleen een knop "Overstappen naar de nieuwe versie"; zolang je niet klikt, houd je je
+versie. Uitzoeken: hoe de melding en de teller dan verdwijnen (bijvoorbeeld zodra je de cursus hebt
+geopend, of met een "Melding sluiten"-kruisje), zodat de teller niet blijft staan.
 
 ## Inhoud van een gedeelde cursus alleen-lezen bekijken
 

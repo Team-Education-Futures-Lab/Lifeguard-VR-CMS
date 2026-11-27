@@ -68,3 +68,28 @@ Verwacht:
 - `isSharedInLibrary` bestaat niet meer.
 - Cursussen van vóór de migratie hebben `private`.
 - Er zijn alleen rijen in `CourseAccess` bij `selective`.
+
+## Resultaten handmatige test
+
+Getest op 2026-11-27 in de lokale ontwikkelomgeving, samen met de handmatige tests van 010 en 011.
+
+| # | Resultaat | Opmerking |
+| --- | --- | --- |
+| 1 | ✅ | Alleen bij Cursussen, niet in de bibliotheek (zo bedoeld) |
+| 2 | ✅ | |
+| 3 | ✅ | |
+| 4 | ✅ | Waarschuwing heeft veel tekst → backlog. Geen thumbnail voor B: zo bedoeld (R6) |
+| 5 | ✅ | |
+| 6 | ✅ | Wens: ook tonen welke beperkte video's al gedeeld waren → backlog |
+| 7 | ✅ | |
+| 8 | ✅ | Geen thumbnail voor andere organisaties: zo bedoeld (R6) |
+| 9 | ✅ | |
+| 10 | open | Getest via het venster van een overgenomen cursus; het venster in de bibliotheek (vóór toevoegen) nog doen |
+| 11 | ✅ | |
+| 12 | ✅ | |
+| 13 | ✅ | |
+| 14 | open | Quest-test, later |
+| 15 | ✅ | Geen link naar de beheerderslogin op de inlogpagina → backlog |
+| 16 | ✅ | |
+
+De SQL-controle uit "Controle in de database" is nog niet gedaan.

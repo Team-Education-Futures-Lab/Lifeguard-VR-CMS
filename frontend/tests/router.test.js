@@ -10,7 +10,8 @@ describe('route guards (contracts/ui.md)', () => {
   })
 
   it.each([
-    ['/', '/'],
+    // '/' has no page of its own and goes to the courses first.
+    ['/', '/courses'],
     ['/videos', '/videos'],
   ])('sends a visitor without a session from %s to /login', async (path, redirect) => {
     mockSession('none')
@@ -25,10 +26,10 @@ describe('route guards (contracts/ui.md)', () => {
     expect(router.currentRoute.value.path).toBe('/admin')
   })
 
-  it('sends a logged-in organisation from /login to /', async () => {
+  it('sends a logged-in organisation from /login to /courses', async () => {
     mockSession('organisation')
     const router = await routerAt('/login')
-    expect(router.currentRoute.value.path).toBe('/')
+    expect(router.currentRoute.value.path).toBe('/courses')
   })
 
   it('sends an administrator from organisation screens to /login', async () => {

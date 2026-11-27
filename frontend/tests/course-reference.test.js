@@ -8,7 +8,6 @@ import {
   losingReceiversSentence,
   newVersionLabel,
   noticeCountLabel,
-  receiversList,
   receiversSentence,
   withdrawnText,
 } from '../src/lib/courseReference'
@@ -48,14 +47,6 @@ describe('sentences for the owner', () => {
     expect(losingReceiversSentence(1)).toBe('1 daarvan heeft deze cursus overgenomen en houdt haar huidige versie.')
     expect(losingReceiversSentence(3)).toBe('3 daarvan hebben deze cursus overgenomen en houden hun huidige versie.')
     expect(losingReceiversSentence(0)).toBe('')
-  })
-
-  it('lists the receivers by name', () => {
-    expect(receiversList([])).toBe('')
-    expect(receiversList([{ id: 5, name: 'Zwembad B' }])).toBe('Overgenomen door 1 organisatie: Zwembad B')
-    expect(receiversList([{ id: 4, name: 'Brandweer Noord' }, { id: 5, name: 'Zwembad B' }])).toBe(
-      'Overgenomen door 2 organisaties: Brandweer Noord, Zwembad B',
-    )
   })
 
   it('labels the notice counter', () => {

@@ -109,8 +109,8 @@ In de lijst van de bibliotheek (`CourseLibraryView`) krijgt een toegevoegde curs
 
 ## Bij de eigenaar
 
-- **Publicatiemenu** (`PublishMenu`): onder de status staat, bij ontvangers, de tekst "Overgenomen
-  door {n} organisaties: <namen>" (`data-test="menu-receivers"`).
+- **Publicatiemenu** (`PublishMenu`): toont de ontvangers niet meer; die staan in het venster van de
+  cursus in de bibliotheek. (Gewijzigd na de handmatige test van 2026-11-27: niet meer in het publicatiemenu.)
 - **Onpubliceren** (`UnpublishDialog`): bij ontvangers komt er de zin "{n} organisaties hebben deze
   cursus overgenomen en houden hun huidige versie." bij (bij één: "1 organisatie heeft deze cursus
   overgenomen en houdt haar huidige versie.").

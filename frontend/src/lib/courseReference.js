@@ -37,13 +37,6 @@ export function losingReceiversSentence(count) {
     : `${count} daarvan hebben deze cursus overgenomen en houden hun huidige versie.`
 }
 
-/** "Overgenomen door …" for the owner; '' without receivers. */
-export function receiversList(receivers) {
-  if (!receivers?.length) return ''
-  const noun = receivers.length === 1 ? 'organisatie' : 'organisaties'
-  return `Overgenomen door ${receivers.length} ${noun}: ${receivers.map((r) => r.name).join(', ')}`
-}
-
 /** The confirmation of "Toevoegen aan mijn organisatie" (specs/010, text changed by specs/011). */
 export function addConfirmationBody(course) {
   const owner = course.owner.name

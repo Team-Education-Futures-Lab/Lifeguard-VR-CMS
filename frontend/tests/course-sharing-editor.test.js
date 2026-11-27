@@ -196,13 +196,11 @@ describe('receivers of a taken-over course', () => {
   const RECEIVERS = [{ id: 4, name: 'Brandweer Noord' }, { id: 5, name: 'Zwembad B' }]
   const withReceivers = (availability, status) => ({ ...live(availability, status), receivers: RECEIVERS })
 
-  it('are named in the publish menu', async () => {
+  it('are not in the publish menu (moved out after the manual test of 2026-11-27)', async () => {
     const { wrapper } = await mountCourseEditor(withReceivers(PUBLIC))
     await openMenu(wrapper)
-    expect(wrapper.get('[data-test="menu-receivers"]').text()).toBe('Overgenomen door 2 organisaties: Brandweer Noord, Zwembad B')
-    const none = (await mountCourseEditor(live(PUBLIC))).wrapper
-    await openMenu(none)
-    expect(none.find('[data-test="menu-receivers"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="menu-receivers"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Overgenomen door')
   })
 
   it('are counted when unpublishing', async () => {

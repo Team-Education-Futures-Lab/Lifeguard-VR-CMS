@@ -369,6 +369,8 @@ textarea {
   gap: 16px;
 }
 .auth-logo { height: 40px; width: auto; justify-self: start; }
+/* Quiet link to the other login page (organisation ↔ administrator). */
+.auth-card .other-login { justify-self: start; text-decoration: underline; }
 
 /* data tables */
 .table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }

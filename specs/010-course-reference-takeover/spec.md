@@ -248,8 +248,8 @@ niet meer in de bibliotheek.
    cursus hebben overgenomen en dat zij hun huidige versie houden (bij één: "1 organisatie heeft
    deze cursus overgenomen en houdt haar huidige versie.").
 7. **Given** de eigenaar van een gedeelde cursus, **When** zij het venster van haar cursus in de
-   bibliotheek of het publicatiemenu opent, **Then** ziet zij hoeveel organisaties de cursus hebben
-   overgenomen en de namen van die organisaties (alfabetisch).
+   bibliotheek opent, **Then** ziet zij hoeveel organisaties de cursus hebben overgenomen en de namen
+   van die organisaties (alfabetisch). (Gewijzigd na de handmatige test van 2026-11-27: niet meer in het publicatiemenu.)
 
 ---
 
@@ -418,8 +418,8 @@ steeds downloaden, en het bestand wordt niet opgeruimd.
   ook het aantal ontvangers noemen en zeggen dat zij hun huidige versie houden (alleen het aantal).
   Bij beperken telt de bevestiging alleen de ontvangers die door de nieuwe keuze geen toegang meer
   hebben.
-  Het venster van een eigen gedeelde cursus in de bibliotheek en het publicatiemenu MUST het aantal
-  ontvangers en hun namen (alfabetisch) tonen, alleen aan de eigenaar. De versie waarop een
+  Het venster van een eigen gedeelde cursus in de bibliotheek MUST het aantal ontvangers en hun
+  namen (alfabetisch) tonen, alleen aan de eigenaar. (Gewijzigd na de handmatige test van 2026-11-27: niet meer in het publicatiemenu.) De versie waarop een
   ontvanger staat MUST NOT voor de eigenaar zichtbaar zijn, en andere ontvangers MUST NOT zien wie
   de cursus nog meer heeft overgenomen.
 

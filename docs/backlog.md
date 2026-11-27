@@ -89,22 +89,6 @@ meenemen.
   `receiversSentence` in `frontend/src/lib/courseReference.js`). Hetzelfde geldt waarschijnlijk voor
   onpubliceren (`frontend/src/editor/UnpublishDialog.vue`).
 
-## Link naar de beheerderslogin op de inlogpagina
-
-Uit de handmatige test van 2026-11-27 (009-15, 010-18: de beheerder moest een organisatie verwijderen).
-Op de gewone inlogpagina (`frontend/src/views/LoginView.vue`) is geen manier om naar de inlogpagina
-voor de beheerder te gaan; die is alleen bereikbaar via de URL `/admin/login`. Wens: een kleine,
-rustige link "Inloggen als beheerder" onder het inlogformulier (en eventueel terug vanaf de
-beheerderslogin).
-
-## Na inloggen meteen naar Cursussen
-
-Uit de handmatige test van 2026-11-27. Na het inloggen komt een organisatie op een startpagina met
-drie knoppen: Cursussen, Video's en Huisstijl (`frontend/src/views/HomeView.vue`, route `/` in
-`frontend/src/router.js`). Die tussenstap is overbodig: de navigatie heeft dezelfde ingangen. Wens:
-de startpagina weg, en na inloggen (en bij `/`) meteen naar Cursussen. Let op de `redirect` na
-inloggen en de terugval-route `/:pathMatch(.*)*`.
-
 ## Iconen voor eigen, overgenomen en aangepaste cursussen
 
 Uit de handmatige test van spec 011 (2026-11-27, scenario 7). Of een cursus een eigen origineel is,
@@ -134,8 +118,6 @@ Wat er nu in de editor kan staan (`frontend/src/editor/`):
     - "Publiceren" of "Wijzigingen publiceren", met de reden als het niet kan;
     - "Beschikbaarheid wijzigen" (niet bij een kopie);
     - "Onpubliceren";
-    - "Overgenomen door N organisaties: …" (zie het backlog-item "Overgenomen door … op een minder
-      prominente plek").
   - Weergave: Canvas, Canvas + paneel, Lijst.
   - Ongedaan maken en Opnieuw.
   - Controlestatus ("nog N punten" / klaar om te publiceren, met de lijst van punten).
@@ -176,14 +158,6 @@ Uit de handmatige test van spec 010 (2026-11-27, scenario 3). Eigen cursussen (t
 en status) en overgenomen cursussen (met afbeelding en pil) zien er in `frontend/src/views/CoursesView.vue`
 heel anders uit. Wens: eigen cursussen ook in de opmaak van de overgenomen cursussen, met afbeelding,
 maar beide rijen iets minder dik.
-
-## "Overgenomen door …" op een minder prominente plek
-
-Uit de handmatige test van spec 010 (2026-11-27, scenario 7). In het publicatiemenu van de editor
-staat "Overgenomen door N organisaties: …" (specs/010 FR-019, `frontend/src/editor/PublishMenu.vue`).
-Dat menu is voor publiceren; deze informatie is daar niet echt relevant. Een andere plek zoeken
-(bijvoorbeeld het venster van de cursus in de bibliotheek, waar het ook al staat, of de instellingen
-van de cursus).
 
 ## Kiezen bij een nieuwe versie eenvoudiger
 

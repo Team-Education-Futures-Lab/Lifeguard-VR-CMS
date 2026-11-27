@@ -25,7 +25,7 @@ async function submit() {
   busy.value = true
   try {
     await auth.loginOrganisation(loginCode.value, password.value)
-    router.replace(safeRedirect(route.query.redirect, { admin: false }) ?? '/')
+    router.replace(safeRedirect(route.query.redirect, { admin: false }) ?? '/courses')
   } catch (e) {
     error.value = e.message
   } finally {
@@ -53,6 +53,7 @@ async function submit() {
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <button class="btn btn-primary" :disabled="busy">Inloggen</button>
       <p class="muted small">Wachtwoord vergeten? Neem contact op met de beheerder.</p>
+      <RouterLink to="/admin/login" class="muted small other-login" data-test="admin-login-link">Inloggen als beheerder</RouterLink>
     </form>
   </div>
 </template>

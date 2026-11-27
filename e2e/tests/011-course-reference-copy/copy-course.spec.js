@@ -5,7 +5,7 @@ import { createCompleteCourse } from '../../helpers/course.js';
 import { shareCourse } from '../../helpers/sharing.js';
 import { addReference, copyTakenOverCourse, publishNewVersion, questVersions, takenOverRow } from '../../helpers/references.js';
 
-// Spec 011, US1 (quickstart 1–4): een overgenomen cursus aanpassen geeft een eigen kopie van de gekozen versie;
+// Spec 011, US1 (quickstart 1–4; e2e-plan-spec-011): een overgenomen cursus aanpassen geeft een eigen kopie van de gekozen versie;
 // de editor opent meteen en de kopie komt in de plaats van de overgenomen cursus.
 
 const t = createTracker();
@@ -23,6 +23,8 @@ test('US1: aanpassen maakt een eigen kopie van de gekozen versie', async ({ brow
 
   const page = await t.pageAs(browser, b.loginCode);
   await page.goto('/courses');
+  // B heeft een melding over versie 2 (de teller bij "Cursussen").
+  await expect(page.locator('[data-test="notice-count"]')).toHaveText('1');
 
   // Annuleren verandert niets.
   await takenOverRow(page, shared.course.name).getByRole('button').click();
@@ -38,13 +40,16 @@ test('US1: aanpassen maakt een eigen kopie van de gekozen versie', async ({ brow
   expect(copyId).not.toBe(shared.course.id);
   await expect(page.locator('[data-test="editor-based-on"]')).toHaveText(`Gebaseerd op ${shared.course.name} van ${shared.org.name}`);
   const doc = await (await api.get(`/api/organisation/courses/${copyId}`)).json();
-  expect(doc.steps.find((s) => s.stepType === 'question').questionText).not.toBe('Versie twee van de vraag?');
+  // De inhoud is die van versie 1 (de vraag van het origineel), niet die van versie 2.
+  const original = shared.course.steps.find((s) => s.stepType === 'question').questionText;
+  expect(doc.steps.find((s) => s.stepType === 'question').questionText).toBe(original);
   expect(doc.publication.versionNumber).toBe(1);
 
   // Het cursusoverzicht: de kopie als eigen cursus, de overgenomen cursus is weg.
   await page.goto('/courses');
   await expect(page.locator('[data-test="based-on"]')).toHaveText(`Gebaseerd op ${shared.course.name} van ${shared.org.name}`);
   await expect(takenOverRow(page, shared.course.name)).toHaveCount(0);
+  await expect(page.locator('[data-test="notice-count"]')).toHaveCount(0);
 
   // De Quest van B ziet de kopie en niet meer het origineel.
   const versions = await questVersions(t, b.questLinkCode);

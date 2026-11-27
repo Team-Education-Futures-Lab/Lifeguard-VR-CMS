@@ -1,5 +1,6 @@
 import { test as teardown, request } from '@playwright/test';
 import fs from 'node:fs';
+import { BASE_URL } from '../helpers/base-url.js';
 
 const runInfoFile = 'playwright/.auth/run-org.json';
 const adminFile = 'playwright/.auth/admin.json';
@@ -11,7 +12,7 @@ teardown('testorganisatie opruimen', async () => {
   const { id } = JSON.parse(fs.readFileSync(runInfoFile, 'utf8'));
 
   const api = await request.newContext({
-    baseURL: 'https://localhost',
+    baseURL: BASE_URL,
     ignoreHTTPSErrors: true,
     storageState: adminFile,
     extraHTTPHeaders: { 'X-Requested-With': 'cms' },

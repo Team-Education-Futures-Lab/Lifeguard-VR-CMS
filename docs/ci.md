@@ -126,6 +126,21 @@ op `git push` van de tag, dan ontbreekt stap 2 of 3.
    (de laatste in `backend/` en in `frontend/`). Zonder `--omit=dev` zie je ook de testtools;
    die tellen in CI niet mee, maar kijk er af en toe naar.
 
+   De e2e-tests draaien lokaal in een **eigen omgeving**, nooit tegen de ontwikkeldatabase (in
+   `e2e/`):
+
+   ```bash
+   npm run test:local
+   ```
+
+   Dat start het Compose-project `e2e` (`docker-compose.yml` + `docker-compose.e2e.yml`) met een
+   lege database op https://localhost:9443, voert de migraties uit, maakt de testbeheerder uit
+   `e2e/.env` aan (`E2E_ADMIN_LOGIN`, `E2E_ADMIN_PASSWORD`), draait Playwright en haalt de omgeving
+   met al haar data daarna weer weg. Alleen een deel draaien:
+   `npm run test:local -- tests/011-course-reference-copy`; de omgeving laten staan om te kijken:
+   `npm run test:local -- --keep`. Een kaal `npx playwright test` gaat ook naar poort 9443
+   (`e2e/helpers/base-url.js`); CI zet `E2E_BASE_URL=https://localhost`.
+
 5. Een run opnieuw starten (bijvoorbeeld bij een tijdelijke netwerkfout): knop **Re-run jobs**
    rechtsboven in de run. Voor **Release** is dat veilig: is de tag er al, dan brengt de job niets
    opnieuw uit.

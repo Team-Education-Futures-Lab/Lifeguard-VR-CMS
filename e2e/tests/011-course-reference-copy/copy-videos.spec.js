@@ -5,8 +5,9 @@ import { createCompleteCourse, draftSteps, publishCourse, saveCourse } from '../
 import { shareCourse } from '../../helpers/sharing.js';
 import { addReference, copyTakenOverCourse } from '../../helpers/references.js';
 
-// Spec 011, US3 (quickstart 8–10): de video's uit de gekozen versie blijven in de kopie werken, ook buiten de
-// eigen videobibliotheek en na onpubliceren; ze komen niet in de videobibliotheek van de organisatie.
+// Spec 011, US3 (quickstart 8–10; e2e-plan-spec-011): de video's uit de gekozen versie blijven in de kopie werken,
+// ook buiten de eigen videobibliotheek en na onpubliceren; ze komen niet in de videobibliotheek van de organisatie.
+// Verwijdert de eigenaar een video, dan moet een ingetrokken kopie eerst een andere kiezen (constitutie V).
 
 const t = createTracker();
 test.afterEach(() => t.cleanup());
@@ -23,7 +24,8 @@ test('US3: meegekregen video\'s blijven bruikbaar in de kopie', async ({ browser
   const page = await t.pageAs(browser, b.loginCode);
   const copyId = await copyTakenOverCourse(page, shared.course.name);
 
-  // In de editor geen melding "Video niet meer beschikbaar".
+  // In de editor (eerst helemaal geladen) geen melding "Video niet meer beschikbaar".
+  await expect(page.locator('[data-test="editor-based-on"]')).toBeVisible();
   await expect(page.getByText('Video niet meer beschikbaar')).toHaveCount(0);
 
   // Onpubliceren, wijzigen en opnieuw publiceren lukt met de meegekregen video's.
@@ -34,7 +36,22 @@ test('US3: meegekregen video\'s blijven bruikbaar in de kopie', async ({ browser
   const published = await publishCourse(api, copyId);
   expect(published.publication.versionNumber).toBe(2);
 
+  // Scenario 9: de eigenaar verwijdert video A. Zolang de kopie live is, blijft hij werken; na onpubliceren moet er
+  // eerst een andere video gekozen worden.
+  const { videos } = await (await shared.api.get('/api/organisation/videos')).json();
+  const videoA = videos.find((v) => v.name === shared.videoNames[0]);
+  expect((await shared.api.delete(`/api/organisation/videos/${videoA.id}`)).status()).toBe(204);
+  expect((await api.post(`/api/organisation/courses/${copyId}/unpublish`)).status()).toBe(200);
+  const again = await (await api.get(`/api/organisation/courses/${copyId}`)).json();
+  await saveCourse(api, again, draftSteps(again).map((s) => (s.stepType === 'question' ? { ...s, questionText: 'Na verwijderen?' } : s)));
+  const refused = await api.post(`/api/organisation/courses/${copyId}/publish`);
+  expect(refused.status()).toBe(422);
+  const { error } = await refused.json();
+  expect(error.code).toBe('course_incomplete');
+  expect(error.issues.map((issue) => issue.message)).toContain('Video niet meer beschikbaar: kies een andere.');
+
   // Niet in de videobibliotheek van B.
   await page.goto('/videos');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   for (const name of shared.videoNames) await expect(page.getByText(name)).toHaveCount(0);
 });

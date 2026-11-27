@@ -5,8 +5,8 @@ import { createCompleteCourse } from '../../helpers/course.js';
 import { libraryCard, openCourseLibrary, shareCourse } from '../../helpers/sharing.js';
 import { questVersions } from '../../helpers/references.js';
 
-// Spec 010, US1 (quickstart 1–4): een gedeelde cursus toevoegen aan de eigen organisatie. Hij komt op de Quests
-// van B in de gekozen versie, niet op die van C.
+// Spec 010, US1 (quickstart 1–4 en 7; e2e-plan-spec-010): een gedeelde cursus toevoegen aan de eigen organisatie.
+// Hij komt op de Quests van B in de gekozen versie, niet op die van C, en de eigenaar ziet dat B hem overnam.
 
 const t = createTracker();
 test.afterEach(() => t.cleanup());
@@ -44,4 +44,10 @@ test('US1: een cursus uit de bibliotheek toevoegen', async ({ browser }) => {
   const api = await t.login(b.loginCode);
   const again = await api.post('/api/organisation/course-references', { data: { courseId: shared.course.id } });
   expect(again.status()).toBe(409);
+
+  // Scenario 7: de eigenaar ziet in het venster van haar cursus in de bibliotheek wie hem overnam.
+  await openCourseLibrary(shared.page);
+  await libraryCard(shared.page, shared.course.name).getByRole('button', { name: `${shared.course.name} openen` }).click();
+  const own = shared.page.getByRole('dialog', { name: shared.course.name });
+  await expect(own.locator('[data-test="details-receivers"]')).toHaveText(`1 organisatie: ${b.name}`);
 });

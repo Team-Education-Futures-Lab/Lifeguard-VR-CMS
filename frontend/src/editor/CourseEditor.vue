@@ -245,6 +245,7 @@ onBeforeRouteLeave((to) => {
       :live-version-number="live ? live.versionNumber : null"
       :availability="ed.availability"
       :organisations="organisations"
+      :receivers="ed.receivers"
       :initial-choice="choiceAfterWarning"
       @confirm="confirmPublish"
       @cancel="dialog = null"
@@ -259,6 +260,7 @@ onBeforeRouteLeave((to) => {
       v-if="dialog === 'availability'"
       :availability="ed.availability"
       :organisations="organisations"
+      :receivers="ed.receivers"
       :save="(choices) => changeCourseAvailability(props.doc.id, choices)"
       @saved="availabilitySaved"
       @cancel="dialog = null"
@@ -274,6 +276,7 @@ onBeforeRouteLeave((to) => {
       v-if="dialog === 'unpublish'"
       :has-unavailable-video="Boolean(live?.hasUnavailableVideo)"
       :shared="shared"
+      :receiver-count="ed.receivers.length"
       @confirm="confirmUnpublish"
       @cancel="dialog = null"
     />

@@ -64,6 +64,8 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
   // Who sees the course in the course library (specs/009 FR-001), and a refused sharing that
   // waits for the owner's confirmation: { videos, choices } (409 shared_videos_warning, FR-009).
   const availability = reactive({ ...(doc.availability ?? { visibility: 'private', accessOrganisations: [] }) })
+  // The organisations that took this course over from the course library (specs/010 FR-019).
+  const receivers = ref(doc.receivers ?? [])
   const shareWarning = ref(null)
 
   const ordered = computed(() => C.orderedNodes(course.value))
@@ -310,6 +312,7 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
   /** Takes over who sees the course in the course library from a draft document (specs/009). */
   function applyAvailability(result) {
     if (result.availability) Object.assign(availability, result.availability)
+    if (result.receivers) receivers.value = result.receivers
   }
 
   /** "Onpubliceren" after the confirmation (specs/006 FR-015, FR-016). Returns true when done. */
@@ -330,7 +333,7 @@ export function provideEditor({ course, stepVideos: initialVideos, doc, history,
     course, stepVideos, history, ordered, variant, issues,
     selectedId, selectedEdge, hoverEdge, focusEdge, focusEnds, modalId, focusRequest, showSettings,
     dirty, saving, fieldErrors, lostVideoNotices, draftVersionNumber, publication, draftReplaced, publishing, publishIssues,
-    availability, shareWarning,
+    availability, receivers, shareWarning,
     select, selectEdge, clearSelection, open, isFlagged,
     addNode, addLinked, connect, disconnect, tidyCanvas, removeNode, setStart, clearVideo, chooseVideo, confirmLosingVideo, saveDraft,
     publish, unpublish, applyPublication, applyAvailability,

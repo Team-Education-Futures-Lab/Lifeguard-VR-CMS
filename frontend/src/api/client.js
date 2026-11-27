@@ -1,6 +1,6 @@
 /** Error from the API, in the format of contracts/api.md. `message` is customer-facing (Dutch). */
 export class ApiError extends Error {
-  constructor(status, code, message, fields = {}, issues = [], videos = []) {
+  constructor(status, code, message, fields = {}, issues = [], videos = [], reference = null) {
     super(message)
     this.status = status
     this.code = code
@@ -9,6 +9,8 @@ export class ApiError extends Error {
     this.issues = issues
     // The videos the owner must confirm before sharing (specs/009 contracts/api.md, shared_videos_warning).
     this.videos = videos
+    // The current state of a course reference (specs/010 contracts/api.md, no_newer_version).
+    this.reference = reference
   }
 }
 
@@ -54,6 +56,7 @@ export async function api(path, { method = 'GET', body, formData } = {}) {
     e.fields ?? {},
     e.issues ?? [],
     e.videos ?? [],
+    e.reference ?? null,
   )
   if (res.status === 401 && !QUIET_401.some((pattern) => pattern.test(path))) {
     unauthorizedHandler?.(error)

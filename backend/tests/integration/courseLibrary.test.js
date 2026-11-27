@@ -82,6 +82,7 @@ describe('GET /course-library', () => {
       stepCount: 3,
       videoCount: 2,
       thumbnailUrl: `/api/organisation/course-library/${course.courseId}/thumbnail`,
+      takenOver: false,
     })
     expect((await agentB.get(`/api/organisation/course-library/${course.courseId}`)).body).toEqual(row)
   })

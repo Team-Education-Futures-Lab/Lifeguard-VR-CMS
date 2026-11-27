@@ -11,7 +11,9 @@ function requireId(organisationId) {
 /**
  * The only definition of "courses this organisation may see and edit" (specs/004 research R2):
  * owned through OrganisationCourse, not deleted, joined with the draft (the version without
- * publishedAt). Every course route starts from this query.
+ * publishedAt). Every course route starts from this query. Owner rows only (isOwner = true):
+ * courses taken over from the library live in modules/courseReferences and can never be edited
+ * here (specs/010 FR-008).
  */
 export function ownCoursesQuery(organisationId, trx = db) {
   requireId(organisationId)
@@ -118,6 +120,20 @@ export async function latestPublishedVersions(courseIds, trx = db) {
     )
     .select('cv.id', 'cv.courseId', 'cv.versionNumber', 'cv.name', 'cv.description', 'cv.publishedAt', 'cv.unpublishedAt')
   return new Map(rows.map((row) => [row.courseId, row]))
+}
+
+/**
+ * Published versions by id (specs/010: the chosen versions of references), Map id → { id,
+ * courseId, versionNumber, name, description, publishedAt, unpublishedAt }, as
+ * latestPublishedVersions.
+ */
+export async function versionsByIds(versionIds, trx = db) {
+  if (versionIds.length === 0) return new Map()
+  const rows = await trx('CourseVersion')
+    .whereIn('id', versionIds)
+    .whereNotNull('publishedAt')
+    .select('id', 'courseId', 'versionNumber', 'name', 'description', 'publishedAt', 'unpublishedAt')
+  return new Map(rows.map((row) => [row.id, row]))
 }
 
 /**

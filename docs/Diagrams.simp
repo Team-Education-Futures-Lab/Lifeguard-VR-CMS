@@ -4273,6 +4273,8 @@
               <attribute uid="a85c0ed00fe2e4dbca195a13e1515540c" cid="EA277" name="courseId" type="INT" type-id="INT" foreign-key="true" primary-key="true" nullable="false" creation-date="10/20/2026 08:29:24" />
               <attribute uid="a8e3db3cfc6d24abc881eda6aaeeda9eb" cid="EA278" name="isOwner" type="BOOLEAN" type-id="BOOLEAN" nullable="false" creation-date="10/20/2026 08:29:24" />
               <attribute uid="ac2224429ee9347ec8bd30dee90c8d44a" cid="EA279" name="addedAt" type="DATETIME" type-id="DATETIME" nullable="false" creation-date="10/20/2026 08:29:24" />
+              <attribute uid="a7e1c0b2d4f6481a9c3e5b7d9f1a2c4e6" cid="EA333" name="courseVersionId" type="INT" type-id="INT" foreign-key="true" nullable="true" creation-date="11/27/2026 10:00:00" />
+              <attribute uid="a8f2d1c3e5a7492b8d4f6c8e0a2b3d5f7" cid="EA334" name="declinedCourseVersionId" type="INT" type-id="INT" foreign-key="true" nullable="true" creation-date="11/27/2026 10:00:00" />
             </attributes>
           </item>
           <item id="e9893f9c695943eaa6ae2c7e8108fb01" cid="ENT017" type="erd-entity" name="Administrator" style-class="Flat Orange" creator="" creation-date="10/20/2026 08:29:24">

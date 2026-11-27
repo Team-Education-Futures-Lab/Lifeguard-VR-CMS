@@ -334,6 +334,20 @@ textarea {
 }
 .nav a:hover { opacity: 1; }
 .nav a.on { opacity: 1; border-bottom-color: var(--brand-2); }
+/* Number of taken-over courses with a new version (specs/010 contracts/ui.md § Teller). */
+.nav .count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--brand-2);
+  color: var(--brand-2-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
 .main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .main > * { flex: 1; min-height: 0; }
 @media (max-width: 640px) {

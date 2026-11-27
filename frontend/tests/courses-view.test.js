@@ -211,3 +211,85 @@ describe('CoursesView: availability', () => {
     wrapper.unmount()
   })
 })
+
+// Taken-over courses in the overview (specs/010 US2 – US4, contracts/ui.md § Cursusoverzicht).
+describe('taken-over courses', () => {
+  const REF = {
+    courseId: 31,
+    name: 'Redden in open water',
+    description: null,
+    owner: { id: 4, name: 'Brandweer Noord' },
+    addedAt: '2026-11-25T10:00:00.000Z',
+    version: { versionNumber: 2, publishedAt: '2026-11-20T09:12:00.000Z', stepCount: 3, videoCount: 1 },
+    thumbnailUrl: '/api/organisation/course-references/31/thumbnail?v=2',
+    newVersion: null,
+    notice: false,
+    withdrawn: null,
+  }
+
+  function mockWithReferences({ courses = [], references = [] } = {}) {
+    globalThis.fetch.mockImplementation(async (url, options = {}) => {
+      if (url === '/api/organisation/courses' && (options.method ?? 'GET') === 'GET') return jsonResponse(200, { courses })
+      if (url === '/api/organisation/course-references') return jsonResponse(200, { references, noticeCount: references.filter((r) => r.notice).length })
+      if (url.startsWith('/api/organisation/courses/') && options.method === 'DELETE') return new Response(null, { status: 204 })
+      return jsonResponse(404, { error: { code: 'not_found', message: 'Niet gevonden.' } })
+    })
+  }
+
+  it('shows them under their own heading, without edit or delete buttons', async () => {
+    mockWithReferences({ courses: [COURSE], references: [REF] })
+    const { wrapper } = await mountView()
+    expect(wrapper.get('[data-test="taken-over-section"]').text()).toBe('Overgenomen cursussen')
+    const row = wrapper.get('[data-test="taken-over-row"]')
+    expect(row.get('[data-test="taken-over-pill"]').text()).toBe('Overgenomen van Brandweer Noord')
+    expect(row.text()).toContain('Op de Quest: versie 2')
+    expect(row.get('img').attributes('src')).toBe(REF.thumbnailUrl)
+    expect(row.find('a[href^="/courses/"]').exists()).toBe(false)
+    expect(row.find('[title="Verwijderen"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('has no heading without taken-over courses, and the empty state points to the course library', async () => {
+    mockWithReferences()
+    const { wrapper } = await mountView()
+    expect(wrapper.find('[data-test="taken-over-section"]').exists()).toBe(false)
+    expect(wrapper.get('[data-test="library-hint"]').text()).toContain('Cursusbibliotheek')
+    wrapper.unmount()
+  })
+
+  it('opens the window on a click', async () => {
+    mockWithReferences({ references: [REF] })
+    const { wrapper } = await mountView()
+    await wrapper.get('[data-test="taken-over-row"] button').trigger('click')
+    expect(wrapper.find('[data-test="taken-over-details"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('shows the notice, the quiet text after keeping, and the explanation (US3, US4)', async () => {
+    mockWithReferences({
+      references: [
+        { ...REF, courseId: 1, name: 'A', newVersion: { versionNumber: 3 }, notice: true },
+        { ...REF, courseId: 2, name: 'B', newVersion: { versionNumber: 3 }, notice: false },
+        { ...REF, courseId: 3, name: 'C', withdrawn: 'no_access' },
+      ],
+    })
+    const { wrapper } = await mountView()
+    const [a, b, c] = wrapper.findAll('[data-test="taken-over-row"]')
+    expect(a.get('[data-test="new-version-notice"]').text()).toBe('Nieuwe versie beschikbaar (versie 3)')
+    expect(b.get('[data-test="newer-version"]').text()).toBe('Nieuwere versie beschikbaar (versie 3)')
+    expect(b.find('[data-test="new-version-notice"]').exists()).toBe(false)
+    expect(c.get('[data-test="withdrawn"]').text()).toBe('De eigenaar deelt deze cursus niet meer met jullie. Jullie houden versie 2.')
+    wrapper.unmount()
+  })
+
+  it('names the receivers when the owner deletes a course they took over (FR-019)', async () => {
+    mockWithReferences({ courses: [{ ...COURSE, status: 'published', publication: { versionNumber: 1, publishedAt: '2026-11-20T09:12:00.000Z' }, visibility: 'public', receiverCount: 2 }] })
+    const { wrapper } = await mountView()
+    await wrapper.get('[title="Verwijderen"]').trigger('click')
+    await flushPromises()
+    expect(ui.confirm.body).toContain('2 organisaties hebben deze cursus overgenomen en houden hun huidige versie.')
+    ui.confirm.resolve(false)
+    await flushPromises()
+    wrapper.unmount()
+  })
+})

@@ -6,12 +6,15 @@
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import AvailabilityPicker, { isAvailabilityValid } from '../components/AvailabilityPicker.vue'
 import SharedVideosWarningDialog from '../components/SharedVideosWarningDialog.vue'
-import { confirmationText, countLosingAccess } from '../lib/videoAccess'
+import { audience, confirmationText, countLosingAccess } from '../lib/videoAccess'
+import { losingReceiversSentence } from '../lib/courseReference'
 import { toast } from '../lib/ui'
 
 const props = defineProps({
   availability: { type: Object, required: true },
   organisations: { type: Array, default: () => [] },
+  // The organisations that took the course over (specs/010 FR-019): [{ id, name }].
+  receivers: { type: Array, default: () => [] },
   // (choices) => Promise<draft document>
   save: { type: Function, required: true },
 })
@@ -24,6 +27,11 @@ const current = computed(() => ({
 const choice = ref({ ...current.value })
 const valid = computed(() => isAvailabilityValid(choice.value))
 const losing = computed(() => countLosingAccess(current.value, choice.value, props.organisations.map((o) => o.id)))
+// The receivers that lose access by this choice keep their version (specs/010 FR-019).
+const losingReceivers = computed(() => {
+  const after = audience(choice.value, props.organisations.map((o) => o.id))
+  return props.receivers.filter((r) => !after.has(r.id)).length
+})
 const askRestrict = ref(false)
 const warning = ref(null) // the videos of a 409 shared_videos_warning
 const busy = ref(false)
@@ -69,6 +77,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <div class="modal-head"><h2>Beschikbaarheid wijzigen</h2></div>
         <div v-if="askRestrict" class="modal-body">
           <p data-test="restrict-question">{{ confirmationText(losing, 'course') }}</p>
+          <p v-if="losingReceivers" data-test="restrict-receivers">{{ losingReceiversSentence(losingReceivers) }}</p>
         </div>
         <div v-else class="modal-body">
           <AvailabilityPicker v-model="choice" :organisations="organisations" subject="course" id-prefix="change-availability" />

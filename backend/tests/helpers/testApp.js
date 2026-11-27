@@ -16,7 +16,8 @@ export const app = createApp()
 export async function resetDatabase() {
   // A copy points to its original (Course.parentCourseId, specs/009): undo that first.
   await db('Course').whereNotNull('parentCourseId').update({ parentCourseId: null })
-  for (const table of ['Answer', 'CourseStep', 'CourseVersion', 'OrganisationCourse', 'CourseAccess', 'Course', 'VideoAccess', 'Video', 'AdminActionLog', 'OrganisationStyle', 'Session', 'Organisation', 'Administrator']) {
+  // OrganisationCourse before CourseVersion: a reference points to its chosen version (specs/010).
+  for (const table of ['Answer', 'CourseStep', 'OrganisationCourse', 'CourseVersion', 'CourseAccess', 'Course', 'VideoAccess', 'Video', 'AdminActionLog', 'OrganisationStyle', 'Session', 'Organisation', 'Administrator']) {
     await db(table).del()
   }
   await rm(config.LOGOS_DIR, { recursive: true, force: true })
@@ -95,6 +96,20 @@ export async function createCourseRow({
   await db('OrganisationCourse').insert({ organisationId, courseId, isOwner: true, addedAt: updatedAt })
   const [versionId] = await db('CourseVersion').insert({ courseId, versionNumber: 1, name, description, publishedAt: null })
   return { courseId, versionId }
+}
+
+/**
+ * Inserts a reference directly (specs/010 data-model.md): an OrganisationCourse row with
+ * isOwner = false that points to the chosen version.
+ */
+export async function createReferenceRow({
+  organisationId,
+  courseId,
+  courseVersionId,
+  declinedCourseVersionId = null,
+  addedAt = new Date('2026-11-25T10:00:00.000Z'),
+}) {
+  await db('OrganisationCourse').insert({ organisationId, courseId, isOwner: false, addedAt, courseVersionId, declinedCourseVersionId })
 }
 
 /**

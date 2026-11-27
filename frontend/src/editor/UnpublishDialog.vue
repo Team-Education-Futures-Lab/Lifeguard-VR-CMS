@@ -3,8 +3,11 @@
 // When the live version has a video that is no longer available, it says that publishing again
 // needs another video (FR-012, constitution V).
 import { onMounted, onBeforeUnmount } from 'vue'
+import { receiversSentence } from '../lib/courseReference'
 
 defineProps({
+  // The number of organisations that took the course over; they keep their version (specs/010 FR-019).
+  receiverCount: { type: Number, default: 0 },
   hasUnavailableVideo: { type: Boolean, default: false },
   // The course is shared in the course library (specs/009 FR-025).
   shared: { type: Boolean, default: false },
@@ -27,6 +30,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             gebruiken. Je concept en eerdere versies blijven bewaard.
           </p>
           <p v-if="shared" data-test="unpublish-library-note">Andere organisaties zien hem dan ook niet meer in de cursusbibliotheek.</p>
+          <p v-if="receiverCount" data-test="unpublish-receivers">{{ receiversSentence(receiverCount) }}</p>
           <p v-if="hasUnavailableVideo" class="warn" data-test="unpublish-video-warning">
             Let op: een video in deze cursus is niet meer beschikbaar. Opnieuw publiceren kan pas met een andere video.
           </p>

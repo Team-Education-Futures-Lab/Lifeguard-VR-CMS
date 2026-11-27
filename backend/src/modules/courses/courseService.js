@@ -6,6 +6,7 @@ import { sameContent } from '../../lib/courseContent.js'
 import { MESSAGES, validateCourseFields, validateDraft } from '../../lib/courseDraft.js'
 import { sharedVideosWarning as videosToConfirm } from '../../lib/courseSharing.js'
 import { parseOrganisationIds, validateAccessOrganisations, validateVisibility } from '../../lib/videoChoices.js'
+import { receiversOf } from '../courseReferences/courseReferenceRepository.js'
 import * as repo from './courseRepository.js'
 
 // Courses and their draft (specs/004 contracts/api.md). Saving replaces the whole draft in one
@@ -91,6 +92,8 @@ async function toDraftDocument(course, organisationId, trx) {
     publication: info.publication,
     lastPublishedVersionNumber: info.lastPublishedVersionNumber,
     availability: await repo.courseAvailability(course.id, trx),
+    // Who took this course over (specs/010 FR-019); only the owner gets this document.
+    receivers: (await receiversOf([course.id], trx)).get(course.id) ?? [],
     updatedAt: new Date(course.updatedAt).toISOString(),
     steps: steps.map((step) => {
       const base = {
@@ -130,6 +133,7 @@ async function toDraftDocument(course, organisationId, trx) {
 export async function listCourses(organisationId) {
   const rows = await repo.listOwnCourses(organisationId)
   const info = await publicationInfo(rows, organisationId)
+  const receivers = await receiversOf(rows.map((row) => row.id))
   return rows.map((row) => {
     const { status, publication, lastPublishedVersionNumber } = info.get(row.id)
     return {
@@ -142,6 +146,7 @@ export async function listCourses(organisationId) {
       publication,
       lastPublishedVersionNumber,
       visibility: row.visibility,
+      receiverCount: receivers.get(row.id)?.length ?? 0,
     }
   })
 }

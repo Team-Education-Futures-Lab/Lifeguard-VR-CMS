@@ -190,3 +190,42 @@ describe('unpublishing a shared course (US5)', () => {
     expect(own.find('[data-test="unpublish-library-note"]').exists()).toBe(false)
   })
 })
+
+// The organisations that took the course over (specs/010 FR-019).
+describe('receivers of a taken-over course', () => {
+  const RECEIVERS = [{ id: 4, name: 'Brandweer Noord' }, { id: 5, name: 'Zwembad B' }]
+  const withReceivers = (availability, status) => ({ ...live(availability, status), receivers: RECEIVERS })
+
+  it('are named in the publish menu', async () => {
+    const { wrapper } = await mountCourseEditor(withReceivers(PUBLIC))
+    await openMenu(wrapper)
+    expect(wrapper.get('[data-test="menu-receivers"]').text()).toBe('Overgenomen door 2 organisaties: Brandweer Noord, Zwembad B')
+    const none = (await mountCourseEditor(live(PUBLIC))).wrapper
+    await openMenu(none)
+    expect(none.find('[data-test="menu-receivers"]').exists()).toBe(false)
+  })
+
+  it('are counted when unpublishing', async () => {
+    const { wrapper } = await mountCourseEditor(withReceivers(PUBLIC, 'published'))
+    await choose(wrapper, 'unpublish')
+    expect(wrapper.get('[data-test="unpublish-receivers"]').text()).toBe('2 organisaties hebben deze cursus overgenomen en houden hun huidige versie.')
+  })
+
+  it('are counted in the restrict confirmation, only those that lose access', async () => {
+    const { wrapper } = await mountCourseEditor(withReceivers(PUBLIC))
+    await choose(wrapper, 'change-availability')
+    const box = () => wrapper.get('[data-test="availability-dialog"]')
+    await box().get('[data-test="visibility-selective"]').setValue(true)
+    await box().get('[data-test="organisation-5"]').setValue(true)
+    await wrapper.get('[data-test="availability-save"]').trigger('click')
+    expect(wrapper.get('[data-test="restrict-receivers"]').text()).toBe('1 daarvan heeft deze cursus overgenomen en houdt haar huidige versie.')
+  })
+
+  it('are counted in the restrict confirmation when publishing', async () => {
+    const { wrapper } = await mountCourseEditor(withReceivers(PUBLIC))
+    await choose(wrapper, 'publish')
+    await dialog(wrapper).get('[data-test="visibility-private"]').setValue(true)
+    await confirmPublish(wrapper)
+    expect(wrapper.get('[data-test="restrict-receivers"]').text()).toBe('2 daarvan hebben deze cursus overgenomen en houden hun huidige versie.')
+  })
+})

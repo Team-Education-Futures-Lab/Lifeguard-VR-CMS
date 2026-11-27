@@ -71,6 +71,17 @@ async function open(course) {
   }
 }
 
+// After "Toevoegen aan mijn organisatie" (specs/010 US1).
+function markAdded(courseId) {
+  courses.value = courses.value.map((row) => (row.id === courseId ? { ...row, takenOver: true } : row))
+  if (openCourse.value?.id === courseId) openCourse.value = { ...openCourse.value, takenOver: true }
+}
+function unavailable() {
+  openCourse.value = null
+  toast(NOT_AVAILABLE)
+  load()
+}
+
 const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`
 </script>
 
@@ -129,7 +140,10 @@ const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`
           <span v-else class="th placeholder" aria-hidden="true" data-test="placeholder" />
           <span class="name">{{ course.name }}</span>
         </button>
-        <span class="labels"><OwnerPill :owner="course.owner" subject="course" @filter="filterOnOwner" /></span>
+        <span class="labels">
+          <OwnerPill :owner="course.owner" subject="course" @filter="filterOnOwner" />
+          <span v-if="course.takenOver" class="added" data-test="course-added">Toegevoegd</span>
+        </span>
         <span v-if="course.description" class="description" data-test="description">{{ course.description }}</span>
         <span class="meta">Versie {{ course.versionNumber }} · {{ formatDate(course.publishedAt) }}</span>
         <span class="meta">{{ plural(course.stepCount, 'onderdeel', 'onderdelen') }} · {{ plural(course.videoCount, 'video', "video's") }}</span>
@@ -150,6 +164,8 @@ const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`
       :course="openCourse"
       @close="openCourse = null"
       @filter-owner="filterOnOwnerFromWindow"
+      @added="markAdded"
+      @unavailable="unavailable"
     />
   </div>
 </template>
@@ -187,6 +203,7 @@ const plural = (count, one, many) => `${count} ${count === 1 ? one : many}`
   margin-bottom: 6px;
 }
 .name { font-weight: 500; font-size: 0.9rem; line-height: 1.35; overflow-wrap: anywhere; }
+.added { padding: 2px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; background: var(--surface-2); color: var(--muted); }
 .labels { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; margin: 2px 0; }
 .chip {
   display: inline-flex;

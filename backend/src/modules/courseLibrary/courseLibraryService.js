@@ -1,6 +1,7 @@
 import { db } from '../../db/knex.js'
 import { notFound } from '../../lib/errors.js'
 import * as courses from '../courses/courseRepository.js'
+import { receiversOf } from '../courseReferences/courseReferenceRepository.js'
 import { thumbnailVideoId } from '../quest/questThumbnail.js'
 import { libraryCoursesQuery } from './courseLibraryRepository.js'
 
@@ -35,9 +36,20 @@ async function loadLibrary(organisationId, onlyId = null, trx = db) {
   // video in its own video library, or owns the course (research R6).
   const visibleImages = await courses.libraryVideoIds(organisationId, [...new Set([...imageVideo.values()].filter(Boolean))], trx)
   // Only the owner sees with whom an own course is shared (FR-004).
+  const ownIds = shown.filter((row) => row.ownerId === organisationId).map((row) => row.id)
   const accessByCourse = await courses.accessOrganisationsOf(
     shown.filter((row) => row.ownerId === organisationId && row.visibility === 'selective').map((row) => row.id),
     trx,
+  )
+  // Only the owner sees who took a course over (specs/010 FR-019); others see whether they did.
+  const receiversByCourse = await receiversOf(ownIds, trx)
+  const takenOver = new Set(
+    (
+      await trx('OrganisationCourse')
+        .where({ organisationId, isOwner: false })
+        .whereIn('courseId', shown.map((row) => row.id))
+        .select('courseId')
+    ).map((row) => row.courseId),
   )
 
   const result = []
@@ -61,6 +73,9 @@ async function loadLibrary(organisationId, onlyId = null, trx = db) {
     if (isOwn) {
       course.visibility = row.visibility
       course.accessOrganisations = accessByCourse.get(row.id) ?? []
+      course.receivers = receiversByCourse.get(row.id) ?? []
+    } else {
+      course.takenOver = takenOver.has(row.id)
     }
     result.push({ course, imageKey })
   }

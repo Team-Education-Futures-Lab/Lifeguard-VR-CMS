@@ -3,34 +3,56 @@
 Uitgestelde wensen voor het CMS. Een item hier is nog geen afspraak; het gaat via de Spec Kit-flow
 zodra het wordt opgepakt.
 
-## Gedeelde cursussen overnemen (FR-12, deel 2) — hoge prioriteit, volgende spec
+## Handmatige test van spec 010 (gedeelde cursussen overnemen als verwijzing)
 
-FR-12 is op 2026-11-26 opgedeeld in twee specs. Deel 1 (delen bij publiceren en de centrale
-cursusbibliotheek) is gebouwd in spec 009 (`specs/009-course-sharing-library`); dit is deel 2 en komt
-direct daarna. Het gaat om:
+Spec 010 (`specs/010-course-reference-takeover`, FR-12 deel 2) is gebouwd op 2026-11-27. De
+geautomatiseerde tests slagen (backend, frontend en de e2e-tests van 003, 006, 009 en 010), maar de
+handmatige scenario's 1–18 van `specs/010-course-reference-takeover/quickstart.md` zijn nog niet
+doorgelopen (taak T063); op 2026-11-27 bewust uitgesteld. Daarbij ook met de SQL-query uit de
+quickstart `addedAt`, `courseVersionId` en `declinedCourseVersionId` controleren en de resultaten
+noteren in een tabel "Resultaten handmatige test" in de quickstart. Ook nog open (taak T060): de usability-omgeving heeft nog geen overgenomen
+cursus met een nieuwere versie, dus de melding is daar pas te zien als iemand zelf een cursus deelt,
+overneemt en opnieuw publiceert.
 
-- Een cursus uit de bibliotheek toevoegen aan de eigen organisatie, als verwijzing naar het
-  origineel (geen kopie).
-- Een eigen volledige kopie zodra de organisatie de cursus wil aanpassen; het origineel blijft
-  ongewijzigd en de kopie krijgt geen updates meer.
-- Een melding bij een organisatie met een verwijzing als de eigenaar een nieuwe versie publiceert;
-  zij kiest de nieuwe of de oude versie en de verwijzing wijst naar de gekozen versie.
-- De ontvanger mag video's die niet algemeen beschikbaar zijn binnen die cursus gebruiken en de
-  cursus verder volledig aanpassen; dit is niet terug te draaien (FR-14).
-- Een verwijderde cursus blijft bestaan zolang een andere organisatie hem via een verwijzing
-  gebruikt (zachte verwijdering, besloten bij feature 006). Hangt samen met "Cursussen en video's
-  van verwijderde cursussen echt opruimen" hieronder.
-- De Quest-API (feature 007) toont ook overgenomen cursussen; bij een verwijzing de gekozen versie.
+De open punten uit spec 009 (research R13) zijn in spec 010 uitgewerkt:
 
-Open punten uit spec 009 (research R13):
+- Een verwijzing blijft op de gekozen versie werken als de eigenaar de cursus beperkt, onpubliceert of
+  verwijdert, of als de eigenaar zelf verwijderd wordt; de ontvanger ziet waarom er geen nieuwe
+  versies meer komen (spec 010, User Story 4).
+- De toestemming voor beperkte video's volgt uit de gekozen versie van de verwijzing; er is geen
+  aparte tabel (spec 010, research R2). In spec 011 zijn de kopie en haar eerste versie het bewijs.
+- Spec 011 kan een verwijzing omzetten naar een kopie zonder bestaande gegevens om te zetten (spec
+  010, research R13).
 
-- Wat er met een verwijzing gebeurt als de eigenaar de cursus later beperkt (minder organisaties of
-  "Alleen eigen organisatie"): blijft de verwijzing werken, of verdwijnt hij?
-- Hoe de onomkeerbare toestemming voor beperkte video's wordt vastgelegd bij het overnemen. Spec 009
-  laat de eigenaar die video's bevestigen bij het delen, maar slaat de bevestiging niet op.
-- Spec 009 legt bij een cursus `Course.visibility` en `CourseAccess` vast; `questLiveVersions` in
-  `backend/src/modules/quest/questCatalog.js` is de enige plek die voor overgenomen cursussen hoeft te
-  veranderen.
+## Eigen kopie van een overgenomen cursus bij aanpassen (FR-12, deel 3, spec 011) — hoge prioriteit, volgende spec
+
+Komt na spec 010. Een organisatie met een verwijzing kiest "Aanpassen" en krijgt een volledige eigen
+kopie (nieuwe `Course` met `parentCourseId` naar het origineel; zij wordt eigenaar, haar verwijzing
+vervalt). De editor opent meteen met de kopie. Het origineel blijft ongewijzigd, de kopie krijgt geen
+updates meer en komt nooit in de cursusbibliotheek (spec 009, FR-014 d). In de kopie mag de ontvanger
+video's die niet algemeen beschikbaar zijn blijven gebruiken, ook als de eigenaar ze later beperkt;
+dit is niet terug te draaien (FR-14). Zulke video's staan niet in haar videobibliotheek en kunnen niet
+in andere cursussen gekozen worden. Uitzoeken: de status en het versienummer van de kopie (begint hij
+als concept of als gepubliceerd?), en wat er op de Quests staat tijdens het aanpassen.
+
+## Nieuwe versies van een overgenomen cursus automatisch gebruiken
+
+Besloten bij spec 010 (2026-11-27): een organisatie met een overgenomen cursus kiest bij elke nieuwe
+versie van de eigenaar zelf of zij die gebruikt. Wens: per overgenomen cursus een instelling
+"Nieuwe versies automatisch gebruiken" (standaard uit), zodat een organisatie die altijd de nieuwste
+versie wil niet steeds dezelfde melding krijgt. Uitzoeken: wat er op de Quests gebeurt als een
+nieuwe versie midden in een lesperiode binnenkomt.
+
+## Handmatige test van spec 009 (cursussen delen en de cursusbibliotheek)
+
+Spec 009 is gebouwd en de geautomatiseerde tests slagen (backend, frontend en de e2e-tests van 003, 006
+en 009), maar de handmatige scenario's 1–16 van `specs/009-course-sharing-library/quickstart.md` zijn
+nog niet doorgelopen (taak T062). Daarbij ook met de SQL-query uit de quickstart controleren dat
+`Course.visibility` en `CourseAccess` kloppen, en de resultaten noteren in een tabel "Resultaten
+handmatige test" in de quickstart.
+
+Ook nog open uit spec 009 (taak T058): de usability-omgeving heeft nog geen gedeelde cursus van een
+tweede organisatie, dus de cursusbibliotheek is daar leeg tot iemand zelf een cursus deelt.
 
 ## Inhoud van een gedeelde cursus alleen-lezen bekijken
 
@@ -76,6 +98,11 @@ FR-09-VR). Daarna mag een opruimstap de cursus met al zijn versies echt verwijde
 video's die alleen daarin zaten opgeruimd kunnen worden. Principe V zegt nu nog dat het record
 blijft bestaan; dat moet verduidelijkt worden naar "eerst zacht, echt weg als niemand hem meer
 gebruikt" (zoals de opruimtaak voor videobestanden al doet).
+
+Aangevuld bij spec 010 (2026-11-27, research R7): een cursus met zijn versies mag pas weg als geen
+`OrganisationCourse`-rij van een actieve organisatie (verwijzing, `isOwner = FALSE`) er nog naar
+wijst. Een versie die een verwijzing als `courseVersionId` heeft, moet altijd blijven, ook als het
+geen live versie meer is.
 
 ## Zien waar een verwijderde video nog gebruikt wordt
 

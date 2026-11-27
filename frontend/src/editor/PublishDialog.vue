@@ -7,7 +7,8 @@
 // contracts/ui.md § Bevestiging publiceren). Restricting a live course asks first (FR-007).
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import AvailabilityPicker, { isAvailabilityValid } from '../components/AvailabilityPicker.vue'
-import { confirmationText, countLosingAccess } from '../lib/videoAccess'
+import { audience, confirmationText, countLosingAccess } from '../lib/videoAccess'
+import { losingReceiversSentence } from '../lib/courseReference'
 import IssueGroups from './IssueGroups.vue'
 
 const props = defineProps({
@@ -20,6 +21,8 @@ const props = defineProps({
   availability: { type: Object, default: () => ({ visibility: 'private', accessOrganisations: [] }) },
   // The other active organisations, for "Selectief beschikbaar".
   organisations: { type: Array, default: () => [] },
+  // The organisations that took the course over (specs/010 FR-019): [{ id, name }].
+  receivers: { type: Array, default: () => [] },
   // A choice to start from instead of the stored availability (back from the warning, contracts/ui.md).
   initialChoice: { type: Object, default: null },
 })
@@ -39,6 +42,11 @@ const valid = computed(() => isAvailabilityValid(choice.value))
 const losing = computed(() =>
   hasLive.value ? countLosingAccess(current.value, choice.value, props.organisations.map((o) => o.id)) : 0,
 )
+// The receivers that lose access by this choice keep their version (specs/010 FR-019).
+const losingReceivers = computed(() => {
+  const after = audience(choice.value, props.organisations.map((o) => o.id))
+  return props.receivers.filter((r) => !after.has(r.id)).length
+})
 const askRestrict = ref(false)
 
 function confirm() {
@@ -69,6 +77,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
         <div v-if="mode === 'confirm' && askRestrict" class="modal-body">
           <p data-test="restrict-question">{{ confirmationText(losing, 'course') }}</p>
+          <p v-if="losingReceivers" data-test="restrict-receivers">{{ losingReceiversSentence(losingReceivers) }}</p>
         </div>
 
         <div v-else-if="mode === 'confirm'" class="modal-body">

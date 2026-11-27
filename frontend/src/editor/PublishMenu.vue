@@ -7,6 +7,7 @@
 // says why, in the menu and not permanently in the bar.
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useEditor } from './context'
+import { receiversList } from '../lib/courseReference'
 import Icon from '../components/Icon.vue'
 
 const emit = defineEmits(['publish', 'unpublish', 'change-availability'])
@@ -23,6 +24,8 @@ const reason = computed(() => {
   return ''
 })
 const busy = computed(() => ed.publishing || ed.saving)
+// Who took this course over (specs/010 FR-019); '' without receivers.
+const receiversText = computed(() => receiversList(ed.receivers))
 
 function choose(action) {
   open.value = false
@@ -72,12 +75,14 @@ onBeforeUnmount(() => {
       <button v-if="live" class="item" role="menuitem" data-test="unpublish" @click="choose('unpublish')">
         <span class="item-label">Onpubliceren</span>
       </button>
+      <p v-if="receiversText" class="receivers" data-test="menu-receivers">{{ receiversText }}</p>
     </div>
   </div>
 </template>
 
 <style scoped>
 .publish-menu { position: relative; }
+.receivers { margin: 4px 0 0; padding: 8px 12px 4px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); max-width: 320px; }
 .trigger { gap: 6px; }
 .pop {
   position: absolute;

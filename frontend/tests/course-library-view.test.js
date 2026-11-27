@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { getLibraryCourse, listLibraryCourses } from '../src/api/courseLibrary'
 import { ui } from '../src/lib/ui'
+import { jsonResponse } from './helpers'
 import CourseLibraryView from '../src/views/CourseLibraryView.vue'
 
 // The course library page and its course window (specs/009 US2, US5, contracts/ui.md).
@@ -120,5 +121,67 @@ describe('the course window', () => {
     await flushPromises()
     expect(wrapper.get('[data-test="details-availability"]').text()).toBe('Selectief beschikbaar: Brandweer Noord')
     expect(wrapper.get('[data-test="open-editor"]').attributes('href')).toBe('/courses/12')
+  })
+})
+
+// Adding a course to the own organisation (specs/010 US1) and the receivers for the owner (FR-019).
+describe('taking over a course', () => {
+  const openWindow = async (wrapper, name) => {
+    await cards(wrapper).find((card) => card.text().includes(name)).get('button.open').trigger('click')
+    await flushPromises()
+  }
+  const answer = async (yes) => {
+    await flushPromises()
+    ui.confirm.resolve(yes)
+    await flushPromises()
+  }
+  const posts = () => globalThis.fetch.mock.calls.filter(([url, options]) => url === '/api/organisation/course-references' && options?.method === 'POST')
+
+  it('adds a course of another organisation after the confirmation', async () => {
+    globalThis.fetch.mockImplementation(async () => jsonResponse(201, { courseId: 11, name: 'Redden in open water', notice: false }))
+    const wrapper = await mountView()
+    await openWindow(wrapper, 'Redden in open water')
+    await wrapper.get('[data-test="add-course"]').trigger('click')
+    expect(ui.confirm.title).toBe('Cursus toevoegen aan jouw organisatie?')
+    expect(ui.confirm.body).toContain('van Brandweer Noord komt bij jouw cursussen en wordt te downloaden op de VR-brillen')
+    await answer(false)
+    expect(posts()).toEqual([])
+
+    await wrapper.get('[data-test="add-course"]').trigger('click')
+    await answer(true)
+    expect(JSON.parse(posts()[0][1].body)).toEqual({ courseId: 11 })
+    expect(ui.toasts.map((t) => t.message)).toContain('Cursus toegevoegd aan jouw cursussen')
+    expect(wrapper.find('[data-test="add-course"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-test="course-added"]').length).toBeGreaterThan(0)
+  })
+
+  it('reloads the library when the course is no longer available', async () => {
+    globalThis.fetch.mockImplementation(async () => jsonResponse(404, { error: { code: 'not_found', message: 'Niet gevonden.' } }))
+    const wrapper = await mountView()
+    await openWindow(wrapper, 'Redden in open water')
+    await wrapper.get('[data-test="add-course"]').trigger('click')
+    await answer(true)
+    expect(ui.toasts.map((t) => t.message)).toContain('Deze cursus is niet meer beschikbaar.')
+    expect(vi.mocked(listLibraryCourses)).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows "Toegevoegd" instead of the button for a course already taken over', async () => {
+    const taken = COURSES.map((c) => (c.id === 11 ? { ...c, takenOver: true } : c))
+    vi.mocked(listLibraryCourses).mockResolvedValue(taken)
+    vi.mocked(getLibraryCourse).mockImplementation(async (id) => taken.find((c) => c.id === id))
+    const wrapper = await mountView()
+    expect(cards(wrapper)[1].find('[data-test="course-added"]').exists()).toBe(true)
+    await openWindow(wrapper, 'Redden in open water')
+    expect(wrapper.find('[data-test="add-course"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="view-taken-over"]').exists()).toBe(true)
+  })
+
+  it('shows the owner who took a course over, and no button', async () => {
+    const own = COURSES.map((c) => (c.id === 12 ? { ...c, receivers: [{ id: 4, name: 'Brandweer Noord' }] } : c))
+    vi.mocked(getLibraryCourse).mockImplementation(async (id) => own.find((c) => c.id === id))
+    const wrapper = await mountView()
+    await openWindow(wrapper, 'Duiken')
+    expect(wrapper.get('[data-test="details-receivers"]').text()).toBe('1 organisatie: Brandweer Noord')
+    expect(wrapper.find('[data-test="add-course"]').exists()).toBe(false)
   })
 })

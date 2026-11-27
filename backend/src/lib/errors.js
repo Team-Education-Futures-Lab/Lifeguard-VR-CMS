@@ -38,6 +38,17 @@ export function sharedVideosWarning(videos) {
 /** Changing the availability needs a live version (specs/009 FR-006, research R9). */
 export const courseNotLive = () => new AppError(409, 'course_not_live', 'Publiceer de cursus eerst.')
 
+/** The organisation already took over this course (specs/010 FR-005). */
+export const courseAlreadyAdded = () =>
+  new AppError(409, 'course_already_added', 'Deze cursus staat al bij jullie cursussen.')
+
+/** "Nieuwe versie gebruiken" without a newer version to choose (specs/010 FR-014); `reference` is the current state. */
+export function noNewerVersion(reference) {
+  const error = new AppError(409, 'no_newer_version', 'Er is geen nieuwere versie om te gebruiken.')
+  error.reference = reference
+  return error
+}
+
 export const notAuthenticated = () =>
   new AppError(401, 'not_authenticated', 'Je bent niet ingelogd.')
 

@@ -78,7 +78,7 @@ De cursus heette daar "Zwemmen" in plaats van "Redden".
 | 1 | ✅ | Bevestiging heeft veel tekst → backlog "Teksten nalopen in het CMS" |
 | 2 | ✅ | "Gebaseerd op" in de kop maakt de editor drukker → backlog "UI-refactor van de cursus-editor" |
 | 3 | ✅ | Kopie gezien; nakijken dat de overgenomen cursus en de melding weg zijn |
-| 4 | open | Quest-test, later |
+| 4 | ✅ | Quest: de kopie verschijnt als nieuwe cursus (versie 1) naast de oude (versie 2). Niet duidelijk wat het verschil is: geen eigenaar of "gebaseerd op" → backlog Quest |
 | 5 | ✅ | |
 | 6 | ✅ | |
 | 7 | ✅ | Wens: icoon voor origineel, overgenomen en kopie → backlog |

@@ -89,20 +89,20 @@ Getest op 2026-11-27 in de lokale ontwikkelomgeving, samen met de handmatige tes
 | 1 | ✅ | Bevestiging heeft veel tekst → backlog "Teksten nalopen in het CMS" |
 | 2 | ✅ | |
 | 3 | ✅ | Eigen en overgenomen cursussen zien er anders uit → backlog |
-| 4 | open | Quest-test, later |
+| 4 | ✅ | Quest: overgenomen cursus in versie 1, beperkte video X downloadt en speelt |
 | 5 | ✅ | Ook de knop "Aanpassen" (spec 011) staat erbij |
 | 6 | ✅ | |
 | 7 | ✅ | "Overgenomen door" in het publicatiemenu is te prominent → backlog |
-| 8 | ✅ | Quest-deel nog niet getest |
-| 9 | ✅ | Ontwerpvraag over "Huidige versie houden" → backlog. Quest-deel nog niet getest |
+| 8 | ✅ | Quest houdt versie 1. "Update beschikbaar" bestaat nog niet in de Quest-app (backlog Quest "Nieuwe versie beschikbaar tonen") |
+| 9 | ✅ | Quest houdt versie 1, X speelt. "Huidige versie houden" voelt nutteloos; houden zou de standaard moeten zijn → backlog |
 | 10 | ✅ | |
-| 11 | ✅ | Quest-deel nog niet getest |
+| 11 | ✅ | Quest: na het verwijderen van versie 1 op de Quest kwam versie 3 binnen; bijwerken zelf zit nog niet in de Quest-app |
 | 12 | ✅ | Zin over overgenomen cursussen kan beter verwoord → backlog "Teksten nalopen in het CMS" |
 | 13 | ✅ | |
-| 14 | ✅ | |
+| 14 | ✅ | Quest houdt de cursus na onpubliceren |
 | 15 | ✅ | |
-| 16 | ✅ | Bevestiging heeft veel tekst → backlog "Teksten nalopen in het CMS" |
+| 16 | ✅ | Bevestiging heeft veel tekst → backlog "Teksten nalopen in het CMS". Quest houdt de cursus. Verwijderen kan alleen vanuit het cursusoverzicht → backlog |
 | 17 | ✅ | |
-| 18 | ✅ | |
+| 18 | ✅ | Ook op de Quest: B houdt de cursus na het verwijderen van A |
 
 De SQL-controle uit "Controle in de database" is nog niet gedaan.

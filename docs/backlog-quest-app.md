@@ -18,7 +18,9 @@ Een gedownloade cursus blijft op de oude versie staan (zo bedoeld in spec 003), 
 er een nieuwere versie is. Dit zijn FR-06-VR ("Update beschikbaar") en FR-07-VR (zelf bijwerken; de oude
 versie blijft speelbaar tot de nieuwe binnen is). Volgens de bouwvolgorde wordt dit **spec 005**; het item
 gaat weg als die spec begint. Er is al op voorbereid: de opslag per cursus en versie (spec 003 FR-007), en
-"Mijn cursussen" speelt de hoogste complete versie (spec 004).
+"Mijn cursussen" speelt de hoogste complete versie (spec 004). Bevestigd in de Quest-test van CMS-spec 010
+(2026-11-27): een overgenomen cursus die naar een nieuwe versie overstapt, toont op de Quest geen update;
+alleen na het verwijderen van de oude versie kwam de nieuwe binnen.
 
 ## Ontkoppelen en opslag van andere organisaties
 
@@ -40,7 +42,12 @@ eigen organisatie te spelen zijn. Let op constitutie III: nooit automatisch wegg
 Past een organisatie in het CMS een overgenomen cursus aan, dan krijgt zij een eigen kopie met een nieuw
 cursusnummer. De Quest ziet nu een nieuwe cursus en de oude als "niet meer in het CMS". Wens: de Quest
 herkent dat de nieuwe cursus de oude vervangt. Vraagt een afgesproken wijziging van het API-contract
-(zie `docs/backlog.md`, "Koppeling tussen oude en nieuwe cursus op de Quest na aanpassen").
+(zie in de CMS-repo `docs/backlog.md`, "Koppeling tussen oude en nieuwe cursus op de Quest na aanpassen").
+
+Quest-test van 2026-11-27: na "Aanpassen" staan beide op de Quest. De oude "Redden" toont versie 2 en de
+grootte, de kopie is bijna gelijk maar versie 1. Niet te zien wat het verschil is: geen eigenaar, geen
+"gebaseerd op", geen aanduiding dat de oude niet meer in het CMS staat die opvalt. Wens: per cursus de
+eigenaar (of "eigen"/"overgenomen"/"aangepast") tonen en de oude duidelijk als vervangen markeren.
 
 ## Reden tonen als je opnieuw moet koppelen
 

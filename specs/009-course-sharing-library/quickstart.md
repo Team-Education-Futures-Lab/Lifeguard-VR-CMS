@@ -88,7 +88,7 @@ Getest op 2026-11-27 in de lokale ontwikkelomgeving, samen met de handmatige tes
 | 11 | ✅ | |
 | 12 | ✅ | |
 | 13 | ✅ | |
-| 14 | open | Quest-test, later |
+| 14 | ✅ | Quest van B toont alleen de eigen cursus van B |
 | 15 | ✅ | Geen link naar de beheerderslogin op de inlogpagina → backlog |
 | 16 | ✅ | |
 

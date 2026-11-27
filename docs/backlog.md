@@ -10,7 +10,8 @@ geautomatiseerde tests slagen (backend, frontend en de e2e-tests van 003, 006, 0
 handmatige scenario's 1–18 van `specs/010-course-reference-takeover/quickstart.md` (taak T063) zijn
 op 2026-11-27 1–3 en 5–18 goed bevonden (resultaten in de quickstart). Nog open: 4 en het Quest-deel
 van 8, 9 en 11 (Quest) en de SQL-controle uit de quickstart (`addedAt`, `courseVersionId`,
-`declinedCourseVersionId`). Ook nog open (taak T060):
+`declinedCourseVersionId`). Update: de Quest-scenario's (4, 8, 9, 11) zijn op 2026-11-27 getest; open
+is alleen nog de SQL-controle. Ook nog open (taak T060):
 de usability-omgeving heeft nog geen overgenomen cursus met een nieuwere versie.
 
 De open punten uit spec 009 (research R13) zijn in spec 010 uitgewerkt:
@@ -30,7 +31,8 @@ een overgenomen cursus geeft een eigen kopie van de gekozen versie (versie 1 gep
 concept), met "Gebaseerd op <cursus> van <organisatie>". De kopie is nooit te delen en krijgt geen
 nieuwe versies; meegekregen video's blijven werken, ook na beperken. Van de handmatige scenario's van
 `specs/011-course-reference-copy/quickstart.md` (taak T049) zijn op 2026-11-27 1–3 en 5–12 goed
-bevonden (resultaten in de quickstart). Nog open: 4 (Quest) en de SQL-controle uit de quickstart.
+bevonden (resultaten in de quickstart). Scenario 4 (Quest) is op 2026-11-27 getest. Nog open: de
+SQL-controle uit de quickstart.
 
 ## Koppeling tussen oude en nieuwe cursus op de Quest na aanpassen
 
@@ -61,11 +63,19 @@ nieuwe versie midden in een lesperiode binnenkomt.
 Spec 009 is gebouwd en de geautomatiseerde tests slagen (backend, frontend en de e2e-tests van 003, 006
 en 009). Van de handmatige scenario's 1–16 van `specs/009-course-sharing-library/quickstart.md` (taak
 T062) zijn op 2026-11-27 1–9, 11–13, 15 en 16 goed bevonden (resultaten in de quickstart). Nog
-open: 10 (het venster van een cursus in de bibliotheek vóór toevoegen), 14
+open: 10 (het venster van een cursus in de bibliotheek vóór toevoegen), 14 (Quest; op 2026-11-27 getest en goed)
 (Quest) en de SQL-controle uit de quickstart.
 
 Ook nog open uit spec 009 (taak T058): de usability-omgeving heeft nog geen gedeelde cursus van een
 tweede organisatie, dus de cursusbibliotheek is daar leeg tot iemand zelf een cursus deelt.
+
+## Een cursus verwijderen vanuit de editor
+
+Uit de handmatige test van spec 010 (2026-11-27, scenario 16). Een cursus verwijderen kan nu alleen
+met het prullenbakje in het cursusoverzicht (`frontend/src/views/CoursesView.vue`). Wens: ook in de
+editor (bijvoorbeeld in het menu bij de naam of het publicatiemenu), met dezelfde bevestiging als in het
+overzicht (ook de zinnen over de VR-brillen, de bibliotheek en de ontvangers). Meenemen in de
+UI-refactor van de cursus-editor.
 
 ## Teksten nalopen in het CMS
 
@@ -166,7 +176,8 @@ overgenomen cursus bij een melding "Nieuwe versie gebruiken" of "Huidige versie 
 versie houden" verandert de versie niet (die verandert nooit vanzelf); het laat alleen de melding en
 de teller verdwijnen (specs/010 FR-015). Daarna staat "Nieuwe versie gebruiken" er nog, wat dubbel
 voelt. Voorstel: alleen een knop "Overstappen naar de nieuwe versie"; zolang je niet klikt, houd je je
-versie. Uitzoeken: hoe de melding en de teller dan verdwijnen (bijvoorbeeld zodra je de cursus hebt
+versie. Ook bevestigd in de Quest-test (2026-11-27): "Huidige versie houden" voelt nutteloos, houden
+hoort de standaard te zijn. Uitzoeken: hoe de melding en de teller dan verdwijnen (bijvoorbeeld zodra je de cursus hebt
 geopend, of met een "Melding sluiten"-kruisje), zodat de teller niet blijft staan.
 
 ## Inhoud van een gedeelde cursus alleen-lezen bekijken
